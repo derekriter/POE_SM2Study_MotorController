@@ -1,29 +1,52 @@
-import 'dart:io';
 import 'dart:isolate';
+import 'dart:ui';
 
-import 'package:desktop_software/device/device.dart' as device;
+import 'package:desktop_software/device/device_loop.dart';
+import 'package:desktop_software/device/device_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 
 class AppState extends ChangeNotifier {
   AppState() {
-    Isolate.run(_deviceLoop);
+    logger.i("Spawning device isolate...");
+    _deviceReceive = ReceivePort();
+    _deviceReceive.listen(_onReceiveFromDevice);
+    Isolate.spawn(
+          deviceLoop,
+          _deviceReceive.sendPort,
+          onExit: _deviceReceive.sendPort,
+        )
+        .then((val) async {
+          _deviceIsolate = val;
+          logger.i("Successfully created device isolate");
+        })
+        .onError((err, _) {
+          logger.f("Failed to create device isolate, exiting");
+          ServicesBinding.instance.exitApplication(AppExitType.cancelable, 1);
+        });
+
+    AppLifecycleListener(
+      onExitRequested: () async {
+        _deviceIsolate?.kill();
+        logger.d("closing");
+        return AppExitResponse.exit;
+      },
+    );
   }
 
-  bool get isConnected => _isConnected;
+  DeviceState? get deviceState => _deviceState;
 
-  bool _isConnected = false;
+  final logger = Logger();
 
-  void _deviceLoop() async {
-    while (true) {
-      if (!_isConnected) {
-        _isConnected = device.connect();
-        notifyListeners();
+  late final ReceivePort _deviceReceive;
+  Isolate? _deviceIsolate;
+  DeviceState? _deviceState;
 
-        if (!_isConnected) {
-          sleep(Duration(seconds: 3));
-          continue;
-        }
-      }
+  void _onReceiveFromDevice(dynamic msg) {
+    if (msg is DeviceState) {
+      _deviceState = msg;
+      notifyListeners();
     }
   }
 }

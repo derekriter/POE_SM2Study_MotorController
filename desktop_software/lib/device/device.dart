@@ -6,7 +6,7 @@ final logger = Logger();
 SerialPort? _port;
 
 bool connect() {
-  if (_port != null && _port!.isOpen) {
+  if (isConnected()) {
     logger.w("Device already connected");
     return false;
   }
@@ -14,6 +14,7 @@ bool connect() {
   _port = SerialPort("COM6");
   if (!_port!.openReadWrite()) {
     logger.e("Failed to open device connection\n${SerialPort.lastError}");
+    _port = null;
     return false;
   }
 
@@ -22,13 +23,18 @@ bool connect() {
 }
 
 void disconnect() {
-  if (_port == null || !_port!.isOpen) {
+  if (!isConnected()) {
     logger.w("Device already disconnected");
     return;
   }
 
   _port!.close();
   _port!.dispose();
+  _port = null;
 
   logger.i("Disconnected from device");
+}
+
+bool isConnected() {
+  return _port != null && _port!.isOpen;
 }
