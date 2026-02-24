@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -9,27 +10,35 @@ import 'package:logger/logger.dart';
 
 class AppState extends ChangeNotifier {
   AppState() {
-    logger.i("Spawning device isolate...");
+    _logger.i("Spawning device isolate...");
+
     _deviceReceive = ReceivePort();
     _deviceReceive.listen(_onReceiveFromDevice);
     Isolate.spawn(
-          deviceLoop,
+          deviceLoopInit,
           _deviceReceive.sendPort,
           onExit: _deviceReceive.sendPort,
         )
         .then((val) async {
           _deviceIsolate = val;
-          logger.i("Successfully created device isolate");
+          _deviceClosed = Completer();
+          _logger.i("Successfully created device isolate");
         })
-        .onError((err, _) {
-          logger.f("Failed to create device isolate, exiting");
+        .onError((err, stack) {
+          _logger.f("Failed to create device isolate\n$err");
           ServicesBinding.instance.exitApplication(AppExitType.cancelable, 1);
         });
 
+    //NOTE: will only trigger on cancelable closes, a force termination will not trigger this function
     AppLifecycleListener(
       onExitRequested: () async {
-        _deviceIsolate?.kill();
-        logger.d("closing");
+        if (_deviceSend == null) {
+          _deviceIsolate?.kill();
+        } else {
+          _deviceSend!.send("close");
+          await _deviceClosed!.future;
+        }
+
         return AppExitResponse.exit;
       },
     );
@@ -37,14 +46,20 @@ class AppState extends ChangeNotifier {
 
   DeviceState? get deviceState => _deviceState;
 
-  final logger = Logger();
+  final _logger = Logger();
 
   late final ReceivePort _deviceReceive;
-  Isolate? _deviceIsolate;
+  late final Isolate? _deviceIsolate;
   DeviceState? _deviceState;
+  SendPort? _deviceSend;
+  Completer<void>? _deviceClosed;
 
   void _onReceiveFromDevice(dynamic msg) {
-    if (msg is DeviceState) {
+    if (msg == null) {
+      _deviceClosed?.complete();
+    } else if (msg is SendPort) {
+      _deviceSend = msg;
+    } else if (msg is DeviceState) {
       _deviceState = msg;
       notifyListeners();
     }
