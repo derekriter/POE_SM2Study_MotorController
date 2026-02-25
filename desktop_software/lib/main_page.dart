@@ -9,8 +9,6 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
 
-    return Scaffold(
-      body: Text(appState.deviceState?.isConnected.toString() ?? "null"),
-    );
+    return Scaffold(body: Text(appState.isConnected.toString()));
   }
 }

@@ -38,18 +38,22 @@ class AppState extends ChangeNotifier {
           _deviceSend!.send("close");
           await _deviceClosed!.future;
         }
+        _deviceIsolate = null;
+        _deviceClosed = null;
+        _deviceSend = null;
+        _deviceState = null;
 
         return AppExitResponse.exit;
       },
     );
   }
 
-  DeviceState? get deviceState => _deviceState;
+  bool get isConnected => _deviceState?.isConnected ?? false;
 
   final _logger = Logger();
 
   late final ReceivePort _deviceReceive;
-  late final Isolate? _deviceIsolate;
+  Isolate? _deviceIsolate;
   DeviceState? _deviceState;
   SendPort? _deviceSend;
   Completer<void>? _deviceClosed;
@@ -62,6 +66,8 @@ class AppState extends ChangeNotifier {
     } else if (msg is DeviceState) {
       _deviceState = msg;
       notifyListeners();
+    } else {
+      _logger.w("Unknown message '$msg' received from device isolate");
     }
   }
 }
