@@ -41,7 +41,7 @@ bool connect() {
     return false;
   }
 
-  _port = SerialPort("COM6");
+  _port = SerialPort("COM6"); //TODO: port scanning
 
   if (!_port!.openReadWrite()) {
     _logger.e("Failed to open device connection\n${SerialPort.lastError}");
@@ -49,17 +49,27 @@ bool connect() {
     return false;
   }
 
-  //config must be set after opening port
-  //https://github.com/jpnurmi/flutter_libserialport/issues/29#issuecomment-1706355179
-  //all config parameters must be manually set
-  //https://pub.dev/documentation/flutter_libserialport/latest/flutter_libserialport/SerialPortConfig-class.html
-  //used https://github.com/jpnurmi/flutter_libserialport/issues/140 as reference for configs
+  /*
+  config must be set after opening port
+  https://github.com/jpnurmi/flutter_libserialport/issues/29#issuecomment-1706355179
+  
+  all config parameters must be manually set
+  https://pub.dev/documentation/flutter_libserialport/latest/flutter_libserialport/SerialPortConfig-class.html
+  
+  used https://github.com/jpnurmi/flutter_libserialport/issues/140 as reference for configs
+  
+  Arduino doesnt support flow control, ie. no DTR, RTS, DSR, CTS, or XON/XOFF
+  https://arduino.stackexchange.com/a/98737
+  
+  Arduino defaults to 8 bits with no parity and 1 stop bit
+  https://docs.arduino.cc/language-reference/en/functions/communication/serial/begin/#:~:text=SERIAL_7N1-,serial_8n1
+  */
   _port!.config = SerialPortConfig()
     ..baudRate = 115200
     ..bits = 8
     ..parity = SerialPortParity.none
     ..stopBits = 1
-    ..dtr = SerialPortDtr.on
+    ..dtr = SerialPortDtr.off
     ..rts = SerialPortRts.off
     ..dsr = SerialPortDsr.ignore
     ..cts = SerialPortCts.ignore
@@ -83,9 +93,12 @@ void disconnect() {
   _logger.i("Disconnected from device");
 }
 
-//TODO: hearbeat or check for serial events
 bool isConnected() {
   return _port != null && _port!.isOpen;
+}
+
+String? getConnectedPort() {
+  return isConnected() ? _port?.name : null;
 }
 
 Future<String?> readLine() async {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:desktop_software/device/device.dart';
 import 'package:desktop_software/device/device_loop.dart';
 import 'package:desktop_software/device/device_state.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,18 @@ class AppState extends ChangeNotifier {
   }
 
   bool get isConnected => _deviceState?.isConnected ?? false;
+  String? get port => _deviceState?.port;
+  bool? get enabled => _deviceState?.lastData?.enabled;
+  double? get sourceVoltage => _deviceState?.lastData?.sourceVoltage;
+  ControlMode? get controlMode => _deviceState?.lastData?.controlMode;
+  double? get controlReference => _deviceState?.lastData?.controlReference;
+  int? get positionTicks => _deviceState?.lastData?.positionTicks;
+  double? get positionRotations => _deviceState?.lastData?.positionRotations;
+  double? get velocityTPS => _deviceState?.lastData?.velocityTPS;
+  double? get velocityRPM => _deviceState?.lastData?.velocityRPM;
+  int? get lastTimestamp => _deviceState?.lastData?.timestamp;
+  double? get commandedOutput => _deviceState?.lastData?.commandedOutput;
+  double? get lastError => _deviceState?.lastData?.error;
 
   final _logger = Logger();
 

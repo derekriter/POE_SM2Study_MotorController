@@ -58,6 +58,8 @@ abstract class DeviceFrame {
         }
     }
   }
+
+  DeviceFrame copy();
 }
 
 class DeviceDataFrame extends DeviceFrame {
@@ -206,6 +208,39 @@ class DeviceDataFrame extends DeviceFrame {
   int get timestamp => _timestamp;
   double get commandedOutput => _commandedOutput;
   double get error => _error;
+
+  @override
+  DeviceDataFrame copy() {
+    return DeviceDataFrame._(
+      enabled: enabled,
+      sourceVoltage: sourceVoltage,
+      controlMode: controlMode,
+      controlReference: controlReference,
+      positionTicks: positionTicks,
+      positionRotations: positionRotations,
+      velocityTPS: velocityTPS,
+      velocityRPM: velocityRPM,
+      timestamp: timestamp,
+      commandedOutput: commandedOutput,
+      error: error,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DeviceDataFrame &&
+        other._enabled == _enabled &&
+        other._sourceVoltage == _sourceVoltage &&
+        other._controlMode == _controlMode &&
+        other._controlReference == _controlReference &&
+        other._positionTicks == _positionTicks &&
+        other._positionRotations == _positionRotations &&
+        other._velocityTPS == _velocityTPS &&
+        other._velocityRPM == _velocityRPM &&
+        other._timestamp == _timestamp &&
+        other._commandedOutput == _commandedOutput &&
+        other._error == _error;
+  }
 }
 
 enum DeviceResponseSeverity { ok, warning, error }
@@ -225,11 +260,11 @@ class DeviceResponse {
   String toString() {
     switch (_severity) {
       case DeviceResponseSeverity.ok:
-        return "OK";
+        return "[Device] OK";
       case DeviceResponseSeverity.warning:
-        return "WARNING: ${_message ?? "no message provided"}";
+        return "[Device] WARN: ${_message ?? "no message provided"}";
       case DeviceResponseSeverity.error:
-        return "ERROR: ${_message ?? "no message provided"}";
+        return "[Device] ERR: ${_message ?? "no message provided"}";
     }
   }
 }
@@ -240,6 +275,11 @@ class DeviceMessageFrame extends DeviceFrame {
   DeviceMessageFrame._({required String message}) : _message = message;
 
   String get message => _message;
+
+  @override
+  DeviceMessageFrame copy() {
+    return DeviceMessageFrame._(message: message);
+  }
 }
 
 class DeviceOKFrame extends DeviceFrame {
@@ -247,6 +287,11 @@ class DeviceOKFrame extends DeviceFrame {
 
   DeviceResponse toResponse() {
     return DeviceResponse._(severity: DeviceResponseSeverity.ok);
+  }
+
+  @override
+  DeviceOKFrame copy() {
+    return DeviceOKFrame._();
   }
 }
 
@@ -294,5 +339,10 @@ class DeviceBadFrame extends DeviceFrame {
           ? DeviceResponseSeverity.error
           : DeviceResponseSeverity.warning,
     );
+  }
+
+  @override
+  DeviceBadFrame copy() {
+    return DeviceBadFrame._(isError: isError, message: message);
   }
 }
