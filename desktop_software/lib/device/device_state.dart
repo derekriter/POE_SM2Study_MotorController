@@ -13,6 +13,7 @@ class DeviceState {
   }
 
   @override
+  // ignore: hash_and_equals
   bool operator ==(Object other) {
     return other is DeviceState &&
         other.isConnected == isConnected &&

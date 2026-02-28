@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:desktop_software/device/device.dart';
+import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_frame.dart';
 import 'package:desktop_software/device/device_state.dart';
 import 'package:logger/logger.dart';
@@ -25,6 +26,8 @@ void deviceLoopInit(SendPort send) async {
   });
 
   if (isConnected()) {
+    await sendControlRequest(DeviceStopRequest());
+    await sendControlRequest(DeviceEnableDisableRequest(false));
     disconnect();
   }
 
@@ -87,9 +90,11 @@ Future<void> _deviceLoop(SendPort send) async {
   _prevState = state;
 }
 
-void _onReceiveFromMain(dynamic msg) {
+void _onReceiveFromMain(dynamic msg) async {
   if (msg == "close") {
     _shouldClose = true;
+  } else if (msg is DeviceControlRequest) {
+    sendControlRequest(msg); //do not await
   } else {
     _logger.w("Unknown message '$msg' received from main isolate");
   }
@@ -100,7 +105,7 @@ DeviceFrame? _parseFrameIfValid(String raw) {
   try {
     parsed = jsonDecode(raw);
   } catch (err) {
-    _logger.w("Exception while parsing frame data: '$err'");
+    _logger.w("Exception while parsing frame data: $err");
     return null;
   }
 

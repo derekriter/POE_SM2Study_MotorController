@@ -227,6 +227,7 @@ class DeviceDataFrame extends DeviceFrame {
   }
 
   @override
+  // ignore: hash_and_equals
   bool operator ==(Object other) {
     return other is DeviceDataFrame &&
         other._enabled == _enabled &&

@@ -1,34 +1,43 @@
+import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:desktop_software/device/device_control_request.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:logger/logger.dart';
 
 final _logger = Logger();
 
 SerialPort? _port;
+SerialPortConfig? _portConfig;
+DateTime? _lastSendTime;
 
 //NOTE: calling any functions in this file from any isolates other than the device loop will probably break things
 
 enum ControlMode {
-  none,
-  dutyCycle,
-  voltage,
-  pidPosition,
-  pidVelocity,
-  trapPosition;
+  none(0),
+  dutyCycle(1),
+  voltage(2),
+  pidPosition(3),
+  pidVelocity(4),
+  trapPosition(5);
+
+  final int id;
+
+  const ControlMode(this.id);
 
   static ControlMode? fromID(int id) {
-    switch (id) {
-      case 0:
-        return none;
-      case 1:
-        return dutyCycle;
-      case 2:
-        return voltage;
-      case 3:
-        return pidPosition;
-      case 4:
-        return pidVelocity;
-      case 5:
-        return trapPosition;
+    if (id == none.id) {
+      return none;
+    } else if (id == dutyCycle.id) {
+      return dutyCycle;
+    } else if (id == voltage.id) {
+      return voltage;
+    } else if (id == pidPosition.id) {
+      return pidPosition;
+    } else if (id == pidVelocity.id) {
+      return pidVelocity;
+    } else if (id == trapPosition.id) {
+      return trapPosition;
     }
 
     return null;
@@ -41,18 +50,7 @@ bool connect() {
     return false;
   }
 
-  _port = SerialPort("COM6"); //TODO: port scanning
-
-  if (!_port!.openReadWrite()) {
-    _logger.e("Failed to open device connection\n${SerialPort.lastError}");
-    _port = null;
-    return false;
-  }
-
   /*
-  config must be set after opening port
-  https://github.com/jpnurmi/flutter_libserialport/issues/29#issuecomment-1706355179
-  
   all config parameters must be manually set
   https://pub.dev/documentation/flutter_libserialport/latest/flutter_libserialport/SerialPortConfig-class.html
   
@@ -64,7 +62,7 @@ bool connect() {
   Arduino defaults to 8 bits with no parity and 1 stop bit
   https://docs.arduino.cc/language-reference/en/functions/communication/serial/begin/#:~:text=SERIAL_7N1-,serial_8n1
   */
-  _port!.config = SerialPortConfig()
+  _portConfig = SerialPortConfig()
     ..baudRate = 115200
     ..bits = 8
     ..parity = SerialPortParity.none
@@ -74,6 +72,20 @@ bool connect() {
     ..dsr = SerialPortDsr.ignore
     ..cts = SerialPortCts.ignore
     ..xonXoff = SerialPortXonXoff.disabled;
+
+  _port = SerialPort("COM6"); //TODO: port scanning
+
+  if (!_port!.openReadWrite()) {
+    _logger.e("Failed to open device connection\n${SerialPort.lastError}");
+    _port = null;
+    return false;
+  }
+
+  /*
+  config must be set after opening port
+  https://github.com/jpnurmi/flutter_libserialport/issues/29#issuecomment-1706355179
+  */
+  _port!.config = _portConfig!;
 
   _logger.i("Connected to device on port ${_port!.name}");
   return true;
@@ -89,6 +101,9 @@ void disconnect() {
   _port?.close();
   _port?.dispose();
   _port = null;
+
+  // _portConfig?.dispose(); // causess assertion failure even though the docs say to dispose. I think SerialPort.dispose() might auto dispose the config
+  _portConfig = null;
 
   _logger.i("Disconnected from device");
 }
@@ -110,7 +125,7 @@ Future<String?> readLine() async {
     try {
       data = String.fromCharCode(_port!.read(1, timeout: 0)[0]);
     } catch (err) {
-      _logger.e("Exception while reading line: '$err'");
+      _logger.e("Exception while reading line: $err");
       return false;
     }
 
@@ -123,4 +138,39 @@ Future<String?> readLine() async {
   });
 
   return line.toString();
+}
+
+Future<bool> _sendMessage(Uint8List msg) async {
+  if (!isConnected()) return false;
+
+  await Future.doWhile(() {
+    return _lastSendTime != null &&
+        DateTime.now().difference(_lastSendTime!).inMilliseconds < 20;
+  });
+
+  try {
+    await Future.microtask(() {
+      _port!.write(msg, timeout: 0);
+    });
+    _lastSendTime = DateTime.now();
+  } catch (err) {
+    _logger.e("Exception while sending message: $err");
+    _lastSendTime = null;
+    return false;
+  }
+
+  return true;
+}
+
+Future<bool> sendControlRequest(DeviceControlRequest req) async {
+  final commands = req.toSerialCommands();
+
+  bool anyFailed = false;
+  for (final c in commands) {
+    if (!await _sendMessage(Uint8List.fromList(c.codeUnits))) {
+      anyFailed = true;
+    }
+  }
+
+  return !anyFailed;
 }
