@@ -1,6 +1,7 @@
 #include "serial.hpp"
 #include "control.hpp"
 #include "util.hpp"
+#include "controlMode.hpp"
 
 void sendDataFrame(double avgTPS, float avgErr) {
     Serial.print("{\"ty\":\"data\",\"py\":{");
@@ -12,10 +13,7 @@ void sendDataFrame(double avgTPS, float avgErr) {
     Serial.print(getSourceVoltage(), 4);
     
     Serial.print(",\"cm\":");
-    Serial.print(getControlMode());
-    
-    Serial.print(",\"cr\":");
-    Serial.print(getControlReference(), 4);
+    Serial.print(getControlMode()->getID());
     
     Serial.print(",\"pt\":");
     Serial.print(getEncoderTicks());
@@ -78,107 +76,109 @@ void processCommand(const String* command) {
         setMotorEnabled(false);
         sendOKFrame();
     }
-    else if(strcmp(cmdCstr, "stop") == 0) {
-        setControlMode(CONTROL_MODE_NONE);
-        sendOKFrame();
-    }
-    else if(strcmp(cmdCstr, "dutyCycle") == 0) {
-        setControlMode(CONTROL_MODE_DUTY_CYCLE);
-        
-        if(abs(getControlReference()) > 1) {
-            sendBadFrame("Control reference is beyond range for control mode DUTY_CYCLE", SEVERITY_WARNING);
+    else if(startsWith(cmdCstr, "stop ") == 0) {
+        StopControlMode control;
+        if(StopControlMode::parseFromCommandArgs(cmdCstr + 5, &control)) {
+            setControlMode(control);
+            sendOKFrame();
         }
-        sendOKFrame();
     }
-    else if(strcmp(cmdCstr, "voltage") == 0) {
-        setControlMode(CONTROL_MODE_VOLTAGE);
-        sendOKFrame();
-    }
-    else if(strcmp(cmdCstr, "pidPos") == 0) {
-        setControlMode(CONTROL_MODE_PID_POSITION);
-        resetPID();
-        sendOKFrame();
-    }
-    else if(strcmp(cmdCstr, "pidVel") == 0) {
-        setControlMode(CONTROL_MODE_PID_VELOCITY);
-        resetPID();
-        sendOKFrame();
-    }
-    else if(strcmp(cmdCstr, "trapPos") == 0) {
-        setControlMode(CONTROL_MODE_TRAP_POSITION);
-        resetPID();
-        resetProfile();
-        sendOKFrame();
-    }
-    else if(startsWith(cmdCstr, "ref ")) {
-        const char* argStart = cmdCstr + 4;
-        
-        float newRef = (float) strtod(argStart, nullptr); //no good way to check parsing, just have to assume a valid value was given
-        setControlReference(newRef);
-        resetPID();
-        resetProfile();
-        
-        if(abs(newRef) > 1 && getControlMode() == CONTROL_MODE_DUTY_CYCLE) {
-            sendBadFrame("Control reference is beyond range for control mode DUTY_CYCLE", SEVERITY_WARNING);
+    else if(startsWith(cmdCstr, "dutyCycle ") == 0) {
+        DutyCycleControlMode control(0);
+        if(DutyCycleControlMode::parseFromCommandArgs(cmdCstr + 10, &control)) {
+            setControlMode(control);
+            sendOKFrame();
         }
-        sendOKFrame();
     }
-    else if(startsWith(cmdCstr, "kP ")) {
-        const char* argStart = cmdCstr + 3;
-        
-        float newKP = (float) strtod(argStart, nullptr);
-        setKP(newKP);
-        
-        sendOKFrame();
+    else if(startsWith(cmdCstr, "voltage ") == 0) {
+        // setControlMode(CONTROL_MODE_VOLTAGE);
+        // sendOKFrame();
     }
-    else if(startsWith(cmdCstr, "kI ")) {
-        const char* argStart = cmdCstr + 3;
-        
-        float newKI = (float) strtod(argStart, nullptr);
-        setKI(newKI);
-        
-        sendOKFrame();
+    else if(startsWith(cmdCstr, "pidPos ") == 0) {
+        // setControlMode(CONTROL_MODE_PID_POSITION);
+        // resetPID();
+        // sendOKFrame();
     }
-    else if(startsWith(cmdCstr, "kD ")) {
-        const char* argStart = cmdCstr + 3;
-        
-        float newKD = (float) strtod(argStart, nullptr);
-        setKD(newKD);
-        
-        sendOKFrame();
+    else if(startsWith(cmdCstr, "pidVel ") == 0) {
+        // setControlMode(CONTROL_MODE_PID_VELOCITY);
+        // resetPID();
+        // sendOKFrame();
     }
-    else if(startsWith(cmdCstr, "kS ")) {
-        const char* argStart = cmdCstr + 3;
-        
-        float newKS = (float) strtod(argStart, nullptr);
-        setKS(newKS);
-        
-        sendOKFrame();
+    else if(startsWith(cmdCstr, "trapPos ") == 0) {
+        // setControlMode(CONTROL_MODE_TRAP_POSITION);
+        // resetPID();
+        // resetProfile();
+        // sendOKFrame();
     }
-    else if(startsWith(cmdCstr, "vMax ")) {
-        const char* argStart = cmdCstr + 5;
+    // else if(startsWith(cmdCstr, "ref ")) {
+    //     const char* argStart = cmdCstr + 4;
         
-        float newVMax = (float) strtod(argStart, nullptr);
-        setVMax(newVMax);
+    //     float newRef = (float) strtod(argStart, nullptr); //no good way to check parsing, just have to assume a valid value was given
+    //     setControlReference(newRef);
+    //     resetPID();
+    //     resetProfile();
         
-        sendOKFrame();
-    }
-    else if(startsWith(cmdCstr, "aStart ")) {
-        const char* argStart = cmdCstr + 7;
+    //     if(abs(newRef) > 1 && getControlMode() == CONTROL_MODE_DUTY_CYCLE) {
+    //         sendBadFrame("Control reference is beyond range for control mode DUTY_CYCLE", SEVERITY_WARNING);
+    //     }
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "kP ")) {
+    //     const char* argStart = cmdCstr + 3;
         
-        float newAStart = (float) strtod(argStart, nullptr);
-        setAStart(newAStart);
+    //     float newKP = (float) strtod(argStart, nullptr);
+    //     setKP(newKP);
         
-        sendOKFrame();
-    }
-    else if(startsWith(cmdCstr, "aEnd ")) {
-        const char* argStart = cmdCstr + 5;
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "kI ")) {
+    //     const char* argStart = cmdCstr + 3;
         
-        float newAEnd = (float) strtod(argStart, nullptr);
-        setAEnd(newAEnd);
+    //     float newKI = (float) strtod(argStart, nullptr);
+    //     setKI(newKI);
         
-        sendOKFrame();
-    }
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "kD ")) {
+    //     const char* argStart = cmdCstr + 3;
+        
+    //     float newKD = (float) strtod(argStart, nullptr);
+    //     setKD(newKD);
+        
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "kS ")) {
+    //     const char* argStart = cmdCstr + 3;
+        
+    //     float newKS = (float) strtod(argStart, nullptr);
+    //     setKS(newKS);
+        
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "vMax ")) {
+    //     const char* argStart = cmdCstr + 5;
+        
+    //     float newVMax = (float) strtod(argStart, nullptr);
+    //     setVMax(newVMax);
+        
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "aStart ")) {
+    //     const char* argStart = cmdCstr + 7;
+        
+    //     float newAStart = (float) strtod(argStart, nullptr);
+    //     setAStart(newAStart);
+        
+    //     sendOKFrame();
+    // }
+    // else if(startsWith(cmdCstr, "aEnd ")) {
+    //     const char* argStart = cmdCstr + 5;
+        
+    //     float newAEnd = (float) strtod(argStart, nullptr);
+    //     setAEnd(newAEnd);
+        
+    //     sendOKFrame();
+    // }
     else {
         size_t len = strlen("Unknown command ''") + strlen(cmdCstr) + 1;
         char* msg = (char*) malloc(len);

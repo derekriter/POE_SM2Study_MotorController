@@ -59,6 +59,7 @@ Future<void> _deviceLoop(SendPort send) async {
         state.lastData = frame;
         _lastDataTime = DateTime.now();
       } else if (frame is DeviceMessageFrame) {
+        _logger.i("[DEVICE] MSG: ${frame.message}");
       } else if (frame is DeviceOKFrame) {
         _logger.i(frame.toResponse().toString());
       } else if (frame is DeviceBadFrame) {

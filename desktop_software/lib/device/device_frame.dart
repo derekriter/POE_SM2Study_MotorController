@@ -66,7 +66,6 @@ class DeviceDataFrame extends DeviceFrame {
   final bool _enabled;
   final double _sourceVoltage;
   final ControlMode _controlMode;
-  final double _controlReference;
   final int _positionTicks;
   final double _positionRotations;
   final double _velocityTPS;
@@ -79,7 +78,6 @@ class DeviceDataFrame extends DeviceFrame {
     required bool enabled,
     required double sourceVoltage,
     required ControlMode controlMode,
-    required double controlReference,
     required int positionTicks,
     required double positionRotations,
     required double velocityTPS,
@@ -90,7 +88,6 @@ class DeviceDataFrame extends DeviceFrame {
   }) : _enabled = enabled,
        _sourceVoltage = sourceVoltage,
        _controlMode = controlMode,
-       _controlReference = controlReference,
        _positionTicks = positionTicks,
        _positionRotations = positionRotations,
        _velocityTPS = velocityTPS,
@@ -125,13 +122,6 @@ class DeviceDataFrame extends DeviceFrame {
       return null;
     }
     controlMode = temp;
-
-    late final double controlReference;
-    if (json["cr"] is! double) {
-      _logger.w("Invalid data frame, missing or invalid 'cr' parameter");
-      return null;
-    }
-    controlReference = json["cr"] as double;
 
     late final int positionTicks;
     if (json["pt"] is! int) {
@@ -186,7 +176,6 @@ class DeviceDataFrame extends DeviceFrame {
       enabled: enabled,
       sourceVoltage: sourceVoltage,
       controlMode: controlMode,
-      controlReference: controlReference,
       positionTicks: positionTicks,
       positionRotations: positionRotations,
       velocityTPS: velocityTPS,
@@ -200,7 +189,6 @@ class DeviceDataFrame extends DeviceFrame {
   bool get enabled => _enabled;
   double get sourceVoltage => _sourceVoltage;
   ControlMode get controlMode => _controlMode;
-  double get controlReference => _controlReference;
   int get positionTicks => _positionTicks;
   double get positionRotations => _positionRotations;
   double get velocityTPS => _velocityTPS;
@@ -215,7 +203,6 @@ class DeviceDataFrame extends DeviceFrame {
       enabled: enabled,
       sourceVoltage: sourceVoltage,
       controlMode: controlMode,
-      controlReference: controlReference,
       positionTicks: positionTicks,
       positionRotations: positionRotations,
       velocityTPS: velocityTPS,
@@ -233,7 +220,6 @@ class DeviceDataFrame extends DeviceFrame {
         other._enabled == _enabled &&
         other._sourceVoltage == _sourceVoltage &&
         other._controlMode == _controlMode &&
-        other._controlReference == _controlReference &&
         other._positionTicks == _positionTicks &&
         other._positionRotations == _positionRotations &&
         other._velocityTPS == _velocityTPS &&

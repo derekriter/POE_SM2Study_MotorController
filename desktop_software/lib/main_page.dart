@@ -16,7 +16,6 @@ class MainPage extends StatelessWidget {
       "enabled": appState.enabled.toString(),
       "sourceVoltage": appState.sourceVoltage.toString(),
       "controlMode": appState.controlMode.toString(),
-      "controlReference": appState.controlReference.toString(),
       "positionTicks": appState.positionTicks.toString(),
       "positionRotations": appState.positionRotations.toString(),
       "velocityTPS": appState.velocityTPS.toString(),

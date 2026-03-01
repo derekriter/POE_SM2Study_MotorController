@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "controlMode.hpp"
 
 #define PIN_MOTOR_FORWARD 5
 #define PIN_MOTOR_REVERSE 6
@@ -9,15 +10,8 @@
 #define PIN_ENCODER_A 2
 #define PIN_ENCODER_B 3
 
-#define CONTROL_MODE_NONE 0x00
-#define CONTROL_MODE_DUTY_CYCLE 0x01
-#define CONTROL_MODE_VOLTAGE 0x02
-#define CONTROL_MODE_PID_POSITION 0x03
-#define CONTROL_MODE_PID_VELOCITY 0x04
-#define CONTROL_MODE_TRAP_POSITION 0x05
-
-#define KS_MODE_ERROR 0x0
-#define KS_MODE_VELOCITY 0x1
+#define KS_MODE_ERROR 0
+#define KS_MODE_VELOCITY 1
 
 #define INVERT_ENCODER false
 #define ENCODER_TICKS_PER_ROTATION 400
@@ -38,14 +32,13 @@ void drivePIDToPosition(float targetTicks);
 void drivePIDToVelocity(float targetTPS);
 void driveProfileToPosition(float targetTicks);
 
-void setControlMode(uint8_t mode);
+void setControlMode(ControlMode mode);
 void setControlReference(float ref);
 
 void updateVelocity();
 
 bool getMotorEnabled();
-uint8_t getControlMode();
-float getControlReference();
+ControlMode* getControlMode();
 long getEncoderTicks();
 double getEncoderRotations();
 double getEncoderTicksPerSecond();

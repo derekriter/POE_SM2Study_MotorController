@@ -3,10 +3,10 @@
 #include "serial.hpp"
 
 bool _motorEnabled = false;
-uint8_t _controlMode = CONTROL_MODE_NONE;
-float _controlRef = 0;
-volatile long _encoderPosition = 0;
+ControlMode _controlMode = StopControlMode();
 float _commandedOutput = 0;
+
+volatile long _encoderPosition = 0;
 double _velocityTPS = 0;
 
 float _iAccumlated = 0;
@@ -112,11 +112,8 @@ void driveProfileToPosition(float targetTicks) {
     return driveDutyCycle(_calcPIDS((float) getEncoderTicks(), profileOutput, _kP, _kI, _kD, _kS, KS_MODE_VELOCITY));
 }
 
-void setControlMode(uint8_t mode) {
+void setControlMode(ControlMode mode) {
     _controlMode = mode;
-}
-void setControlReference(float ref) {
-    _controlRef = ref;
 }
 
 void updateVelocity() {
@@ -135,11 +132,8 @@ void updateVelocity() {
 bool getMotorEnabled() {
     return _motorEnabled;
 }
-uint8_t getControlMode() {
-    return _controlMode;
-}
-float getControlReference() {
-    return _controlRef;
+ControlMode* getControlMode() {
+    return &_controlMode;
 }
 long getEncoderTicks() {
     noInterrupts();
