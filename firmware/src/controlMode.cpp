@@ -1,47 +1,53 @@
 #include "controlMode.hpp"
-#include "control.hpp"
-#include "serial.hpp"
+#include "hardware.hpp"
 #include "util.hpp"
+#include "serial.hpp"
 
-StopControlMode::StopControlMode() {}
 void StopControlMode::update(unsigned long deltaMicros) {
-    driveDutyCycle(0);
+    dutyCycle(0);
 }
-uint8_t StopControlMode::getID() {return 0;}
-bool StopControlMode::parseFromCommandArgs(const char* commandArgs, StopControlMode* controlOut) {
+uint8_t StopControlMode::getID() {return 0u;}
+bool StopControlMode::parseFromCommandArgs(const char* commandArgs, StopControlMode** controlOut) {
     if(*commandArgs != '\0') {
-        sendBadFrame("Malformed StopControlMode, too many arguments", SEVERITY_ERROR);
+        MessageFrame msg = {SEVERITY_ERROR, "Malformed StopControlMode, too many arguments"};
+        sendMessageFrame(&msg);
+        
         return false;
     }
     
-    *controlOut = StopControlMode();
+    *controlOut = new StopControlMode();
     return true;
 }
 
 
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
-    duty = dutyCycle;
+    _duty = dutyCycle;
 }
 void DutyCycleControlMode::update(unsigned long deltaMicros) {
-    driveDutyCycle(duty);
+    dutyCycle(_duty);
 }
-uint8_t DutyCycleControlMode::getID() {return 1;}
-bool DutyCycleControlMode::parseFromCommandArgs(const char* commandArgs, DutyCycleControlMode* controlOut) {
+uint8_t DutyCycleControlMode::getID() {return 1u;}
+bool DutyCycleControlMode::parseFromCommandArgs(const char* commandArgs, DutyCycleControlMode** controlOut) {
     double duty;
     char* arg2Start;
     if(!parseDouble(commandArgs, &duty, &arg2Start)) {
-        sendBadFrame("Malformed DutyCycleControlMode, failed to parse arg1 as a double", SEVERITY_ERROR);
+        MessageFrame msg =  {SEVERITY_ERROR, "Malformed DutyCycleControlMode, failed to parse arg1 as a double"};
+        sendMessageFrame(&msg);
+        
         return false;
-    }
-    if(abs(duty) > 1) {
-        sendBadFrame("Control reference is beyond range for DutyCycleControlMode", SEVERITY_WARNING);
     }
     
     if(*arg2Start != '\0') {
-        sendBadFrame("Malformed DutyCycleControlMode, too many arguments", SEVERITY_ERROR);
+        MessageFrame msg = {SEVERITY_ERROR, "Malformed DutyCycleControlMode, too many arguments"};
+        sendMessageFrame(&msg);
+        
         return false;
     }
     
-    *controlOut = DutyCycleControlMode(duty);
+    if(abs(duty) > 1) {
+        MessageFrame msg = {SEVERITY_WARNING, "Control reference is beyond range for DutyCycleControlMode"};
+        sendMessageFrame(&msg);
+    }
+    *controlOut = new DutyCycleControlMode(duty);
     return true;
 }

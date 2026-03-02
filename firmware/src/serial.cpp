@@ -1,115 +1,107 @@
 #include "serial.hpp"
-#include "control.hpp"
 #include "util.hpp"
 #include "controlMode.hpp"
 
-void sendDataFrame(double avgTPS, float avgErr) {
+void sendDataFrame(const DataFrame* data) {
     Serial.print("{\"ty\":\"data\",\"py\":{");
     
     Serial.print("\"en\":");
-    Serial.print(getMotorEnabled() ? "true" : "false");
+    Serial.print(data->enabled ? "true" : "false");
     
     Serial.print(",\"sv\":");
-    Serial.print(getSourceVoltage(), 4);
+    Serial.print(data->sourceVoltage, 4);
     
     Serial.print(",\"cm\":");
-    Serial.print(getControlMode()->getID());
-    
-    Serial.print(",\"pt\":");
-    Serial.print(getEncoderTicks());
+    Serial.print(data->controlModeData);
     
     Serial.print(",\"pr\":");
-    Serial.print(getEncoderRotations(), 4);
-    
-    Serial.print(",\"vt\":");
-    Serial.print(avgTPS, 4);
+    Serial.print(data->position, 4);
     
     Serial.print(",\"vr\":");
-    Serial.print(avgTPS / ENCODER_TICKS_PER_ROTATION * 60, 4);
-    
-    Serial.print(",\"ms\":");
-    Serial.print(millis());
+    Serial.print(data->velocity, 4);
     
     Serial.print(",\"co\":");
-    Serial.print(getCommandedOutput(), 4);
-    
-    Serial.print(",\"er\":");
-    Serial.print(avgErr, 4);
+    Serial.print(data->commandedOutput, 4);
     
     Serial.println("}}");
 }
-void sendMessageFrame(const char* msg) {
-    Serial.print("{\"ty\":\"msg\",\"py\":\"");
+void sendMessageFrame(const MessageFrame* msg) {
+    Serial.print("{\"ty\":\"msg\",\"py\":{");
     
-    Serial.print(msg);
+    Serial.print("\"sv\":");
+    Serial.print(msg->severity);
     
-    Serial.println("\"}");
+    Serial.print(",\"msg\":\"");
+    Serial.print(msg->message);
+    
+    Serial.println("\"}}");
 }
 void sendOKFrame() {
     Serial.println("{\"ty\":\"ok\"}");
 }
-void sendBadFrame(const char* msg, uint8_t severity) {
-    Serial.print("{\"ty\":\"bad\",\"py\":{");
-    
-    Serial.print("\"sv\":");
-    Serial.print(severity);
-    
-    Serial.print(",\"msg\":\"");
-    Serial.print(msg);
-    
-    Serial.println("\"}}");
-}
+
 bool getIncomingIfAvailable(String* incoming) {
     if(!Serial.available()) return false;
     
     *incoming = Serial.readStringUntil('\0');
     return true;
 }
-void processCommand(const String* command) {
-    const char* cmdCstr = command->c_str();
-    
-    if(strcmp(cmdCstr, "enable") == 0) {
-        setMotorEnabled(true);
+bool processCommand(const String* command, ReceivedCommand* instructions) {
+    if(command->equals("enable")) {
+        *instructions = ReceivedCommand {SET_ENABLE, nullptr};
+        
         sendOKFrame();
+        return true;
     }
-    else if(strcmp(cmdCstr, "disable") == 0) {
-        setMotorEnabled(false);
+    else if(command->equals("disable")) {
+        *instructions = ReceivedCommand {SET_DISABLE, nullptr};
+        
         sendOKFrame();
+        return true;
     }
-    else if(startsWith(cmdCstr, "stop ") == 0) {
-        StopControlMode control;
-        if(StopControlMode::parseFromCommandArgs(cmdCstr + 5, &control)) {
-            setControlMode(control);
+    else if(command->startsWith("stop ")) {
+        StopControlMode* control = nullptr;
+        if(StopControlMode::parseFromCommandArgs(command->c_str() + 5, &control)) {
+            *instructions = ReceivedCommand {NO_CHANGE, control};
+            
             sendOKFrame();
+            return true;
         }
+        
+        return false;
     }
-    else if(startsWith(cmdCstr, "dutyCycle ") == 0) {
-        DutyCycleControlMode control(0);
-        if(DutyCycleControlMode::parseFromCommandArgs(cmdCstr + 10, &control)) {
-            setControlMode(control);
+    else if(command->startsWith("dutyCycle ")) {
+        DutyCycleControlMode* control = nullptr;
+        if(DutyCycleControlMode::parseFromCommandArgs(command->c_str() + 10, &control)) {
+            *instructions = ReceivedCommand {NO_CHANGE, control};
+            
             sendOKFrame();
+            return true;
         }
+        
+        
+        return false;
     }
-    else if(startsWith(cmdCstr, "voltage ") == 0) {
+    // else if(command->startsWith("voltage ")) {
         // setControlMode(CONTROL_MODE_VOLTAGE);
         // sendOKFrame();
-    }
-    else if(startsWith(cmdCstr, "pidPos ") == 0) {
+    // }
+    // else if(command->startsWith("pidPos ")) {
         // setControlMode(CONTROL_MODE_PID_POSITION);
         // resetPID();
         // sendOKFrame();
-    }
-    else if(startsWith(cmdCstr, "pidVel ") == 0) {
+    // }
+    // else if(command->startsWith("pidVel ")) {
         // setControlMode(CONTROL_MODE_PID_VELOCITY);
         // resetPID();
         // sendOKFrame();
-    }
-    else if(startsWith(cmdCstr, "trapPos ") == 0) {
+    // }
+    // else if(command->startsWith("trapPos ")) {
         // setControlMode(CONTROL_MODE_TRAP_POSITION);
         // resetPID();
         // resetProfile();
         // sendOKFrame();
-    }
+    // }
     // else if(startsWith(cmdCstr, "ref ")) {
     //     const char* argStart = cmdCstr + 4;
         
@@ -180,12 +172,14 @@ void processCommand(const String* command) {
     //     sendOKFrame();
     // }
     else {
-        size_t len = strlen("Unknown command ''") + strlen(cmdCstr) + 1;
+        size_t len = strlen("Unknown command ''") + command->length() + 1;
         char* msg = (char*) malloc(len);
-        snprintf(msg, len, "Unknown command '%s'", cmdCstr);
+        snprintf(msg, len, "Unknown command '%s'", command->c_str());
         
-        sendBadFrame(msg, SEVERITY_ERROR);
-        
+        MessageFrame frame = {SEVERITY_ERROR, msg};
+        sendMessageFrame(&frame);
         free(msg);
+        
+        return false;
     }
 }

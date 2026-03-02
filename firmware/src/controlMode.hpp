@@ -4,20 +4,18 @@
 
 class ControlMode {
     public:
-        ControlMode() {}
+        virtual ~ControlMode() {};
     
-        virtual void update(unsigned long deltaMicros) {}
-        virtual uint8_t getID() {return 2;}
+        virtual void update(unsigned long deltaMicros) = 0;
+        virtual uint8_t getID() = 0;
 };
 
 class StopControlMode : public ControlMode {
     public:
-        StopControlMode();
-    
         void update(unsigned long deltaMicros) override;
         uint8_t getID() override;
         
-        static bool parseFromCommandArgs(const char* commandArgs, StopControlMode* controlOut);
+        static bool parseFromCommandArgs(const char* commandArgs, StopControlMode** controlOut);
 };
 
 class DutyCycleControlMode : public ControlMode {
@@ -27,8 +25,8 @@ class DutyCycleControlMode : public ControlMode {
         void update(unsigned long deltaMicros) override;
         uint8_t getID() override;
         
-        static bool parseFromCommandArgs(const char* commandArgs, DutyCycleControlMode* controlOut);
+        static bool parseFromCommandArgs(const char* commandArgs, DutyCycleControlMode** controlOut);
     
     private:
-        double duty;
+        double _duty;
 };
