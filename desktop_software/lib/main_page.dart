@@ -15,14 +15,10 @@ class MainPage extends StatelessWidget {
       "port": appState.port ?? "null",
       "enabled": appState.enabled.toString(),
       "sourceVoltage": appState.sourceVoltage.toString(),
-      "controlMode": appState.controlMode.toString(),
-      "positionTicks": appState.positionTicks.toString(),
-      "positionRotations": appState.positionRotations.toString(),
-      "velocityTPS": appState.velocityTPS.toString(),
-      "velocityRPM": appState.velocityRPM.toString(),
-      "lastTimestamp": appState.lastTimestamp.toString(),
-      "commandedOutput": appState.commandedOutput.toString(),
-      "lastError": appState.lastError.toString(),
+      "position": appState.position.toString(),
+      "velocity": appState.velocity.toString(),
+      "controlModeName": appState.controlModeName.toString(),
+      "dutyOut": appState.dutyOut.toString(),
     };
 
     return Scaffold(
@@ -65,7 +61,7 @@ class MainPage extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  appState.sendControlRequest(DeviceDutyCycleRequest(0.5));
+                  appState.sendControlRequest(DeviceDutyCycleRequest(1));
                 },
                 child: Text("Duty Cycle"),
               ),

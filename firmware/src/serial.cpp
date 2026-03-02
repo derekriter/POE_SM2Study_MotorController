@@ -11,17 +11,14 @@ void sendDataFrame(const DataFrame* data) {
     Serial.print(",\"sv\":");
     Serial.print(data->sourceVoltage, 4);
     
-    Serial.print(",\"cm\":");
-    Serial.print(data->controlModeData);
-    
     Serial.print(",\"pr\":");
     Serial.print(data->position, 4);
     
     Serial.print(",\"vr\":");
     Serial.print(data->velocity, 4);
     
-    Serial.print(",\"co\":");
-    Serial.print(data->commandedOutput, 4);
+    Serial.print(",\"cm\":");
+    Serial.print(data->controlModeData);
     
     Serial.println("}}");
 }
@@ -59,16 +56,11 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         sendOKFrame();
         return true;
     }
-    else if(command->startsWith("stop ")) {
-        StopControlMode* control = nullptr;
-        if(StopControlMode::parseFromCommandArgs(command->c_str() + 5, &control)) {
-            *instructions = ReceivedCommand {NO_CHANGE, control};
-            
-            sendOKFrame();
-            return true;
-        }
+    else if(command->equals("stop")) {
+        *instructions = ReceivedCommand {NO_CHANGE, new StopControlMode()};
         
-        return false;
+        sendOKFrame();
+        return true;
     }
     else if(command->startsWith("dutyCycle ")) {
         DutyCycleControlMode* control = nullptr;
@@ -78,7 +70,6 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
             sendOKFrame();
             return true;
         }
-        
         
         return false;
     }

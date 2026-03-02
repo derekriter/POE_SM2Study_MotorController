@@ -3,22 +3,27 @@
 #include "util.hpp"
 #include "serial.hpp"
 
+void DisabledControlMode::update(unsigned long deltaMicros) {
+    dutyCycle(0);
+}
+uint8_t DisabledControlMode::getID() {return 255u;}
+char* DisabledControlMode::getControlModeData() {
+    char* data = (char*) malloc(4);
+    itoa(getID(), data, 10);
+    
+    return data;
+}
+
 void StopControlMode::update(unsigned long deltaMicros) {
     dutyCycle(0);
 }
 uint8_t StopControlMode::getID() {return 0u;}
-bool StopControlMode::parseFromCommandArgs(const char* commandArgs, StopControlMode** controlOut) {
-    if(*commandArgs != '\0') {
-        MessageFrame msg = {SEVERITY_ERROR, "Malformed StopControlMode, too many arguments"};
-        sendMessageFrame(&msg);
-        
-        return false;
-    }
+char* StopControlMode::getControlModeData() {
+    char* data = (char*) malloc(4);
+    itoa(getID(), data, 10);
     
-    *controlOut = new StopControlMode();
-    return true;
+    return data;
 }
-
 
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
     _duty = dutyCycle;
@@ -27,6 +32,15 @@ void DutyCycleControlMode::update(unsigned long deltaMicros) {
     dutyCycle(_duty);
 }
 uint8_t DutyCycleControlMode::getID() {return 1u;}
+char* DutyCycleControlMode::getControlModeData() {
+    char dutyOut[8];
+    dtostrf(_duty, 1, 4, dutyOut);
+    
+    char* data = (char*) malloc(64);
+    snprintf(data, 64, "{\"id\":%u,\"do\":%s}", getID(), dutyOut);
+    
+    return data;
+}
 bool DutyCycleControlMode::parseFromCommandArgs(const char* commandArgs, DutyCycleControlMode** controlOut) {
     double duty;
     char* arg2Start;

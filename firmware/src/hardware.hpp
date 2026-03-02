@@ -23,7 +23,6 @@ bool getMotorEnabled();
 
 void dutyCycle(double dutyCycle);
 void stop();
-double getCommandedOutput();
 
 double getSourceVoltage();
 

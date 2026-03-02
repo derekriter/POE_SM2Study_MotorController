@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
-import 'package:desktop_software/device/device.dart';
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_loop.dart';
 import 'package:desktop_software/device/device_state.dart';
@@ -54,14 +53,10 @@ class AppState extends ChangeNotifier {
   String? get port => _deviceState?.port;
   bool? get enabled => _deviceState?.lastData?.enabled;
   double? get sourceVoltage => _deviceState?.lastData?.sourceVoltage;
-  ControlMode? get controlMode => _deviceState?.lastData?.controlMode;
-  int? get positionTicks => _deviceState?.lastData?.positionTicks;
-  double? get positionRotations => _deviceState?.lastData?.positionRotations;
-  double? get velocityTPS => _deviceState?.lastData?.velocityTPS;
-  double? get velocityRPM => _deviceState?.lastData?.velocityRPM;
-  int? get lastTimestamp => _deviceState?.lastData?.timestamp;
-  double? get commandedOutput => _deviceState?.lastData?.commandedOutput;
-  double? get lastError => _deviceState?.lastData?.error;
+  double? get position => _deviceState?.lastData?.position;
+  double? get velocity => _deviceState?.lastData?.velocity;
+  String? get controlModeName => _deviceState?.lastData?.controlMode.name;
+  double? get dutyOut => _deviceState?.lastData?.controlMode.output.dutyOut;
 
   void sendControlRequest(DeviceControlRequest req) {
     _deviceSend?.send(req);

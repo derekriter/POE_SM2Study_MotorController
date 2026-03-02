@@ -13,37 +13,6 @@ DateTime? _lastSendTime;
 
 //NOTE: calling any functions in this file from any isolates other than the device loop will probably break things
 
-enum ControlMode {
-  none(0),
-  dutyCycle(1),
-  voltage(2),
-  pidPosition(3),
-  pidVelocity(4),
-  trapPosition(5);
-
-  final int id;
-
-  const ControlMode(this.id);
-
-  static ControlMode? fromID(int id) {
-    if (id == none.id) {
-      return none;
-    } else if (id == dutyCycle.id) {
-      return dutyCycle;
-    } else if (id == voltage.id) {
-      return voltage;
-    } else if (id == pidPosition.id) {
-      return pidPosition;
-    } else if (id == pidVelocity.id) {
-      return pidVelocity;
-    } else if (id == trapPosition.id) {
-      return trapPosition;
-    }
-
-    return null;
-  }
-}
-
 bool connect() {
   if (isConnected()) {
     _logger.w("Device already connected");
@@ -54,13 +23,11 @@ bool connect() {
   all config parameters must be manually set
   https://pub.dev/documentation/flutter_libserialport/latest/flutter_libserialport/SerialPortConfig-class.html
   
-  used https://github.com/jpnurmi/flutter_libserialport/issues/140 as reference for configs
-  
   Arduino doesnt support flow control, ie. no DTR, RTS, DSR, CTS, or XON/XOFF
   https://arduino.stackexchange.com/a/98737
   
-  Arduino defaults to 8 bits with no parity and 1 stop bit
-  https://docs.arduino.cc/language-reference/en/functions/communication/serial/begin/#:~:text=SERIAL_7N1-,serial_8n1
+  Arduino defaults to 8 bits with no parity and 1 stop bit (8N1 serial)
+  https://docs.arduino.cc/language-reference/en/functions/communication/serial/begin/
   */
   _portConfig = SerialPortConfig()
     ..baudRate = 115200
@@ -87,7 +54,7 @@ bool connect() {
   */
   _port!.config = _portConfig!;
 
-  _logger.i("Connected to device on port ${_port!.name}");
+  _logger.i("Connected to device on port ${getConnectedPort()}");
   return true;
 }
 

@@ -14,10 +14,9 @@
 struct DataFrame {
     bool enabled;
     double sourceVoltage;
-    const char* controlModeData;
     double position;
     double velocity;
-    double commandedOutput;
+    const char* controlModeData;
 };
 struct MessageFrame {
     uint8_t severity;

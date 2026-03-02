@@ -26,12 +26,11 @@ void deviceLoopInit(SendPort send) async {
   });
 
   if (isConnected()) {
-    await sendControlRequest(DeviceStopRequest());
     await sendControlRequest(DeviceEnableDisableRequest(false));
     disconnect();
   }
 
-  _logger.i("Ended device loop");
+  _logger.i("Shut down device loop");
   Isolate.exit();
 }
 
@@ -59,16 +58,25 @@ Future<void> _deviceLoop(SendPort send) async {
         state.lastData = frame;
         _lastDataTime = DateTime.now();
       } else if (frame is DeviceMessageFrame) {
-        _logger.i("[DEVICE] MSG: ${frame.message}");
+        final resp = frame.toResponse().toString();
+
+        switch (frame.severity) {
+          case DeviceResponseSeverity.ok:
+          case DeviceResponseSeverity.info:
+            {
+              _logger.i(resp);
+            }
+          case DeviceResponseSeverity.warning:
+            {
+              _logger.w(resp);
+            }
+          case DeviceResponseSeverity.error:
+            {
+              _logger.e(resp);
+            }
+        }
       } else if (frame is DeviceOKFrame) {
         _logger.i(frame.toResponse().toString());
-      } else if (frame is DeviceBadFrame) {
-        final resp = frame.toResponse();
-        if (frame.isError) {
-          _logger.e(resp.toString());
-        } else {
-          _logger.w(resp.toString());
-        }
       }
     }
   } else if (_lastReconnectTime == null ||

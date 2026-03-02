@@ -2,7 +2,6 @@
 
 bool _motorEnabled = false;
 volatile long _encoderPosition = 0;
-double _commandedOutput = 0;
 double _velocityTPS = 0;
 
 void initHardware() {
@@ -30,7 +29,6 @@ bool getMotorEnabled() {
 
 void dutyCycle(double dutyCycle) {
     dutyCycle = min(max(dutyCycle, -1), 1);
-    _commandedOutput = dutyCycle;
     
     if(dutyCycle == 0) {
         digitalWrite(PIN_MOTOR_FORWARD, 0);
@@ -48,14 +46,11 @@ void dutyCycle(double dutyCycle) {
 void stop() {
     dutyCycle(0);
 }
-double getCommandedOutput() {
-    return _commandedOutput;
-}
 
 double getSourceVoltage() {
     const int R1 = 969; //r1 value in the voltage divider ; 1000 ohm resistor with 5% tolerance, measured with multimeter
     const int R2 = 542; //r2 value in the voltage divider ; 560 ohm resistor with 5% tolerance, measured with multimeter
-    const float REF_VOLTAGE = 4.8; //should be 5 V but the voltage regulator isn't perfect
+    const float REF_VOLTAGE = 4.24; //should be 5 V but the voltage regulator is pretty shit
     
     float percent = analogRead(PIN_SOURCE_VOLTAGE) / 1023.0;
     //V_in = (V_s * R2) / (R1 + R2)
