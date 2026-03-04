@@ -73,10 +73,17 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         
         return false;
     }
-    // else if(command->startsWith("voltage ")) {
-        // setControlMode(CONTROL_MODE_VOLTAGE);
-        // sendOKFrame();
-    // }
+    else if(command->startsWith("voltage ")) {
+        VoltageControlMode* control = nullptr;
+        if(VoltageControlMode::parseFromCommandArgs(command->c_str() + 8, &control)) {
+            *instructions = ReceivedCommand {NO_CHANGE, control};
+            
+            sendOKFrame();
+            return true;
+        }
+        
+        return false;
+    }
     // else if(command->startsWith("pidPos ")) {
         // setControlMode(CONTROL_MODE_PID_POSITION);
         // resetPID();

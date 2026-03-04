@@ -38,3 +38,18 @@ class DutyCycleControlMode : public ControlMode {
     private:
         double _duty;
 };
+
+class VoltageControlMode : public ControlMode {
+    public:
+        VoltageControlMode(double voltage);
+        
+        void update(unsigned long deltaMicros) override;
+        uint8_t getID() override;
+        char* getControlModeData() override;
+        
+        static bool parseFromCommandArgs(const char* commandArgs, VoltageControlMode** controlOut);
+    
+    private:
+        double _voltage;
+        double _lastDuty;
+};

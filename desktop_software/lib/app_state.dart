@@ -57,6 +57,8 @@ class AppState extends ChangeNotifier {
   double? get velocity => _deviceState?.lastData?.velocity;
   String? get controlModeName => _deviceState?.lastData?.controlMode.name;
   double? get dutyOut => _deviceState?.lastData?.controlMode.output.dutyOut;
+  double? get voltageOut =>
+      _deviceState?.lastData?.controlMode.output.voltageOut;
 
   void sendControlRequest(DeviceControlRequest req) {
     _deviceSend?.send(req);

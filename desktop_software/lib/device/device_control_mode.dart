@@ -4,8 +4,9 @@ final _logger = Logger();
 
 class MotorOutput {
   final double dutyOut;
+  final double? voltageOut;
 
-  MotorOutput({required this.dutyOut});
+  MotorOutput({required this.dutyOut, this.voltageOut});
 }
 
 abstract class ControlModeData {
@@ -36,6 +37,10 @@ abstract class ControlModeData {
         case 1:
           {
             return DutyCycleControlModeData.parseJSON(json);
+          }
+        case 2:
+          {
+            return VoltageControlModeData.parseJSON(json);
           }
       }
 
@@ -123,5 +128,55 @@ class DutyCycleControlModeData extends ControlModeData {
   @override
   bool operator ==(Object other) {
     return other is DutyCycleControlModeData && other._duty == _duty;
+  }
+}
+
+class VoltageControlModeData extends ControlModeData {
+  final double _duty;
+  final double _voltage;
+
+  VoltageControlModeData._({required double duty, required double voltage})
+    : _duty = duty,
+      _voltage = voltage;
+
+  static VoltageControlModeData? parseJSON(Map<String, dynamic> json) {
+    late final double duty;
+    if (json["do"] is! double) {
+      _logger.w(
+        "Invalid voltage control mode, missing or invalid 'do' parameter",
+      );
+      return null;
+    }
+    duty = json["do"] as double;
+
+    late final double voltage;
+    if (json["vo"] is! double) {
+      _logger.w(
+        "Invalid voltage control mode, missing or invalid 'vo' parameter",
+      );
+      return null;
+    }
+    voltage = json["vo"] as double;
+
+    return VoltageControlModeData._(duty: duty, voltage: voltage);
+  }
+
+  @override
+  String get name => "voltage";
+  @override
+  MotorOutput get output => MotorOutput(dutyOut: _duty, voltageOut: _voltage);
+  double get duty => _duty;
+  double get voltage => _voltage;
+
+  @override
+  VoltageControlModeData copy() {
+    return VoltageControlModeData._(duty: _duty, voltage: _voltage);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VoltageControlModeData &&
+        other._duty == _duty &&
+        other._voltage == _voltage;
   }
 }

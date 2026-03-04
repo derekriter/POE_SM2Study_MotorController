@@ -20,10 +20,7 @@ void initHardware();
 
 void setMotorEnabled(bool enabled);
 bool getMotorEnabled();
-
 void dutyCycle(double dutyCycle);
-void stop();
-
 double getSourceVoltage();
 
 void _encoderISR();

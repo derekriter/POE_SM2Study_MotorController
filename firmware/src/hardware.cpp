@@ -16,7 +16,7 @@ void initHardware() {
     attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_B), _encoderISR, CHANGE);
     
     setMotorEnabled(false);
-    stop();
+    dutyCycle(0);
 }
 
 void setMotorEnabled(bool enabled) {
@@ -26,7 +26,6 @@ void setMotorEnabled(bool enabled) {
 bool getMotorEnabled() {
     return _motorEnabled;
 }
-
 void dutyCycle(double dutyCycle) {
     dutyCycle = min(max(dutyCycle, -1), 1);
     
@@ -43,10 +42,6 @@ void dutyCycle(double dutyCycle) {
         analogWrite(PIN_MOTOR_REVERSE, (int) (-dutyCycle * 255));
     }
 }
-void stop() {
-    dutyCycle(0);
-}
-
 double getSourceVoltage() {
     const int R1 = 969; //r1 value in the voltage divider ; 1000 ohm resistor with 5% tolerance, measured with multimeter
     const int R2 = 542; //r2 value in the voltage divider ; 560 ohm resistor with 5% tolerance, measured with multimeter

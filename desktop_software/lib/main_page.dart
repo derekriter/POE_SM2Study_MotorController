@@ -19,6 +19,7 @@ class MainPage extends StatelessWidget {
       "velocity": appState.velocity.toString(),
       "controlModeName": appState.controlModeName.toString(),
       "dutyOut": appState.dutyOut.toString(),
+      "voltageOut": appState.voltageOut.toString(),
     };
 
     return Scaffold(
@@ -64,6 +65,12 @@ class MainPage extends StatelessWidget {
                   appState.sendControlRequest(DeviceDutyCycleRequest(1));
                 },
                 child: Text("Duty Cycle"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(DeviceVoltageRequest(6));
+                },
+                child: Text("Voltage"),
               ),
             ],
           ),

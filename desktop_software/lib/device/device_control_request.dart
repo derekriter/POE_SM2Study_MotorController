@@ -50,49 +50,49 @@ class DeviceVoltageRequest extends DeviceControlRequest {
   }
 }
 
-class DevicePIDPositionRequest extends DeviceControlRequest {
-  final int _slot;
-  final int _ticks;
+// class DevicePIDPositionRequest extends DeviceControlRequest {
+//   final int _slot;
+//   final int _ticks;
 
-  DevicePIDPositionRequest(int ticks, int slot) : _ticks = ticks, _slot = slot;
+//   DevicePIDPositionRequest(int ticks, int slot) : _ticks = ticks, _slot = slot;
 
-  int get slot => _slot;
-  int get ticks => _ticks;
+//   int get slot => _slot;
+//   int get ticks => _ticks;
 
-  @override
-  List<String> toSerialCommands() {
-    return <String>["pidPos $_ticks $_slot"];
-  }
-}
+//   @override
+//   List<String> toSerialCommands() {
+//     return <String>["pidPos $_ticks $_slot"];
+//   }
+// }
 
-class DevicePIDVelocityRequest extends DeviceControlRequest {
-  final int _slot;
-  final double _tps;
+// class DevicePIDVelocityRequest extends DeviceControlRequest {
+//   final int _slot;
+//   final double _tps;
 
-  DevicePIDVelocityRequest(double tps, int slot) : _tps = tps, _slot = slot;
+//   DevicePIDVelocityRequest(double tps, int slot) : _tps = tps, _slot = slot;
 
-  int get slot => _slot;
-  double get tps => _tps;
+//   int get slot => _slot;
+//   double get tps => _tps;
 
-  @override
-  List<String> toSerialCommands() {
-    return <String>["pidVel ${_tps.toStringAsFixed(4)} $_slot"];
-  }
-}
+//   @override
+//   List<String> toSerialCommands() {
+//     return <String>["pidVel ${_tps.toStringAsFixed(4)} $_slot"];
+//   }
+// }
 
-class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
-  final int _slot;
-  final int _ticks;
+// class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
+//   final int _slot;
+//   final int _ticks;
 
-  DeviceTrapezoidalMotionPositionRequest(int ticks, int slot)
-    : _ticks = ticks,
-      _slot = slot;
+//   DeviceTrapezoidalMotionPositionRequest(int ticks, int slot)
+//     : _ticks = ticks,
+//       _slot = slot;
 
-  int get slot => _slot;
-  int get ticks => _ticks;
+//   int get slot => _slot;
+//   int get ticks => _ticks;
 
-  @override
-  List<String> toSerialCommands() {
-    return <String>["trapPos $_ticks $_slot"];
-  }
-}
+//   @override
+//   List<String> toSerialCommands() {
+//     return <String>["trapPos $_ticks $_slot"];
+//   }
+// }
