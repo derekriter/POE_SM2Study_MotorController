@@ -1,5 +1,6 @@
 import 'package:desktop_software/app_state.dart';
 import 'package:desktop_software/device/device_control_request.dart';
+import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,7 @@ class MainPage extends StatelessWidget {
       "sourceVoltage": appState.sourceVoltage.toString(),
       "position": appState.position.toString(),
       "velocity": appState.velocity.toString(),
+      "timestamp": appState.timestamp.toString(),
       "controlModeName": appState.controlModeName.toString(),
       "dutyOut": appState.dutyOut.toString(),
       "voltageOut": appState.voltageOut.toString(),
@@ -71,6 +73,30 @@ class MainPage extends StatelessWidget {
                   appState.sendControlRequest(DeviceVoltageRequest(6));
                 },
                 child: Text("Voltage"),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(
+                    DeviceSlotConfigRequest(
+                      0,
+                      DeviceSlotConfig(
+                        kP: 0.02,
+                        kI: 0,
+                        kD: 0.0003,
+                        kS: 0.17,
+                        kSMode: KSMode.errorBased,
+                        vMax: 25000,
+                        aStart: 10000,
+                        aEnd: 10000,
+                      ),
+                    ),
+                  );
+                },
+                child: Text("Dummy Slot 0"),
               ),
             ],
           ),

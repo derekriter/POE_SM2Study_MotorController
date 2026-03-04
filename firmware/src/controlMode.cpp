@@ -3,7 +3,7 @@
 #include "util.hpp"
 #include "serial.hpp"
 
-void DisabledControlMode::update(unsigned long deltaMicros) {
+void DisabledControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
     dutyCycle(0);
 }
 uint8_t DisabledControlMode::getID() {return 255u;}
@@ -14,7 +14,7 @@ char* DisabledControlMode::getControlModeData() {
     return data;
 }
 
-void StopControlMode::update(unsigned long deltaMicros) {
+void StopControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
     dutyCycle(0);
 }
 uint8_t StopControlMode::getID() {return 0u;}
@@ -28,7 +28,7 @@ char* StopControlMode::getControlModeData() {
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
     _duty = dutyCycle;
 }
-void DutyCycleControlMode::update(unsigned long deltaMicros) {
+void DutyCycleControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
     dutyCycle(_duty);
 }
 uint8_t DutyCycleControlMode::getID() {return 1u;}
@@ -71,7 +71,7 @@ VoltageControlMode::VoltageControlMode(double voltage) {
     _voltage = voltage;
     _lastDuty = 0;
 }
-void VoltageControlMode::update(unsigned long deltaMicros) {
+void VoltageControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
     double source = getSourceVoltage();
     double out = min(max(source == 0 ? 0 : _voltage / source, -1), 1);
     

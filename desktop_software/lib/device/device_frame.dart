@@ -1,4 +1,5 @@
 import 'package:desktop_software/device/device_control_mode.dart';
+import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:logger/logger.dart';
 
 final _logger = Logger();
@@ -40,6 +41,17 @@ abstract class DeviceFrame {
         {
           return DeviceOKFrame._();
         }
+      case "slot":
+        {
+          late final Map<String, dynamic> payload;
+          if (json["py"] is! Map<String, dynamic>) {
+            _logger.w("Invalid slot frame, missing or invalid 'py' parameter");
+            return null;
+          }
+          payload = json["py"] as Map<String, dynamic>;
+
+          return DeviceSlotFrame._parsePayload(payload);
+        }
       default:
         {
           _logger.w("Invalid device frame, invalid 'ty' parameter");
@@ -52,23 +64,21 @@ abstract class DeviceFrame {
 }
 
 class DeviceDataFrame extends DeviceFrame {
-  final bool _enabled;
-  final double _sourceVoltage;
-  final ControlModeData _controlMode;
-  final double _position;
-  final double _velocity;
+  final bool enabled;
+  final double sourceVoltage;
+  final ControlModeData controlMode;
+  final double position;
+  final double velocity;
+  final int timestamp;
 
   DeviceDataFrame._({
-    required bool enabled,
-    required double sourceVoltage,
-    required ControlModeData controlMode,
-    required double position,
-    required double velocity,
-  }) : _enabled = enabled,
-       _sourceVoltage = sourceVoltage,
-       _controlMode = controlMode,
-       _position = position,
-       _velocity = velocity;
+    required this.enabled,
+    required this.sourceVoltage,
+    required this.controlMode,
+    required this.position,
+    required this.velocity,
+    required this.timestamp,
+  });
 
   static DeviceDataFrame? _parsePayload(Map<String, dynamic> json) {
     late final bool enabled;
@@ -111,40 +121,44 @@ class DeviceDataFrame extends DeviceFrame {
     }
     velocity = json["vr"] as double;
 
+    late final int timestamp;
+    if (json["ms"] is! int) {
+      _logger.w("Invalid data frame, missing or invalid 'ms' parameter");
+      return null;
+    }
+    timestamp = json["ms"] as int;
+
     return DeviceDataFrame._(
       enabled: enabled,
       sourceVoltage: sourceVoltage,
       controlMode: controlMode,
       position: position,
       velocity: velocity,
+      timestamp: timestamp,
     );
   }
-
-  bool get enabled => _enabled;
-  double get sourceVoltage => _sourceVoltage;
-  ControlModeData get controlMode => _controlMode;
-  double get position => _position;
-  double get velocity => _velocity;
 
   @override
   DeviceDataFrame copy() {
     return DeviceDataFrame._(
-      enabled: _enabled,
-      sourceVoltage: _sourceVoltage,
-      controlMode: _controlMode.copy(),
-      position: _position,
-      velocity: _velocity,
+      enabled: enabled,
+      sourceVoltage: sourceVoltage,
+      controlMode: controlMode.copy(),
+      position: position,
+      velocity: velocity,
+      timestamp: timestamp,
     );
   }
 
   @override
   bool operator ==(Object other) {
     return other is DeviceDataFrame &&
-        other._enabled == _enabled &&
-        other._sourceVoltage == _sourceVoltage &&
-        other._controlMode == _controlMode &&
-        other._position == _position &&
-        other._velocity == _velocity;
+        other.enabled == enabled &&
+        other.sourceVoltage == sourceVoltage &&
+        other.controlMode == controlMode &&
+        other.position == position &&
+        other.velocity == velocity &&
+        other.timestamp == timestamp;
   }
 }
 
@@ -174,27 +188,22 @@ enum DeviceResponseSeverity {
 }
 
 class DeviceResponse {
-  final String? _message;
-  final DeviceResponseSeverity _severity;
+  final String? message;
+  final DeviceResponseSeverity severity;
 
-  DeviceResponse._({String? message, required DeviceResponseSeverity severity})
-    : _message = message,
-      _severity = severity;
-
-  String? get message => _message;
-  DeviceResponseSeverity get severity => _severity;
+  DeviceResponse._({this.message, required this.severity});
 
   @override
   String toString() {
-    switch (_severity) {
+    switch (severity) {
       case DeviceResponseSeverity.ok:
         return "[Device] OK";
       case DeviceResponseSeverity.info:
-        return "[DEVICE] INFO: ${_message ?? "no message provided"}";
+        return "[DEVICE] INFO: ${message ?? "no message provided"}";
       case DeviceResponseSeverity.warning:
-        return "[Device] WARN: ${_message ?? "no message provided"}";
+        return "[Device] WARN: ${message ?? "no message provided"}";
       case DeviceResponseSeverity.error:
-        return "[Device] ERR: ${_message ?? "no message provided"}";
+        return "[Device] ERR: ${message ?? "no message provided"}";
     }
   }
 }
@@ -222,14 +231,10 @@ enum DeviceMessageFrameSeverity {
 }
 
 class DeviceMessageFrame extends DeviceFrame {
-  final DeviceResponseSeverity _severity;
-  final String? _message;
+  final DeviceResponseSeverity severity;
+  final String? message;
 
-  DeviceMessageFrame._({
-    required DeviceResponseSeverity severity,
-    required String? message,
-  }) : _severity = severity,
-       _message = message;
+  DeviceMessageFrame._({required this.severity, required this.message});
 
   static DeviceMessageFrame? _parsePayload(Map<String, dynamic> json) {
     late final DeviceResponseSeverity severity;
@@ -256,16 +261,13 @@ class DeviceMessageFrame extends DeviceFrame {
     return DeviceMessageFrame._(severity: severity, message: message);
   }
 
-  DeviceResponseSeverity get severity => _severity;
-  String? get message => _message;
-
   DeviceResponse toResponse() {
-    return DeviceResponse._(message: message, severity: _severity);
+    return DeviceResponse._(message: message, severity: severity);
   }
 
   @override
   DeviceMessageFrame copy() {
-    return DeviceMessageFrame._(severity: _severity, message: message);
+    return DeviceMessageFrame._(severity: severity, message: message);
   }
 }
 
@@ -279,5 +281,136 @@ class DeviceOKFrame extends DeviceFrame {
   @override
   DeviceOKFrame copy() {
     return DeviceOKFrame._();
+  }
+}
+
+class DeviceSlotFrame extends DeviceFrame {
+  final int slotNum;
+  final double kP, kI, kD, kS;
+  final KSMode kSMode;
+  final double vMax, aStart, aEnd;
+
+  DeviceSlotFrame._({
+    required this.slotNum,
+    required this.kP,
+    required this.kI,
+    required this.kD,
+    required this.kS,
+    required this.kSMode,
+    required this.vMax,
+    required this.aStart,
+    required this.aEnd,
+  });
+
+  static DeviceSlotFrame? _parsePayload(Map<String, dynamic> json) {
+    late final int slotNum;
+    if (json["sn"] is! int) {
+      _logger.w("Invalid slot frame, missing or invalid 'sn' parameter");
+      return null;
+    }
+    slotNum = json["sn"] as int;
+    if (slotNum < 0 || slotNum > 5) {
+      _logger.w("Invalid slot frame, invalid 'sn' parameter");
+      return null;
+    }
+
+    late final double kP;
+    if (json["p"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'p' parameter");
+      return null;
+    }
+    kP = json["p"] as double;
+
+    late final double kI;
+    if (json["i"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'i' parameter");
+      return null;
+    }
+    kI = json["i"] as double;
+
+    late final double kD;
+    if (json["d"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'd' parameter");
+      return null;
+    }
+    kD = json["d"] as double;
+
+    late final double kS;
+    if (json["s"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 's' parameter");
+      return null;
+    }
+    kS = json["s"] as double;
+
+    late final KSMode kSMode;
+    if (json["sm"] is! int) {
+      _logger.w("Invalid slot frame, missing or invalid 'sm' parameter");
+      return null;
+    }
+    final KSMode? temp = KSMode.fromID(json["sm"] as int);
+    if (temp == null) {
+      _logger.w("Invalid slot frame, invalid 'sm' parameter");
+      return null;
+    }
+    kSMode = temp;
+
+    late final double vMax;
+    if (json["v"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'v' parameter");
+      return null;
+    }
+    vMax = json["v"] as double;
+
+    late final double aStart;
+    if (json["as"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'as' parameter");
+      return null;
+    }
+    aStart = json["as"] as double;
+
+    late final double aEnd;
+    if (json["ae"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'ae' parameter");
+      return null;
+    }
+    aEnd = json["ae"] as double;
+
+    return DeviceSlotFrame._(
+      slotNum: slotNum,
+      kP: kP,
+      kI: kI,
+      kD: kD,
+      kS: kS,
+      kSMode: kSMode,
+      vMax: vMax,
+      aStart: aStart,
+      aEnd: aEnd,
+    );
+  }
+
+  DeviceSlotConfig get slotConfig => DeviceSlotConfig(
+    kP: kP,
+    kI: kI,
+    kD: kD,
+    kS: kS,
+    kSMode: kSMode,
+    vMax: vMax,
+    aStart: aStart,
+    aEnd: aEnd,
+  );
+
+  @override
+  DeviceSlotFrame copy() {
+    return DeviceSlotFrame._(
+      slotNum: slotNum,
+      kP: kP,
+      kI: kI,
+      kD: kD,
+      kS: kS,
+      kSMode: kSMode,
+      vMax: vMax,
+      aStart: aStart,
+      aEnd: aEnd,
+    );
   }
 }

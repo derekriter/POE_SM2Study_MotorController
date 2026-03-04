@@ -20,6 +20,9 @@ void sendDataFrame(const DataFrame* data) {
     Serial.print(",\"cm\":");
     Serial.print(data->controlModeData);
     
+    Serial.print(",\"ms\":");
+    Serial.print(data->millis);
+    
     Serial.println("}}");
 }
 void sendMessageFrame(const MessageFrame* msg) {
@@ -36,6 +39,38 @@ void sendMessageFrame(const MessageFrame* msg) {
 void sendOKFrame() {
     Serial.println("{\"ty\":\"ok\"}");
 }
+void sendSlotFrame(const SlotFrame* slot) {
+    Serial.print("{\"ty\":\"slot\",\"py\":{");
+    
+    Serial.print("\"sn\":");
+    Serial.print(slot->slotNum);
+    
+    Serial.print(",\"p\":");
+    Serial.print(slot->kP);
+    
+    Serial.print(",\"i\":");
+    Serial.print(slot->kI);
+    
+    Serial.print(",\"d\":");
+    Serial.print(slot->kD);
+    
+    Serial.print(",\"s\":");
+    Serial.print(slot->kS);
+    
+    Serial.print(",\"sm\":");
+    Serial.print(slot->kSMode);
+    
+    Serial.print(",\"v\":");
+    Serial.print(slot->vMax);
+    
+    Serial.print(",\"as\":");
+    Serial.print(slot->aStart);
+    
+    Serial.print(",\"ae\":");
+    Serial.print(slot->aEnd);
+    
+    Serial.print("}}");
+}
 
 bool getIncomingIfAvailable(String* incoming) {
     if(!Serial.available()) return false;
@@ -45,19 +80,36 @@ bool getIncomingIfAvailable(String* incoming) {
 }
 bool processCommand(const String* command, ReceivedCommand* instructions) {
     if(command->equals("enable")) {
-        *instructions = ReceivedCommand {SET_ENABLE, nullptr};
+        *instructions = ReceivedCommand {
+            SET_ENABLE,
+            nullptr,
+            nullptr,
+            (uint8_t) NULL,
+            (uint8_t) NULL
+        };
         
         sendOKFrame();
         return true;
     }
     else if(command->equals("disable")) {
-        *instructions = ReceivedCommand {SET_DISABLE, nullptr};
+        *instructions = ReceivedCommand {
+            SET_DISABLE,
+            nullptr,
+            nullptr,
+            (uint8_t) NULL,
+            (uint8_t) NULL
+        };
         
         sendOKFrame();
         return true;
     }
     else if(command->equals("stop")) {
-        *instructions = ReceivedCommand {NO_CHANGE, new StopControlMode()};
+        *instructions = ReceivedCommand {
+            NO_CHANGE,
+            new StopControlMode(),
+            nullptr, (uint8_t) NULL,
+            (uint8_t) NULL
+        };
         
         sendOKFrame();
         return true;
@@ -65,7 +117,13 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
     else if(command->startsWith("dutyCycle ")) {
         DutyCycleControlMode* control = nullptr;
         if(DutyCycleControlMode::parseFromCommandArgs(command->c_str() + 10, &control)) {
-            *instructions = ReceivedCommand {NO_CHANGE, control};
+            *instructions = ReceivedCommand {
+                NO_CHANGE,
+                control,
+                nullptr,
+                (uint8_t) NULL,
+                (uint8_t) NULL
+            };
             
             sendOKFrame();
             return true;
@@ -76,7 +134,13 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
     else if(command->startsWith("voltage ")) {
         VoltageControlMode* control = nullptr;
         if(VoltageControlMode::parseFromCommandArgs(command->c_str() + 8, &control)) {
-            *instructions = ReceivedCommand {NO_CHANGE, control};
+            *instructions = ReceivedCommand {
+                NO_CHANGE,
+                control,
+                nullptr,
+                (uint8_t) NULL,
+                (uint8_t) NULL
+            };
             
             sendOKFrame();
             return true;
@@ -113,62 +177,58 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
     //     }
     //     sendOKFrame();
     // }
-    // else if(startsWith(cmdCstr, "kP ")) {
-    //     const char* argStart = cmdCstr + 3;
+    else if(command->startsWith("setSlot ")) {
+        SlotConfig* slot = nullptr;
+        uint8_t slotNum = (uint8_t) NULL;
+        if(parseSlotConfigFromCommandArgs(command->c_str() + 8, &slot, &slotNum)) {
+            *instructions = ReceivedCommand {
+                NO_CHANGE,
+                nullptr,
+                slot,
+                slotNum,
+                (uint8_t) NULL
+            };
+            
+            sendOKFrame();
+            return true;
+        }
         
-    //     float newKP = (float) strtod(argStart, nullptr);
-    //     setKP(newKP);
+        return false;
+    }
+    else if(command->startsWith("getSlot ")) {
+        uint8_t slotNum;
+        char* arg2Start;
+        if(!parseUInt(command->c_str() + 8, &slotNum, &arg2Start)) {
+            MessageFrame msg =  {SEVERITY_ERROR, "Malformed getSlot, failed to parse arg1 as a uint8_t"};
+            sendMessageFrame(&msg);
+            
+            return false;
+        }
+        if(slotNum >= 6) {
+            MessageFrame msg = {SEVERITY_ERROR, "Malformed getSlot, slotNum must be in range [0, 5]"};
+            sendMessageFrame(&msg);
+            
+            return false;
+        }
         
-    //     sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "kI ")) {
-    //     const char* argStart = cmdCstr + 3;
+        if(*arg2Start != '\0') {
+            MessageFrame msg = {SEVERITY_ERROR, "Malformed getSlot, too many arguments"};
+            sendMessageFrame(&msg);
+            
+            return false;
+        }
         
-    //     float newKI = (float) strtod(argStart, nullptr);
-    //     setKI(newKI);
+        *instructions = ReceivedCommand {
+            NO_CHANGE,
+            nullptr,
+            nullptr,
+            (uint8_t) NULL,
+            slotNum
+        };
         
-    //     sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "kD ")) {
-    //     const char* argStart = cmdCstr + 3;
-        
-    //     float newKD = (float) strtod(argStart, nullptr);
-    //     setKD(newKD);
-        
-    //     sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "kS ")) {
-    //     const char* argStart = cmdCstr + 3;
-        
-    //     float newKS = (float) strtod(argStart, nullptr);
-    //     setKS(newKS);
-        
-    //     sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "vMax ")) {
-    //     const char* argStart = cmdCstr + 5;
-        
-    //     float newVMax = (float) strtod(argStart, nullptr);
-    //     setVMax(newVMax);
-        
-    //     sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "aStart ")) {
-    //     const char* argStart = cmdCstr + 7;
-        
-    //     float newAStart = (float) strtod(argStart, nullptr);
-    //     setAStart(newAStart);
-        
-    //     sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "aEnd ")) {
-    //     const char* argStart = cmdCstr + 5;
-        
-    //     float newAEnd = (float) strtod(argStart, nullptr);
-    //     setAEnd(newAEnd);
-        
-    //     sendOKFrame();
-    // }
+        sendOKFrame();
+        return true;
+    }
     else {
         size_t len = strlen("Unknown command ''") + command->length() + 1;
         char* msg = (char*) malloc(len);

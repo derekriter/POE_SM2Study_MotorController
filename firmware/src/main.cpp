@@ -5,6 +5,7 @@
 
 ControlMode* _controlMode;
 ControlMode* _disabledControlMode;
+SlotConfig _slotConfigs[6];
 
 void setup() {
     initHardware();
@@ -14,6 +15,9 @@ void setup() {
     
     _controlMode = new StopControlMode();
     _disabledControlMode = new DisabledControlMode();
+    for(int i = 0; i < 6; i++) {
+        _slotConfigs[i] = SlotConfig {0, 0, 0, 0, KS_MODE_ERROR_BASED, 0, 0, 0};
+    }
 }
 
 void loop() {
@@ -35,10 +39,10 @@ void loop() {
     }
     //only run the commanded mode if the motor is enabled
     if(getMotorEnabled()) {
-        _controlMode->update(currentMicros - lastMicros);
+        _controlMode->update(currentMicros - lastMicros, _slotConfigs);
     }
     else {
-        _disabledControlMode->update(currentMicros - lastMicros);
+        _disabledControlMode->update(currentMicros - lastMicros, _slotConfigs);
     }
     
     if(currentMicros - lastDataTime >= 1e6 / 40.0) {
@@ -56,6 +60,7 @@ void loop() {
         data.position = getEncoderRotations();
         data.velocity = sumRPMSinceLastData / framesSinceLastData;
         data.controlModeData = cm;
+        data.millis = millis();
         
         sendDataFrame(&data);
         free(cm);
@@ -73,6 +78,18 @@ void loop() {
                 if(_controlMode != nullptr) delete _controlMode;
                 
                 _controlMode = todo.changeControlMode;
+            }
+            if(todo.changeSlotConfig != nullptr && todo.changeSlotNum < 6) {
+                _slotConfigs[todo.changeSlotNum].kP = todo.changeSlotConfig->kP;
+                _slotConfigs[todo.changeSlotNum].kI = todo.changeSlotConfig->kI;
+                _slotConfigs[todo.changeSlotNum].kD = todo.changeSlotConfig->kD;
+                _slotConfigs[todo.changeSlotNum].kS = todo.changeSlotConfig->kS;
+                _slotConfigs[todo.changeSlotNum].kSMode = todo.changeSlotConfig->kSMode;
+                _slotConfigs[todo.changeSlotNum].vMax = todo.changeSlotConfig->vMax;
+                _slotConfigs[todo.changeSlotNum].aStart = todo.changeSlotConfig->aStart;
+                _slotConfigs[todo.changeSlotNum].aEnd = todo.changeSlotConfig->aEnd;
+                
+                delete todo.changeSlotConfig;
             }
             if(todo.changeEnabled == SET_DISABLE) {
                 setMotorEnabled(false);

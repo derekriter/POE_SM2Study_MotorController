@@ -77,6 +77,9 @@ Future<void> _deviceLoop(SendPort send) async {
         }
       } else if (frame is DeviceOKFrame) {
         _logger.i(frame.toResponse().toString());
+      } else if (frame is DeviceSlotFrame) {
+        state.slots[frame.slotNum] = frame.slotConfig;
+        _logger.d(state.slots);
       }
     }
   } else if (_lastReconnectTime == null ||

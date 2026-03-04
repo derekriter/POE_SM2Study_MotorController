@@ -1,19 +1,17 @@
-import 'dart:ui';
+import 'package:desktop_software/device/device_control_slot.dart';
 
 abstract class DeviceControlRequest {
   List<String> toSerialCommands();
 }
 
 class DeviceEnableDisableRequest extends DeviceControlRequest {
-  final bool _enable;
+  final bool enable;
 
-  DeviceEnableDisableRequest(bool enable) : _enable = enable;
-
-  bool get enable => _enable;
+  DeviceEnableDisableRequest(this.enable);
 
   @override
   List<String> toSerialCommands() {
-    return <String>[_enable ? "enable" : "disable"];
+    return <String>[enable ? "enable" : "disable"];
   }
 }
 
@@ -25,74 +23,84 @@ class DeviceStopRequest extends DeviceControlRequest {
 }
 
 class DeviceDutyCycleRequest extends DeviceControlRequest {
-  final double _duty;
+  final double duty;
 
-  DeviceDutyCycleRequest(double duty) : _duty = clampDouble(duty, -1, 1);
-
-  double get duty => _duty;
+  DeviceDutyCycleRequest(this.duty);
 
   @override
   List<String> toSerialCommands() {
-    return <String>["dutyCycle ${_duty.toStringAsFixed(4)}"];
+    return <String>["dutyCycle ${duty.toStringAsFixed(4)}"];
   }
 }
 
 class DeviceVoltageRequest extends DeviceControlRequest {
-  final double _voltage;
+  final double voltage;
 
-  DeviceVoltageRequest(double voltage) : _voltage = voltage;
-
-  double get voltage => _voltage;
+  DeviceVoltageRequest(this.voltage);
 
   @override
   List<String> toSerialCommands() {
-    return <String>["voltage ${_voltage.toStringAsFixed(4)}"];
+    return <String>["voltage ${voltage.toStringAsFixed(4)}"];
   }
 }
 
 // class DevicePIDPositionRequest extends DeviceControlRequest {
-//   final int _slot;
-//   final int _ticks;
+//   final int slot;
+//   final int ticks;
 
-//   DevicePIDPositionRequest(int ticks, int slot) : _ticks = ticks, _slot = slot;
-
-//   int get slot => _slot;
-//   int get ticks => _ticks;
+//   DevicePIDPositionRequest(this.ticks, this.slot);
 
 //   @override
 //   List<String> toSerialCommands() {
-//     return <String>["pidPos $_ticks $_slot"];
+//     return <String>["pidPos $ticks $slot"];
 //   }
 // }
 
 // class DevicePIDVelocityRequest extends DeviceControlRequest {
-//   final int _slot;
-//   final double _tps;
+//   final int slot;
+//   final double tps;
 
-//   DevicePIDVelocityRequest(double tps, int slot) : _tps = tps, _slot = slot;
-
-//   int get slot => _slot;
-//   double get tps => _tps;
+//   DevicePIDVelocityRequest(this.tps, this.slot);
 
 //   @override
 //   List<String> toSerialCommands() {
-//     return <String>["pidVel ${_tps.toStringAsFixed(4)} $_slot"];
+//     return <String>["pidVel ${tps.toStringAsFixed(4)} $slot"];
 //   }
 // }
 
 // class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
-//   final int _slot;
-//   final int _ticks;
+//   final int slot;
+//   final int ticks;
 
-//   DeviceTrapezoidalMotionPositionRequest(int ticks, int slot)
-//     : _ticks = ticks,
-//       _slot = slot;
-
-//   int get slot => _slot;
-//   int get ticks => _ticks;
+//   DeviceTrapezoidalMotionPositionRequest(this.ticks, this.slot);
 
 //   @override
 //   List<String> toSerialCommands() {
-//     return <String>["trapPos $_ticks $_slot"];
+//     return <String>["trapPos $ticks $slot"];
 //   }
 // }
+
+class DeviceSlotConfigRequest extends DeviceControlRequest {
+  final DeviceSlotConfig config;
+  final int slotNum;
+
+  DeviceSlotConfigRequest(this.slotNum, this.config);
+
+  @override
+  List<String> toSerialCommands() {
+    return <String>[
+      "setSlot $slotNum ${config.kP} ${config.kI} ${config.kD} ${config.kS} ${config.kSMode.id} ${config.vMax} ${config.aStart} ${config.aEnd}",
+    ];
+  }
+}
+
+class DeviceGetSlotRequest extends DeviceControlRequest {
+  final int slotNum;
+
+  DeviceGetSlotRequest(this.slotNum);
+
+  @override
+  List<String> toSerialCommands() {
+    return <String>["getSlot $slotNum"];
+  }
+}

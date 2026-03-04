@@ -17,20 +17,31 @@ struct DataFrame {
     double position;
     double velocity;
     const char* controlModeData;
+    unsigned long millis;
 };
 struct MessageFrame {
     uint8_t severity;
     const char* message;
 };
+struct SlotFrame {
+    uint8_t slotNum;
+    double kP, kI, kD, kS;
+    uint8_t kSMode;
+    double vMax, aStart, aEnd;
+};
 
 struct ReceivedCommand {
     int changeEnabled; //either NO_CHANGE, SET_ENABLE, or SET_DISABLE
-    ControlMode* changeControlMode;
+    struct ControlMode* changeControlMode;
+    struct SlotConfig* changeSlotConfig;
+    uint8_t changeSlotNum;
+    uint8_t getSlotNum;
 };
 
 void sendDataFrame(const DataFrame* data);
 void sendMessageFrame(const MessageFrame* msg);
 void sendOKFrame();
+void sendSlotFrame(const SlotFrame* slot);
 
 bool getIncomingIfAvailable(String* incoming);
 bool processCommand(const String* command, ReceivedCommand* instructions);
