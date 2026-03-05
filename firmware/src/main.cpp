@@ -97,6 +97,20 @@ void loop() {
             if(todo.changeEnabled == SET_ENABLE) {
                 setMotorEnabled(true);
             }
+            if(todo.getSlotNum != NO_CHANGE && todo.getSlotNum < 6) {
+                SlotFrame frame = {
+                    todo.getSlotNum,
+                    _slotConfigs[todo.getSlotNum].kP,
+                    _slotConfigs[todo.getSlotNum].kI,
+                    _slotConfigs[todo.getSlotNum].kD,
+                    _slotConfigs[todo.getSlotNum].kS,
+                    _slotConfigs[todo.getSlotNum].kSMode,
+                    _slotConfigs[todo.getSlotNum].vMax,
+                    _slotConfigs[todo.getSlotNum].aStart,
+                    _slotConfigs[todo.getSlotNum].aEnd,
+                };
+                sendSlotFrame(&frame);
+            }
         }
     }
     

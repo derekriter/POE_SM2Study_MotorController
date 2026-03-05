@@ -13,6 +13,7 @@ class MainPage extends StatelessWidget {
 
     final Map<String, String> data = {
       "isConnected": appState.isConnected.toString(),
+      "isReady": appState.isReady.toString(),
       "port": appState.port ?? "null",
       "enabled": appState.enabled.toString(),
       "sourceVoltage": appState.sourceVoltage.toString(),
@@ -98,6 +99,19 @@ class MainPage extends StatelessWidget {
                 },
                 child: Text("Dummy Slot 0"),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(DeviceGetSlotRequest(0));
+                },
+                child: Text("Get Slot 0"),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int i = 0; i < (appState.slotConfigs?.length ?? 0); i++)
+                Text("slot$i: ${appState.slotConfigs![i]}"),
             ],
           ),
         ],

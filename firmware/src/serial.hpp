@@ -7,25 +7,25 @@
 #define SEVERITY_WARNING 0x1u
 #define SEVERITY_ERROR 0x2u
 
-#define NO_CHANGE 0
-#define SET_ENABLE 1
-#define SET_DISABLE 2
+#define NO_CHANGE 255u
+#define SET_ENABLE 1u
+#define SET_DISABLE 2u
 
 struct DataFrame {
     bool enabled;
     double sourceVoltage;
     double position;
     double velocity;
-    const char* controlModeData;
+    char const * controlModeData;
     unsigned long millis;
 };
 struct MessageFrame {
     uint8_t severity;
-    const char* message;
+    char const * message;
 };
 struct MessageFrameP {
     uint8_t severity;
-    const __FlashStringHelper* messageP;
+    __FlashStringHelper const * messageP;
 };
 struct SlotFrame {
     uint8_t slotNum;
@@ -36,17 +36,17 @@ struct SlotFrame {
 
 struct ReceivedCommand {
     int changeEnabled; //either NO_CHANGE, SET_ENABLE, or SET_DISABLE
-    struct ControlMode* changeControlMode;
-    struct SlotConfig* changeSlotConfig;
-    uint8_t changeSlotNum;
-    uint8_t getSlotNum;
+    struct ControlMode* changeControlMode; //nullptr if none
+    struct SlotConfig* changeSlotConfig; //nullptr if none
+    uint8_t changeSlotNum; //NULL if none
+    uint8_t getSlotNum; //either a slot num or NO_CHANGE
 };
 
-void sendDataFrame(const DataFrame* data);
-void sendMessageFrame(const MessageFrame* msg);
-void sendMessageFrameP(const MessageFrameP* msgP);
+void sendDataFrame(DataFrame const * const data);
+void sendMessageFrame(MessageFrame const * const msg);
+void sendMessageFrameP(MessageFrameP const * const msgP);
 void sendOKFrame();
-void sendSlotFrame(const SlotFrame* slot);
+void sendSlotFrame(SlotFrame const * const slot);
 
-bool getIncomingIfAvailable(String* incoming);
-bool processCommand(const String* command, ReceivedCommand* instructions);
+bool getIncomingIfAvailable(String* const incoming);
+bool processCommand(String const * const command, ReceivedCommand* const instructions);

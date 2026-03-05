@@ -12,4 +12,4 @@ struct SlotConfig {
     double vMax, aStart, aEnd;
 };
 
-bool parseSlotConfigFromCommandArgs(const char* commandArgs, SlotConfig** slotOut, uint8_t* slotNumOut);
+bool parseSlotConfigFromCommandArgs(char const * const commandArgs, SlotConfig** const slotOut, uint8_t* const slotNumOut);

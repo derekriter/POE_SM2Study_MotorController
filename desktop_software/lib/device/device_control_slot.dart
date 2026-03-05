@@ -32,4 +32,9 @@ class DeviceSlotConfig {
     required this.aStart,
     required this.aEnd,
   });
+
+  @override
+  String toString() {
+    return "DeviceSlotConfig{kP:$kP, kI:$kI, kD:$kD, kS:$kS, kSMode:$kSMode, vMax:$vMax, aStart:$aStart, aEnd:$aEnd}";
+  }
 }

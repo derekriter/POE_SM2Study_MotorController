@@ -3,38 +3,29 @@ import 'package:desktop_software/device/device_frame.dart';
 
 class DeviceState {
   bool isConnected = false;
+  bool isReady = false;
   String? port;
   DeviceDataFrame? lastData;
   List<DeviceSlotConfig?> slots;
 
-  DeviceState()
-    : slots = List.filled(
-        6,
-        DeviceSlotConfig(
-          kP: 0,
-          kI: 0,
-          kD: 0,
-          kS: 0,
-          kSMode: KSMode.errorBased,
-          vMax: 0,
-          aStart: 0,
-          aEnd: 0,
-        ),
-        growable: false,
-      );
+  DeviceState() : slots = List.filled(6, null, growable: false);
 
   DeviceState copy() {
     return DeviceState()
       ..isConnected = isConnected
+      ..isReady = isReady
       ..port = port
-      ..lastData = lastData?.copy();
+      ..lastData = lastData?.copy()
+      ..slots = List.from(slots);
   }
 
   @override
   bool operator ==(Object other) {
     return other is DeviceState &&
         other.isConnected == isConnected &&
+        other.isReady == isReady &&
         other.port == port &&
-        other.lastData == lastData;
+        other.lastData == lastData &&
+        other.slots == slots;
   }
 }

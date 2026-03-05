@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
@@ -37,6 +38,7 @@ void deviceLoopInit(SendPort send) async {
 Future<void> _deviceLoop(SendPort send) async {
   DeviceState state = _prevState?.copy() ?? DeviceState();
   state.isConnected = isConnected();
+  state.isReady = isReady();
   state.port = getConnectedPort();
 
   final now = DateTime.now();
@@ -47,9 +49,10 @@ Future<void> _deviceLoop(SendPort send) async {
 
     disconnect();
     state.isConnected = false;
+    state.isReady = false;
   }
 
-  if (state.isConnected) {
+  if (state.isReady) {
     final String? raw = await readLine();
     if (raw != null) {
       final DeviceFrame? frame = _parseFrameIfValid(raw);
@@ -79,10 +82,9 @@ Future<void> _deviceLoop(SendPort send) async {
         _logger.i(frame.toResponse().toString());
       } else if (frame is DeviceSlotFrame) {
         state.slots[frame.slotNum] = frame.slotConfig;
-        _logger.d(state.slots);
       }
     }
-  } else if (_lastReconnectTime == null ||
+  } else if (!state.isConnected && _lastReconnectTime == null ||
       now.difference(_lastReconnectTime!).inSeconds >= 3) {
     state.isConnected = connect();
 
@@ -90,8 +92,20 @@ Future<void> _deviceLoop(SendPort send) async {
       _lastDataTime = null;
       _lastReconnectTime = DateTime.now();
     } else {
-      _lastDataTime = DateTime.now();
+      _lastDataTime = null;
       _lastReconnectTime = null;
+
+      //update local copy of all slots
+      Future.doWhile(() async {
+        if (!isReady()) return true;
+
+        _lastDataTime = DateTime.now();
+        flushBuffers(); //prevent unprocessed bad data from causing problems
+        for (int i = 0; i < state.slots.length; i++) {
+          await sendControlRequest(DeviceGetSlotRequest(i));
+        }
+        return false;
+      });
     }
   }
 

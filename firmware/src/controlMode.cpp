@@ -3,7 +3,7 @@
 #include "util.hpp"
 #include "serial.hpp"
 
-inline void DisabledControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
+inline void DisabledControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     dutyCycle(0);
 }
 inline const uint8_t DisabledControlMode::getID() const {return 255u;}
@@ -14,7 +14,7 @@ char* DisabledControlMode::getControlModeData() const {
     return data;
 }
 
-inline void StopControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
+inline void StopControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     dutyCycle(0);
 }
 inline const uint8_t StopControlMode::getID() const {return 0u;}
@@ -28,7 +28,7 @@ char* StopControlMode::getControlModeData() const {
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
     _duty = dutyCycle;
 }
-inline void DutyCycleControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
+inline void DutyCycleControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     dutyCycle(_duty);
 }
 inline const uint8_t DutyCycleControlMode::getID() const {return 1u;}
@@ -42,7 +42,7 @@ char* DutyCycleControlMode::getControlModeData() const {
     
     return data;
 }
-bool DutyCycleControlMode::parseFromCommandArgs(const char* commandArgs, DutyCycleControlMode** controlOut) {
+bool DutyCycleControlMode::parseFromCommandArgs(char const * const commandArgs, DutyCycleControlMode** const controlOut) {
     double duty;
     char* arg2Start;
     if(!parseDouble(commandArgs, &duty, &arg2Start)) {
@@ -71,7 +71,7 @@ VoltageControlMode::VoltageControlMode(double voltage) {
     _voltage = voltage;
     _lastDuty = 0;
 }
-void VoltageControlMode::update(unsigned long deltaMicros, const struct SlotConfig* slots) {
+void VoltageControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     double source = getSourceVoltage();
     double out = min(max(source == 0 ? 0 : _voltage / source, -1), 1);
     
@@ -92,7 +92,7 @@ char* VoltageControlMode::getControlModeData() const {
     
     return data;
 }
-bool VoltageControlMode::parseFromCommandArgs(const char* commandArgs, VoltageControlMode** controlOut) {
+bool VoltageControlMode::parseFromCommandArgs(char const * const commandArgs, VoltageControlMode** const controlOut) {
     double voltage;
     char* arg2Start;
     if(!parseDouble(commandArgs, &voltage, &arg2Start)) {

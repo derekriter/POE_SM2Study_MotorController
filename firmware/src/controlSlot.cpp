@@ -1,7 +1,7 @@
 #include "controlSlot.hpp"
 #include "util.hpp"
 
-bool parseSlotConfigFromCommandArgs(const char* commandArgs, SlotConfig** slotOut, uint8_t* slotNumOut) {
+bool parseSlotConfigFromCommandArgs(char const * const commandArgs, SlotConfig** const slotOut, uint8_t* const slotNumOut) {
     uint8_t slotNum;
     char* arg2Start;
     if(!parseUInt(commandArgs, &slotNum, &arg2Start)) {

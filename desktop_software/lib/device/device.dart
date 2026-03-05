@@ -10,6 +10,7 @@ final _logger = Logger();
 SerialPort? _port;
 SerialPortConfig? _portConfig;
 DateTime? _lastSendTime;
+DateTime? _connectTime;
 
 //NOTE: calling any functions in this file from any isolates other than the device loop will probably break things
 
@@ -54,6 +55,8 @@ bool connect() {
   */
   _port!.config = _portConfig!;
 
+  _connectTime = DateTime.now();
+
   _logger.i("Connected to device on port ${getConnectedPort()}");
   return true;
 }
@@ -69,8 +72,10 @@ void disconnect() {
   _port?.dispose();
   _port = null;
 
-  // _portConfig?.dispose(); // causess assertion failure even though the docs say to dispose. I think SerialPort.dispose() might auto dispose the config
+  // _portConfig?.dispose(); // causes assertion failure even though the docs say to dispose. I think SerialPort.dispose() might auto dispose the config
   _portConfig = null;
+
+  _connectTime = null;
 
   _logger.i("Disconnected from device");
 }
@@ -79,12 +84,19 @@ bool isConnected() {
   return _port != null && _port!.isOpen;
 }
 
+bool isReady() {
+  return isConnected() &&
+      _connectTime != null &&
+      DateTime.now().difference(_connectTime!).inMilliseconds >=
+          200; //allow time for connection to configure and stabilize
+}
+
 String? getConnectedPort() {
   return isConnected() ? _port?.name : null;
 }
 
 Future<String?> readLine() async {
-  if (!isConnected()) return null;
+  if (!isReady()) return null;
 
   StringBuffer line = StringBuffer();
   await Future.doWhile(() {
@@ -108,7 +120,7 @@ Future<String?> readLine() async {
 }
 
 Future<bool> _sendMessage(Uint8List msg) async {
-  if (!isConnected()) return false;
+  if (!isReady()) return false;
 
   await Future.doWhile(() {
     return _lastSendTime != null &&
@@ -140,4 +152,10 @@ Future<bool> sendControlRequest(DeviceControlRequest req) async {
   }
 
   return !anyFailed;
+}
+
+void flushBuffers() {
+  if (!isConnected()) return;
+
+  _port!.flush(SerialPortBuffer.both);
 }

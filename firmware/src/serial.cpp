@@ -2,7 +2,7 @@
 #include "util.hpp"
 #include "controlMode.hpp"
 
-void sendDataFrame(const DataFrame* data) {
+void sendDataFrame(DataFrame const * const data) {
     Serial.print(F("{\"ty\":\"data\",\"py\":{"));
     
     Serial.print(F("\"en\":"));
@@ -25,7 +25,7 @@ void sendDataFrame(const DataFrame* data) {
     
     Serial.println(F("}}"));
 }
-void sendMessageFrame(const MessageFrame* msg) {
+void sendMessageFrame(MessageFrame const * const msg) {
     Serial.print(F("{\"ty\":\"msg\",\"py\":{"));
     
     Serial.print(F("\"sv\":"));
@@ -36,7 +36,7 @@ void sendMessageFrame(const MessageFrame* msg) {
     
     Serial.println(F("\"}}"));
 }
-void sendMessageFrameP(const MessageFrameP* msgP) {
+void sendMessageFrameP(MessageFrameP const * const msgP) {
     Serial.print(F("{\"ty\":\"msg\",\"py\":{"));
     
     Serial.print(F("\"sv\":"));
@@ -50,7 +50,7 @@ void sendMessageFrameP(const MessageFrameP* msgP) {
 void sendOKFrame() {
     Serial.println(F("{\"ty\":\"ok\"}"));
 }
-void sendSlotFrame(const SlotFrame* slot) {
+void sendSlotFrame(SlotFrame const * const slot) {
     Serial.print(F("{\"ty\":\"slot\",\"py\":{"));
     
     Serial.print(F("\"sn\":"));
@@ -80,48 +80,49 @@ void sendSlotFrame(const SlotFrame* slot) {
     Serial.print(F(",\"ae\":"));
     Serial.print(slot->aEnd);
     
-    Serial.print(F("}}"));
+    Serial.println(F("}}"));
 }
 
-bool getIncomingIfAvailable(String* incoming) {
+bool getIncomingIfAvailable(String* const incoming) {
     if(!Serial.available()) return false;
     
     *incoming = Serial.readStringUntil('\0');
     return true;
 }
-bool processCommand(const String* command, ReceivedCommand* instructions) {
-    const char* commandCstr = command->c_str();
-    if(strcmp_P(commandCstr, (const char*) F("enable"))) {
+bool processCommand(String const * const command, ReceivedCommand* const instructions) {
+    char const * commandCstr = command->c_str();
+    
+    if(strcmp_P(commandCstr, (char const *) F("enable")) == 0) {
         *instructions = ReceivedCommand {
             SET_ENABLE,
             nullptr,
             nullptr,
             static_cast<uint8_t>(NULL),
-            static_cast<uint8_t>(NULL)
+            NO_CHANGE
         };
         
         sendOKFrame();
         return true;
     }
-    else if(strcmp_P(commandCstr, (const char*) F("disable"))) {
+    else if(strcmp_P(commandCstr, (char const *) F("disable")) == 0) {
         *instructions = ReceivedCommand {
             SET_DISABLE,
             nullptr,
             nullptr,
             static_cast<uint8_t>(NULL),
-            static_cast<uint8_t>(NULL)
+            NO_CHANGE
         };
         
         sendOKFrame();
         return true;
     }
-    else if(strcmp_P(commandCstr, (const char*) F("stop"))) {
+    else if(strcmp_P(commandCstr, (char const *) F("stop")) == 0) {
         *instructions = ReceivedCommand {
             NO_CHANGE,
             new StopControlMode(),
             nullptr,
             static_cast<uint8_t>(NULL),
-            static_cast<uint8_t>(NULL)
+            NO_CHANGE
         };
         
         sendOKFrame();
@@ -135,7 +136,7 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
                 control,
                 nullptr,
                 static_cast<uint8_t>(NULL),
-                static_cast<uint8_t>(NULL)
+                NO_CHANGE
             };
             
             sendOKFrame();
@@ -152,7 +153,7 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
                 control,
                 nullptr,
                 static_cast<uint8_t>(NULL),
-                static_cast<uint8_t>(NULL)
+                NO_CHANGE
             };
             
             sendOKFrame();
@@ -161,35 +162,6 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         
         return false;
     }
-    // else if(command->startsWith("pidPos ")) {
-        // setControlMode(CONTROL_MODE_PID_POSITION);
-        // resetPID();
-        // sendOKFrame();
-    // }
-    // else if(command->startsWith("pidVel ")) {
-        // setControlMode(CONTROL_MODE_PID_VELOCITY);
-        // resetPID();
-        // sendOKFrame();
-    // }
-    // else if(command->startsWith("trapPos ")) {
-        // setControlMode(CONTROL_MODE_TRAP_POSITION);
-        // resetPID();
-        // resetProfile();
-        // sendOKFrame();
-    // }
-    // else if(startsWith(cmdCstr, "ref ")) {
-    //     const char* argStart = cmdCstr + 4;
-        
-    //     float newRef = (float) strtod(argStart, nullptr); //no good way to check parsing, just have to assume a valid value was given
-    //     setControlReference(newRef);
-    //     resetPID();
-    //     resetProfile();
-        
-    //     if(abs(newRef) > 1 && getControlMode() == CONTROL_MODE_DUTY_CYCLE) {
-    //         sendBadFrame("Control reference is beyond range for control mode DUTY_CYCLE", SEVERITY_WARNING);
-    //     }
-    //     sendOKFrame();
-    // }
     else if(startsWithP(commandCstr, F("setSlot "))) {
         SlotConfig* slot = nullptr;
         uint8_t slotNum = static_cast<uint8_t>(NULL);
@@ -199,7 +171,7 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
                 nullptr,
                 slot,
                 slotNum,
-                static_cast<uint8_t>(NULL)
+                NO_CHANGE
             };
             
             sendOKFrame();
@@ -243,9 +215,9 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         return true;
     }
     else {
-        size_t len = strlen_P((const char*) F("Unknown command ''")) + strlen(commandCstr) + 1;
+        size_t len = strlen_P((char const *) F("Unknown command ''")) + strlen(commandCstr) + 1;
         char* msg = static_cast<char*>(malloc(len));
-        snprintf_P(msg, len, (const char*) F("Unknown command '%s'"), commandCstr);
+        snprintf_P(msg, len, (char const *) F("Unknown command '%s'"), commandCstr);
         
         MessageFrame frame = {SEVERITY_ERROR, msg};
         sendMessageFrame(&frame);

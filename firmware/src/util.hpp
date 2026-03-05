@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-bool startsWith(const char* str, const char* prefix);
-bool startsWithP(const char* str, const __FlashStringHelper* prefixP);
+bool startsWith(char const * const str, char const * const prefix);
+bool startsWithP(char const * const str, __FlashStringHelper const * const prefixP);
 int sign(float val);
-bool parseDouble(const char* str, double* out, char** end);
-bool parseUInt(const char* str, uint8_t* out, char** end);
+bool parseDouble(char const * const str, double* const out, char** const end);
+bool parseUInt(char const * const str, uint8_t* const out, char** const end);

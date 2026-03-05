@@ -51,6 +51,7 @@ class AppState extends ChangeNotifier {
   }
 
   bool get isConnected => _deviceState?.isConnected ?? false;
+  bool get isReady => _deviceState?.isReady ?? false;
   String? get port => _deviceState?.port;
   bool? get enabled => _deviceState?.lastData?.enabled;
   double? get sourceVoltage => _deviceState?.lastData?.sourceVoltage;
