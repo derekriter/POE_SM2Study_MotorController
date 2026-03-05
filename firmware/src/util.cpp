@@ -2,6 +2,12 @@
 
 #include <errno.h>
 
+bool startsWith(const char* str, const char* prefix) {
+    return strncmp(prefix, str, strlen(prefix)) == 0;
+}
+bool startsWithP(const char* str, const __FlashStringHelper* prefixP) {
+    return strncmp_P(str, (const char*) prefixP, strlen_P((const char*) prefixP)) == 0;
+}
 int sign(float val) {
     return val == 0 ? 0 : (val < 0 ? -1 : 1);
 }

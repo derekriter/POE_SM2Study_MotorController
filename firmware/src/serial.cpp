@@ -3,73 +3,84 @@
 #include "controlMode.hpp"
 
 void sendDataFrame(const DataFrame* data) {
-    Serial.print("{\"ty\":\"data\",\"py\":{");
+    Serial.print(F("{\"ty\":\"data\",\"py\":{"));
     
-    Serial.print("\"en\":");
-    Serial.print(data->enabled ? "true" : "false");
+    Serial.print(F("\"en\":"));
+    Serial.print(data->enabled ? F("true") : F("false"));
     
-    Serial.print(",\"sv\":");
+    Serial.print(F(",\"sv\":"));
     Serial.print(data->sourceVoltage, 4);
     
-    Serial.print(",\"pr\":");
+    Serial.print(F(",\"pr\":"));
     Serial.print(data->position, 4);
     
-    Serial.print(",\"vr\":");
+    Serial.print(F(",\"vr\":"));
     Serial.print(data->velocity, 4);
     
-    Serial.print(",\"cm\":");
+    Serial.print(F(",\"cm\":"));
     Serial.print(data->controlModeData);
     
-    Serial.print(",\"ms\":");
+    Serial.print(F(",\"ms\":"));
     Serial.print(data->millis);
     
-    Serial.println("}}");
+    Serial.println(F("}}"));
 }
 void sendMessageFrame(const MessageFrame* msg) {
-    Serial.print("{\"ty\":\"msg\",\"py\":{");
+    Serial.print(F("{\"ty\":\"msg\",\"py\":{"));
     
-    Serial.print("\"sv\":");
+    Serial.print(F("\"sv\":"));
     Serial.print(msg->severity);
     
-    Serial.print(",\"msg\":\"");
+    Serial.print(F(",\"msg\":\""));
     Serial.print(msg->message);
     
-    Serial.println("\"}}");
+    Serial.println(F("\"}}"));
+}
+void sendMessageFrameP(const MessageFrameP* msgP) {
+    Serial.print(F("{\"ty\":\"msg\",\"py\":{"));
+    
+    Serial.print(F("\"sv\":"));
+    Serial.print(msgP->severity);
+    
+    Serial.print(F(",\"msg\":\""));
+    Serial.print(msgP->messageP);
+    
+    Serial.println(F("\"}}"));
 }
 void sendOKFrame() {
-    Serial.println("{\"ty\":\"ok\"}");
+    Serial.println(F("{\"ty\":\"ok\"}"));
 }
 void sendSlotFrame(const SlotFrame* slot) {
-    Serial.print("{\"ty\":\"slot\",\"py\":{");
+    Serial.print(F("{\"ty\":\"slot\",\"py\":{"));
     
-    Serial.print("\"sn\":");
+    Serial.print(F("\"sn\":"));
     Serial.print(slot->slotNum);
     
-    Serial.print(",\"p\":");
+    Serial.print(F(",\"p\":"));
     Serial.print(slot->kP);
     
-    Serial.print(",\"i\":");
+    Serial.print(F(",\"i\":"));
     Serial.print(slot->kI);
     
-    Serial.print(",\"d\":");
+    Serial.print(F(",\"d\":"));
     Serial.print(slot->kD);
     
-    Serial.print(",\"s\":");
+    Serial.print(F(",\"s\":"));
     Serial.print(slot->kS);
     
-    Serial.print(",\"sm\":");
+    Serial.print(F(",\"sm\":"));
     Serial.print(slot->kSMode);
     
-    Serial.print(",\"v\":");
+    Serial.print(F(",\"v\":"));
     Serial.print(slot->vMax);
     
-    Serial.print(",\"as\":");
+    Serial.print(F(",\"as\":"));
     Serial.print(slot->aStart);
     
-    Serial.print(",\"ae\":");
+    Serial.print(F(",\"ae\":"));
     Serial.print(slot->aEnd);
     
-    Serial.print("}}");
+    Serial.print(F("}}"));
 }
 
 bool getIncomingIfAvailable(String* incoming) {
@@ -79,50 +90,52 @@ bool getIncomingIfAvailable(String* incoming) {
     return true;
 }
 bool processCommand(const String* command, ReceivedCommand* instructions) {
-    if(command->equals("enable")) {
+    const char* commandCstr = command->c_str();
+    if(strcmp_P(commandCstr, (const char*) F("enable"))) {
         *instructions = ReceivedCommand {
             SET_ENABLE,
             nullptr,
             nullptr,
-            (uint8_t) NULL,
-            (uint8_t) NULL
+            static_cast<uint8_t>(NULL),
+            static_cast<uint8_t>(NULL)
         };
         
         sendOKFrame();
         return true;
     }
-    else if(command->equals("disable")) {
+    else if(strcmp_P(commandCstr, (const char*) F("disable"))) {
         *instructions = ReceivedCommand {
             SET_DISABLE,
             nullptr,
             nullptr,
-            (uint8_t) NULL,
-            (uint8_t) NULL
+            static_cast<uint8_t>(NULL),
+            static_cast<uint8_t>(NULL)
         };
         
         sendOKFrame();
         return true;
     }
-    else if(command->equals("stop")) {
+    else if(strcmp_P(commandCstr, (const char*) F("stop"))) {
         *instructions = ReceivedCommand {
             NO_CHANGE,
             new StopControlMode(),
-            nullptr, (uint8_t) NULL,
-            (uint8_t) NULL
+            nullptr,
+            static_cast<uint8_t>(NULL),
+            static_cast<uint8_t>(NULL)
         };
         
         sendOKFrame();
         return true;
     }
-    else if(command->startsWith("dutyCycle ")) {
+    else if(startsWithP(commandCstr, F("dutyCycle "))) {
         DutyCycleControlMode* control = nullptr;
         if(DutyCycleControlMode::parseFromCommandArgs(command->c_str() + 10, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,
                 nullptr,
-                (uint8_t) NULL,
-                (uint8_t) NULL
+                static_cast<uint8_t>(NULL),
+                static_cast<uint8_t>(NULL)
             };
             
             sendOKFrame();
@@ -131,15 +144,15 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         
         return false;
     }
-    else if(command->startsWith("voltage ")) {
+    else if(startsWithP(commandCstr, F("voltage "))) {
         VoltageControlMode* control = nullptr;
         if(VoltageControlMode::parseFromCommandArgs(command->c_str() + 8, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,
                 nullptr,
-                (uint8_t) NULL,
-                (uint8_t) NULL
+                static_cast<uint8_t>(NULL),
+                static_cast<uint8_t>(NULL)
             };
             
             sendOKFrame();
@@ -177,16 +190,16 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
     //     }
     //     sendOKFrame();
     // }
-    else if(command->startsWith("setSlot ")) {
+    else if(startsWithP(commandCstr, F("setSlot "))) {
         SlotConfig* slot = nullptr;
-        uint8_t slotNum = (uint8_t) NULL;
+        uint8_t slotNum = static_cast<uint8_t>(NULL);
         if(parseSlotConfigFromCommandArgs(command->c_str() + 8, &slot, &slotNum)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 nullptr,
                 slot,
                 slotNum,
-                (uint8_t) NULL
+                static_cast<uint8_t>(NULL)
             };
             
             sendOKFrame();
@@ -195,25 +208,25 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         
         return false;
     }
-    else if(command->startsWith("getSlot ")) {
+    else if(startsWithP(commandCstr, F("getSlot "))) {
         uint8_t slotNum;
         char* arg2Start;
         if(!parseUInt(command->c_str() + 8, &slotNum, &arg2Start)) {
-            MessageFrame msg =  {SEVERITY_ERROR, "Malformed getSlot, failed to parse arg1 as a uint8_t"};
-            sendMessageFrame(&msg);
+            const MessageFrameP msg =  {SEVERITY_ERROR, F("Malformed getSlot, failed to parse arg1 as a uint8_t")};
+            sendMessageFrameP(&msg);
             
             return false;
         }
         if(slotNum >= 6) {
-            MessageFrame msg = {SEVERITY_ERROR, "Malformed getSlot, slotNum must be in range [0, 5]"};
-            sendMessageFrame(&msg);
+            const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed getSlot, slotNum must be in range [0, 5]")};
+            sendMessageFrameP(&msg);
             
             return false;
         }
         
         if(*arg2Start != '\0') {
-            MessageFrame msg = {SEVERITY_ERROR, "Malformed getSlot, too many arguments"};
-            sendMessageFrame(&msg);
+            const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed getSlot, too many arguments")};
+            sendMessageFrameP(&msg);
             
             return false;
         }
@@ -222,7 +235,7 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
             NO_CHANGE,
             nullptr,
             nullptr,
-            (uint8_t) NULL,
+            static_cast<uint8_t>(NULL),
             slotNum
         };
         
@@ -230,9 +243,9 @@ bool processCommand(const String* command, ReceivedCommand* instructions) {
         return true;
     }
     else {
-        size_t len = strlen("Unknown command ''") + command->length() + 1;
-        char* msg = (char*) malloc(len);
-        snprintf(msg, len, "Unknown command '%s'", command->c_str());
+        size_t len = strlen_P((const char*) F("Unknown command ''")) + strlen(commandCstr) + 1;
+        char* msg = static_cast<char*>(malloc(len));
+        snprintf_P(msg, len, (const char*) F("Unknown command '%s'"), commandCstr);
         
         MessageFrame frame = {SEVERITY_ERROR, msg};
         sendMessageFrame(&frame);

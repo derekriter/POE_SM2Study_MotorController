@@ -23,6 +23,10 @@ struct MessageFrame {
     uint8_t severity;
     const char* message;
 };
+struct MessageFrameP {
+    uint8_t severity;
+    const __FlashStringHelper* messageP;
+};
 struct SlotFrame {
     uint8_t slotNum;
     double kP, kI, kD, kS;
@@ -40,6 +44,7 @@ struct ReceivedCommand {
 
 void sendDataFrame(const DataFrame* data);
 void sendMessageFrame(const MessageFrame* msg);
+void sendMessageFrameP(const MessageFrameP* msgP);
 void sendOKFrame();
 void sendSlotFrame(const SlotFrame* slot);
 
