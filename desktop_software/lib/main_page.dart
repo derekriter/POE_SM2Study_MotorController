@@ -23,6 +23,8 @@ class MainPage extends StatelessWidget {
       "controlModeName": appState.controlModeName.toString(),
       "dutyOut": appState.dutyOut.toString(),
       "voltageOut": appState.voltageOut.toString(),
+      "closedLoopTarget": appState.closedLoopTarget.toString(),
+      "closedLoopError": appState.closedLoopError.toString(),
     };
 
     return Scaffold(
@@ -74,6 +76,12 @@ class MainPage extends StatelessWidget {
                   appState.sendControlRequest(DeviceVoltageRequest(6));
                 },
                 child: Text("Voltage"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(DevicePIDPositionRequest(300, 0));
+                },
+                child: Text("PID Pos"),
               ),
             ],
           ),

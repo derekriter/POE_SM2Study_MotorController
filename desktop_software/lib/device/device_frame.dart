@@ -66,7 +66,7 @@ abstract class DeviceFrame {
 class DeviceDataFrame extends DeviceFrame {
   final bool enabled;
   final double sourceVoltage;
-  final ControlModeData controlMode;
+  final DeviceControlModeData controlMode;
   final double position;
   final double velocity;
   final int timestamp;
@@ -95,12 +95,14 @@ class DeviceDataFrame extends DeviceFrame {
     }
     sourceVoltage = json["sv"] as double;
 
-    late final ControlModeData controlMode;
-    if (json["cm"] == null) {
-      _logger.w("Invalid data frame, missing 'cm' parameter");
+    late final DeviceControlModeData controlMode;
+    if (json["cm"] is! Map<String, dynamic>) {
+      _logger.w("Invalid data frame, missing or invalid 'cm' parameter");
       return null;
     }
-    ControlModeData? temp = ControlModeData.parseJSON(json["cm"] as dynamic);
+    DeviceControlModeData? temp = DeviceControlModeData.parseJSON(
+      json["cm"] as Map<String, dynamic>,
+    );
     if (temp == null) {
       _logger.w("Invalid data frame, invalid 'cm' parameter");
       return null;

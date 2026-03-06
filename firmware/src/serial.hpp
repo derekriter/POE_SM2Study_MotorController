@@ -11,12 +11,22 @@
 #define SET_ENABLE 1u
 #define SET_DISABLE 2u
 
+struct ControlModeData {
+    uint8_t controlID;
+    double dutyOut;
+    double voltageOut;
+    
+    bool hasTarget;
+    double target;
+    bool hasError;
+    double error;
+};
 struct DataFrame {
     bool enabled;
     double sourceVoltage;
     double position;
     double velocity;
-    char const * controlModeData;
+    ControlModeData const * controlModeData;
     unsigned long millis;
 };
 struct MessageFrame {

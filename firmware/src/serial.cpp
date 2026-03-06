@@ -17,10 +17,22 @@ void sendDataFrame(DataFrame const * const data) {
     Serial.print(F(",\"vr\":"));
     Serial.print(data->velocity, 4);
     
-    Serial.print(F(",\"cm\":"));
-    Serial.print(data->controlModeData);
+    Serial.print(F(",\"cm\":{\"id\":"));
+    Serial.print(data->controlModeData->controlID);
+    Serial.print(F(",\"do\":"));
+    Serial.print(data->controlModeData->dutyOut, 4);
+    Serial.print(F(",\"vo\":"));
+    Serial.print(data->controlModeData->voltageOut, 4);
+    if(data->controlModeData->hasTarget) {
+        Serial.print(F(",\"ct\":"));
+        Serial.print(data->controlModeData->target);
+    }
+    if(data->controlModeData->hasError) {
+        Serial.print(F(",\"ce\":"));
+        Serial.print(data->controlModeData->error);
+    }
     
-    Serial.print(F(",\"ms\":"));
+    Serial.print(F("},\"ms\":"));
     Serial.print(data->millis);
     
     Serial.println(F("}}"));
@@ -148,6 +160,23 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
     else if(startsWithP(commandCstr, F("voltage "))) {
         VoltageControlMode* control = nullptr;
         if(VoltageControlMode::parseFromCommandArgs(command->c_str() + 8, &control)) {
+            *instructions = ReceivedCommand {
+                NO_CHANGE,
+                control,
+                nullptr,
+                static_cast<uint8_t>(NULL),
+                NO_CHANGE
+            };
+            
+            sendOKFrame();
+            return true;
+        }
+        
+        return false;
+    }
+    else if(startsWithP(commandCstr, F("pidPos "))) {
+        PIDPositionControlMode* control = nullptr;
+        if(PIDPositionControlMode::parseFromCommandArgs(command->c_str() + 7, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,

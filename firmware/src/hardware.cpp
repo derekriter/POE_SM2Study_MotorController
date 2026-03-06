@@ -43,8 +43,8 @@ void dutyCycle(double dutyCycle) {
     }
 }
 double getSourceVoltage() {
-    const int R1 = 969; //r1 value in the voltage divider ; 1000 ohm resistor with 5% tolerance, measured with multimeter
-    const int R2 = 542; //r2 value in the voltage divider ; 560 ohm resistor with 5% tolerance, measured with multimeter
+    const int R1 = 971; //r1 value in the voltage divider ; 1000 ohm resistor with 5% tolerance, measured with multimeter
+    const int R2 = 543; //r2 value in the voltage divider ; 560 ohm resistor with 5% tolerance, measured with multimeter
     const float REF_VOLTAGE = 4.24; //should be 5 V but the voltage regulator is pretty shit
     
     float percent = analogRead(PIN_SOURCE_VOLTAGE) / 1023.0;

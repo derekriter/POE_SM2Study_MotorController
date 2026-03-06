@@ -2,181 +2,110 @@ import 'package:logger/logger.dart';
 
 final _logger = Logger();
 
-class MotorOutput {
-  final double dutyOut;
-  final double? voltageOut;
+enum DeviceControlMode {
+  disabled(255, "disabled"),
+  stop(0, "stop"),
+  dutyCycle(1, "dutyCycle"),
+  voltage(2, "voltage"),
+  pidPos(3, "pidPos");
 
-  MotorOutput({required this.dutyOut, this.voltageOut});
+  final int id;
+  final String name;
+
+  const DeviceControlMode(this.id, this.name);
+
+  static DeviceControlMode? fromID(int id) {
+    if (id == disabled.id) {
+      return disabled;
+    } else if (id == stop.id) {
+      return stop;
+    } else if (id == dutyCycle.id) {
+      return dutyCycle;
+    } else if (id == voltage.id) {
+      return voltage;
+    } else if (id == pidPos.id) {
+      return pidPos;
+    }
+
+    return null;
+  }
 }
 
-abstract class ControlModeData {
-  static ControlModeData? parseJSON(dynamic json) {
-    if (json is int) {
-      switch (json) {
-        case 0:
-          {
-            return StopControlModeData._();
-          }
-        case 255:
-          {
-            return DisabledControlModeData._();
-          }
-      }
+class DeviceControlModeData {
+  final DeviceControlMode mode;
+  final double dutyOut;
+  final double voltageOut;
+  final double? target;
+  final double? error;
 
-      _logger.w("Invalid control mode, invalid id");
+  DeviceControlModeData._({
+    required this.mode,
+    required this.dutyOut,
+    required this.voltageOut,
+    required this.target,
+    required this.error,
+  });
+
+  static DeviceControlModeData? parseJSON(Map<String, dynamic> json) {
+    late final DeviceControlMode mode;
+    if (json["id"] is! int) {
+      _logger.w("Invalid control mode, missing or invalid 'id' parameter");
       return null;
-    } else if (json is Map<String, dynamic>) {
-      late final int id;
-      if (json["id"] is! int) {
-        _logger.w("Invalid control mode, missing or invalid 'id' parameter");
-        return null;
-      }
-      id = json["id"] as int;
-
-      switch (id) {
-        case 1:
-          {
-            return DutyCycleControlModeData.parseJSON(json);
-          }
-        case 2:
-          {
-            return VoltageControlModeData.parseJSON(json);
-          }
-      }
-
+    }
+    DeviceControlMode? tempMode = DeviceControlMode.fromID(json["id"] as int);
+    if (tempMode == null) {
       _logger.w("Invalid control mode, invalid 'id' parameter");
       return null;
     }
+    mode = tempMode;
 
-    _logger.w("Invalid control mode, unrecognized data type");
-    return null;
-  }
-
-  String get name;
-  MotorOutput get output;
-
-  ControlModeData copy();
-}
-
-class DisabledControlModeData extends ControlModeData {
-  DisabledControlModeData._();
-
-  @override
-  ControlModeData copy() {
-    return DisabledControlModeData._();
-  }
-
-  @override
-  String get name => "disabled";
-  @override
-  MotorOutput get output => MotorOutput(dutyOut: 0);
-
-  @override
-  bool operator ==(Object other) {
-    return other is DisabledControlModeData;
-  }
-}
-
-class StopControlModeData extends ControlModeData {
-  StopControlModeData._();
-
-  @override
-  StopControlModeData copy() {
-    return StopControlModeData._();
-  }
-
-  @override
-  String get name => "stop";
-  @override
-  MotorOutput get output => MotorOutput(dutyOut: 0);
-
-  @override
-  bool operator ==(Object other) {
-    return other is StopControlModeData;
-  }
-}
-
-class DutyCycleControlModeData extends ControlModeData {
-  final double _duty;
-
-  DutyCycleControlModeData._({required double duty}) : _duty = duty;
-
-  static DutyCycleControlModeData? parseJSON(Map<String, dynamic> json) {
-    late final double duty;
+    late final double dutyOut;
     if (json["do"] is! double) {
-      _logger.w(
-        "Invalid duty cycle control mode, missing or invalid 'do' parameter",
-      );
+      _logger.w("Invalid control mode, missing or invalid 'do' parameter");
       return null;
     }
-    duty = json["do"] as double;
+    dutyOut = json["do"] as double;
 
-    return DutyCycleControlModeData._(duty: duty);
-  }
-
-  @override
-  String get name => "dutyCycle";
-  @override
-  MotorOutput get output => MotorOutput(dutyOut: _duty);
-  double get duty => _duty;
-
-  @override
-  DutyCycleControlModeData copy() {
-    return DutyCycleControlModeData._(duty: _duty);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is DutyCycleControlModeData && other._duty == _duty;
-  }
-}
-
-class VoltageControlModeData extends ControlModeData {
-  final double _duty;
-  final double _voltage;
-
-  VoltageControlModeData._({required double duty, required double voltage})
-    : _duty = duty,
-      _voltage = voltage;
-
-  static VoltageControlModeData? parseJSON(Map<String, dynamic> json) {
-    late final double duty;
-    if (json["do"] is! double) {
-      _logger.w(
-        "Invalid voltage control mode, missing or invalid 'do' parameter",
-      );
-      return null;
-    }
-    duty = json["do"] as double;
-
-    late final double voltage;
+    late final double voltageOut;
     if (json["vo"] is! double) {
-      _logger.w(
-        "Invalid voltage control mode, missing or invalid 'vo' parameter",
-      );
+      _logger.w("Invalid control mode, missing or invalid 'vo' parameter");
       return null;
     }
-    voltage = json["vo"] as double;
+    voltageOut = json["vo"] as double;
 
-    return VoltageControlModeData._(duty: duty, voltage: voltage);
+    late final double? target;
+    if (json["ct"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'ct' parameter");
+      return null;
+    }
+    target = json["ct"] as double?;
+
+    late final double? error;
+    if (json["ce"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'ce' parameter");
+      return null;
+    }
+    error = json["ce"] as double?;
+
+    return DeviceControlModeData._(
+      mode: mode,
+      dutyOut: dutyOut,
+      voltageOut: voltageOut,
+      target: target,
+      error: error,
+    );
   }
 
-  @override
-  String get name => "voltage";
-  @override
-  MotorOutput get output => MotorOutput(dutyOut: _duty, voltageOut: _voltage);
-  double get duty => _duty;
-  double get voltage => _voltage;
+  int get id => mode.id;
+  String get name => mode.name;
 
-  @override
-  VoltageControlModeData copy() {
-    return VoltageControlModeData._(duty: _duty, voltage: _voltage);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is VoltageControlModeData &&
-        other._duty == _duty &&
-        other._voltage == _voltage;
+  DeviceControlModeData copy() {
+    return DeviceControlModeData._(
+      mode: mode,
+      dutyOut: dutyOut,
+      voltageOut: voltageOut,
+      target: target,
+      error: error,
+    );
   }
 }

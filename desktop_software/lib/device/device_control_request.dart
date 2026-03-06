@@ -44,17 +44,17 @@ class DeviceVoltageRequest extends DeviceControlRequest {
   }
 }
 
-// class DevicePIDPositionRequest extends DeviceControlRequest {
-//   final int slot;
-//   final int ticks;
+class DevicePIDPositionRequest extends DeviceControlRequest {
+  final double rots;
+  final int slot;
 
-//   DevicePIDPositionRequest(this.ticks, this.slot);
+  DevicePIDPositionRequest(this.rots, this.slot);
 
-//   @override
-//   List<String> toSerialCommands() {
-//     return <String>["pidPos $ticks $slot"];
-//   }
-// }
+  @override
+  List<String> toSerialCommands() {
+    return <String>["pidPos $rots $slot"];
+  }
+}
 
 // class DevicePIDVelocityRequest extends DeviceControlRequest {
 //   final int slot;

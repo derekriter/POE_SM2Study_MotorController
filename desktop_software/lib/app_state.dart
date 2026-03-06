@@ -59,10 +59,11 @@ class AppState extends ChangeNotifier {
   double? get velocity => _deviceState?.lastData?.velocity;
   int? get timestamp => _deviceState?.lastData?.timestamp;
   String? get controlModeName => _deviceState?.lastData?.controlMode.name;
-  double? get dutyOut => _deviceState?.lastData?.controlMode.output.dutyOut;
-  double? get voltageOut =>
-      _deviceState?.lastData?.controlMode.output.voltageOut;
+  double? get dutyOut => _deviceState?.lastData?.controlMode.dutyOut;
+  double? get voltageOut => _deviceState?.lastData?.controlMode.voltageOut;
   List<DeviceSlotConfig?>? get slotConfigs => _deviceState?.slots;
+  double? get closedLoopTarget => _deviceState?.lastData?.controlMode.target;
+  double? get closedLoopError => _deviceState?.lastData?.controlMode.error;
 
   void sendControlRequest(DeviceControlRequest req) {
     _deviceSend?.send(req);

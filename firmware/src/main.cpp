@@ -46,12 +46,12 @@ void loop() {
     }
     
     if(currentMicros - lastDataTime >= 1e6 / 40.0) {
-        char* cm;
+        ControlModeData cm;
         if(getMotorEnabled()) {
-            cm = _controlMode->getControlModeData();
+            _controlMode->getControlModeData(&cm);
         }
         else {
-            cm = _disabledControlMode->getControlModeData();
+            _disabledControlMode->getControlModeData(&cm);
         }
         
         DataFrame data;
@@ -59,11 +59,10 @@ void loop() {
         data.sourceVoltage = getSourceVoltage();
         data.position = getEncoderRotations();
         data.velocity = sumRPMSinceLastData / framesSinceLastData;
-        data.controlModeData = cm;
+        data.controlModeData = &cm;
         data.millis = millis();
         
         sendDataFrame(&data);
-        free(cm);
         
         lastDataTime = currentMicros;
         sumRPMSinceLastData = 0;
