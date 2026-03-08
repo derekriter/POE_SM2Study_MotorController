@@ -68,17 +68,17 @@ class DevicePIDVelocityRequest extends DeviceControlRequest {
   }
 }
 
-// class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
-//   final int slot;
-//   final int ticks;
+class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
+  final double rots;
+  final int slot;
 
-//   DeviceTrapezoidalMotionPositionRequest(this.ticks, this.slot);
+  DeviceTrapezoidalMotionPositionRequest(this.rots, this.slot);
 
-//   @override
-//   List<String> toSerialCommands() {
-//     return <String>["trapPos $ticks $slot"];
-//   }
-// }
+  @override
+  List<String> toSerialCommands() {
+    return <String>["trapPos ${rots.toStringAsFixed(4)} $slot"];
+  }
+}
 
 class DeviceSlotConfigRequest extends DeviceControlRequest {
   final DeviceSlotConfig config;

@@ -8,21 +8,21 @@ class ControlMode {
         virtual ~ControlMode() {};
     
         virtual void update(unsigned long deltaMicros, struct SlotConfig const * const slots) = 0;
-        virtual const uint8_t getID() const = 0;
+        virtual uint8_t const getID() const = 0;
         virtual void getControlModeData(struct ControlModeData* data) = 0;
 };
 
 class DisabledControlMode : public ControlMode {
     public:
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
-        const uint8_t getID() const override;
+        uint8_t const getID() const override;
         void getControlModeData(struct ControlModeData* data) override;
 };
 
 class StopControlMode : public ControlMode {
     public:
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
-        const uint8_t getID() const override;
+        uint8_t const getID() const override;
         void getControlModeData(struct ControlModeData* data) override;
 };
 
@@ -31,7 +31,7 @@ class DutyCycleControlMode : public ControlMode {
         explicit DutyCycleControlMode(double dutyCycle);
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
-        const uint8_t getID() const override;
+        uint8_t const getID() const override;
         void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, DutyCycleControlMode** const controlOut);
@@ -45,7 +45,7 @@ class VoltageControlMode : public ControlMode {
         explicit VoltageControlMode(double voltage);
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
-        const uint8_t getID() const override;
+        uint8_t const getID() const override;
         void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, VoltageControlMode** const controlOut);
@@ -61,7 +61,7 @@ class PIDPositionControlMode : public ControlMode {
         PIDPositionControlMode(double targetRots, uint8_t slot);
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
-        const uint8_t getID() const override;
+        uint8_t const getID() const override;
         void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, PIDPositionControlMode** const controlOut);
@@ -83,7 +83,7 @@ class PIDVelocityControlMode : public ControlMode {
         PIDVelocityControlMode(double targetRPM, uint8_t slot);
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
-        const uint8_t getID() const override;
+        uint8_t const getID() const override;
         void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, PIDVelocityControlMode** const controlOut);
@@ -95,6 +95,32 @@ class PIDVelocityControlMode : public ControlMode {
         double _lastVS;
         double _lastError;
         double _iAccum;
+        
+        unsigned int _updatesSinceLastFrame;
+        double _totalP, _totalI, _totalD, _totalS;
+};
+
+class TrapezoidalPIDPositionControlMode : public ControlMode {
+    public:
+        TrapezoidalPIDPositionControlMode(double targetRots, uint8_t slot);
+        
+        
+        void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
+        uint8_t const getID() const override;
+        void getControlModeData(struct ControlModeData* data) override;
+        
+        static bool parseFromCommandArgs(char const * const commandArgs, TrapezoidalPIDPositionControlMode** const controlOut);
+    
+    private:
+        double _target;
+        uint8_t _slot;
+        double _lastDuty;
+        double _lastVS;
+        double _lastMajorError;
+        double _lastMinorError;
+        double _iAccum;
+        unsigned long _microsSinceStart;
+        double _startRots;
         
         unsigned int _updatesSinceLastFrame;
         double _totalP, _totalI, _totalD, _totalS;

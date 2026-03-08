@@ -28,6 +28,8 @@ struct ControlModeData {
     double dFactor;
     bool hasSFactor;
     double sFactor;
+    bool hasSubError;
+    double subError;
 };
 struct DataFrame {
     bool enabled;

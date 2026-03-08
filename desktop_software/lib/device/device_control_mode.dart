@@ -8,7 +8,8 @@ enum DeviceControlMode {
   dutyCycle(1, "dutyCycle"),
   voltage(2, "voltage"),
   pidPos(3, "pidPos"),
-  pidVel(4, "pidVel");
+  pidVel(4, "pidVel"),
+  trapPos(5, "trapPos");
 
   final int id;
   final String name;
@@ -28,6 +29,8 @@ enum DeviceControlMode {
       return pidPos;
     } else if (id == pidVel.id) {
       return pidVel;
+    } else if (id == trapPos.id) {
+      return trapPos;
     }
 
     return null;
@@ -44,6 +47,7 @@ class DeviceControlModeData {
   final double? iFactor;
   final double? dFactor;
   final double? sFactor;
+  final double? subError;
 
   DeviceControlModeData._({
     required this.mode,
@@ -55,6 +59,7 @@ class DeviceControlModeData {
     required this.iFactor,
     required this.dFactor,
     required this.sFactor,
+    required this.subError,
   });
 
   static DeviceControlModeData? parseJSON(Map<String, dynamic> json) {
@@ -126,6 +131,13 @@ class DeviceControlModeData {
     }
     sFactor = json["cs"] as double?;
 
+    late final double? subError;
+    if (json["se"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'se' parameter");
+      return null;
+    }
+    subError = json["se"] as double?;
+
     return DeviceControlModeData._(
       mode: mode,
       dutyOut: dutyOut,
@@ -136,6 +148,7 @@ class DeviceControlModeData {
       iFactor: iFactor,
       dFactor: dFactor,
       sFactor: sFactor,
+      subError: subError,
     );
   }
 
@@ -153,6 +166,7 @@ class DeviceControlModeData {
       iFactor: iFactor,
       dFactor: dFactor,
       sFactor: sFactor,
+      subError: subError,
     );
   }
 }

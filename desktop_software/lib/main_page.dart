@@ -29,6 +29,7 @@ class MainPage extends StatelessWidget {
       "closedLoopI": appState.closedLoopI.toString(),
       "closedLoopD": appState.closedLoopD.toString(),
       "closedLoopS": appState.closedLoopS.toString(),
+      "closedLoopSubError": appState.closedLoopSubError.toString(),
     };
 
     return Scaffold(
@@ -95,6 +96,22 @@ class MainPage extends StatelessWidget {
                 },
                 child: Text("PID Vel"),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(
+                    DeviceTrapezoidalMotionPositionRequest(100000 / 400, 0),
+                  );
+                },
+                child: Text("Trap Pos 1"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(
+                    DeviceTrapezoidalMotionPositionRequest(0, 0),
+                  );
+                },
+                child: Text("Trap Pos 0"),
+              ),
             ],
           ),
           Row(
@@ -110,9 +127,9 @@ class MainPage extends StatelessWidget {
                         kD: 0.01,
                         kS: 0.17,
                         kSMode: KSMode.errorBased,
-                        vMax: 25000,
-                        aStart: 10000,
-                        aEnd: 10000,
+                        vMax: 25000 / 400 * 60,
+                        aStart: 10000 / 400 * 60,
+                        aEnd: 10000 / 400 * 60,
                       ),
                     ),
                   );

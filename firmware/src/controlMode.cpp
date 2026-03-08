@@ -21,6 +21,7 @@ void DisabledControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSubError = false;
 }
 
 inline void StopControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
@@ -39,6 +40,7 @@ void StopControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSubError = false;
 }
 
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
@@ -60,6 +62,7 @@ void DutyCycleControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSubError = false;
 }
 bool DutyCycleControlMode::parseFromCommandArgs(char const * const commandArgs, DutyCycleControlMode** const controlOut) {
     double duty;
@@ -110,6 +113,7 @@ void VoltageControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSubError = false;
 }
 bool VoltageControlMode::parseFromCommandArgs(char const * const commandArgs, VoltageControlMode** const controlOut) {
     double voltage;
@@ -161,8 +165,8 @@ void PIDPositionControlMode::update(unsigned long deltaMicros, struct SlotConfig
     _totalD += d;
     _totalS += s;
     _updatesSinceLastFrame++;
-    _lastDuty = min(max(_lastDuty, -1), 1);
     
+    _lastDuty = min(max(_lastDuty, -1), 1);
     dutyCycle(_lastDuty);
 }
 inline const uint8_t PIDPositionControlMode::getID() const {return 3u;}
@@ -184,6 +188,7 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     data->dFactor = _totalD / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasSubError = false;
     
     _updatesSinceLastFrame = 0;
     _totalP = 0;
@@ -285,6 +290,7 @@ void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
     data->dFactor = _totalD / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasSubError = false;
     
     _updatesSinceLastFrame = 0;
     _totalP = 0;
@@ -331,5 +337,120 @@ bool PIDVelocityControlMode::parseFromCommandArgs(char const * const commandArgs
     }
     
     *controlOut = new PIDVelocityControlMode(target, slot);
+    return true;
+}
+
+TrapezoidalPIDPositionControlMode::TrapezoidalPIDPositionControlMode(double targetRots, uint8_t slot) {
+    _target = targetRots;
+    
+    assert(slot < 6);
+    _slot = slot;
+    
+    _lastDuty = 0;
+    _lastVS = 0;
+    _lastMajorError = 0;
+    _lastMinorError = 0;
+    _iAccum = 0;
+    _microsSinceStart = 0;
+    _updatesSinceLastFrame = 0;
+    _totalP = 0;
+    _totalI = 0;
+    _totalD = 0;
+    _totalS = 0;
+    _startRots = NAN;
+}
+void TrapezoidalPIDPositionControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
+    _microsSinceStart += deltaMicros;
+    _lastVS = getSourceVoltage();
+    
+    if(isnan(_startRots)) {
+        _startRots = getEncoderRotations();
+    }
+    
+    SlotConfig const * config = slots + _slot;
+    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config);
+    
+    double currentPosition = getEncoderRotations();
+    _lastMajorError = _target - currentPosition;
+    
+    double p, i, d, s;
+    _lastDuty = calcPIDS(currentPosition, currentTarget, config, deltaMicros, &_lastMinorError, &p, &i, &_iAccum, &d, &s);
+    
+    _totalP += p;
+    _totalI += i;
+    _totalD += d;
+    _totalS += s;
+    _updatesSinceLastFrame++;
+    
+    _lastDuty = min(max(_lastDuty, -1), 1);
+    dutyCycle(_lastDuty);
+}
+uint8_t const TrapezoidalPIDPositionControlMode::getID() const {return 5u;}
+void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeData* data) {
+    *data = ControlModeData {};
+    data->controlID = getID();
+    data->dutyOut = _lastDuty;
+    data->voltageOut = _lastDuty * _lastVS;
+    
+    data->hasTarget = true;
+    data->target = _target;
+    data->hasError = true;
+    data->error = _lastMajorError;
+    data->hasPFactor = true;
+    data->pFactor = _totalP / _updatesSinceLastFrame;
+    data->hasIFactor = true;
+    data->iFactor = _totalI / _updatesSinceLastFrame;
+    data->hasDFactor = true;
+    data->dFactor = _totalD / _updatesSinceLastFrame;
+    data->hasSFactor = true;
+    data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasSubError = true;
+    data->subError = _lastMinorError;
+    
+    _updatesSinceLastFrame = 0;
+    _totalP = 0;
+    _totalI = 0;
+    _totalD = 0;
+    _totalS = 0;
+}
+bool TrapezoidalPIDPositionControlMode::parseFromCommandArgs(char const * const commandArgs, TrapezoidalPIDPositionControlMode** const controlOut) {
+    double target;
+    char* arg2Start;
+    if(!parseDouble(commandArgs, &target, &arg2Start)) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed TrapezoidalPIDPositionControlMode, failed to parse arg1 as a double")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    if(*arg2Start == '\0') {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed TrapezoidalPIDPositionControlMode, too few arguments")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    uint8_t slot;
+    char* arg3Start;
+    if(!parseUInt(arg2Start, &slot, &arg3Start)) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed TrapezoidalPIDPositionControlMode, failed to parse arg2 as uint8_t")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    if(slot >= 6) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed TrapezoidalPIDPositionControlMode, slot must be in range [0, 5]")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    if(*arg3Start != '\0') {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed TrapezoidalPIDPositionControlMode, too many arguments")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    *controlOut = new TrapezoidalPIDPositionControlMode(target, slot);
     return true;
 }

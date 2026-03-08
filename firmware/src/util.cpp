@@ -76,3 +76,30 @@ However, when using position closed loop with zero velocity reference (no motion
     *sFactor = s;
     return p + i + d + s;
 }
+double calcTrapProfile(unsigned long microsSinceStart, double startPos, double targetPos, struct SlotConfig const * config) {
+    //https://www.desmos.com/calculator/1rzl2ysfkp
+    
+    double minsSinceStart = microsSinceStart / (double) 1e6 / 60.0;
+    double deltaPos = targetPos - startPos;
+    
+    double vel = sign(deltaPos) * min(sqrt(2 * abs(deltaPos) / (1 / config->aStart + 1 / config->aEnd)), config->vMax);
+    
+    double tAccel = abs(vel) / config->aStart;
+    double posAccel = tAccel * vel / 2;
+    
+    double tDeccel = abs(vel) / config->aEnd;
+    double posDeccel = tDeccel * vel / 2;
+    
+    double posConst = deltaPos - posAccel - posDeccel;
+    double tConst = vel == 0.0 ? 0 : abs(posConst / vel);
+    
+    double iAccel = min(minsSinceStart, tAccel);
+    double iConst = min(max(minsSinceStart - tAccel, 0), tConst);
+    double iDeccel = min(max(minsSinceStart - tAccel - tConst, 0), tDeccel);
+    
+    double accelSeg = config->aStart / 2 * iAccel * iAccel;
+    double constSeg = abs(vel) * iConst;
+    double deccelSeg = -config->aEnd / 2 * iDeccel * iDeccel + abs(vel) * iDeccel;
+    
+    return startPos + sign(vel) * (accelSeg + constSeg + deccelSeg);
+}

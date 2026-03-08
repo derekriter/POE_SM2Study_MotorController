@@ -29,7 +29,7 @@ void sendDataFrame(DataFrame const * const data) {
     }
     if(data->controlModeData->hasError) {
         Serial.print(F(",\"ce\":"));
-        Serial.print(data->controlModeData->error, 2);
+        Serial.print(data->controlModeData->error, 4);
     }
     if(data->controlModeData->hasPFactor) {
         Serial.print(F(",\"cp\":"));
@@ -46,6 +46,10 @@ void sendDataFrame(DataFrame const * const data) {
     if(data->controlModeData->hasSFactor) {
         Serial.print(F(",\"cs\":"));
         Serial.print(data->controlModeData->sFactor, 2);
+    }
+    if(data->controlModeData->hasSubError) {
+        Serial.print(F(",\"se\":"));
+        Serial.print(data->controlModeData->subError, 4);
     }
     
     Serial.print(F("},\"ms\":"));
@@ -210,6 +214,23 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
     else if(startsWithP(commandCstr, F("pidVel "))) {
         PIDVelocityControlMode* control = nullptr;
         if(PIDVelocityControlMode::parseFromCommandArgs(commandCstr + 7, &control)) {
+            *instructions = ReceivedCommand {
+                NO_CHANGE,
+                control,
+                nullptr,
+                static_cast<uint8_t>(NULL),
+                NO_CHANGE
+            };
+            
+            sendOKFrame();
+            return true;
+        }
+        
+        return false;
+    }
+    else if(startsWithP(commandCstr, F("trapPos "))) {
+        TrapezoidalPIDPositionControlMode* control = nullptr;
+        if(TrapezoidalPIDPositionControlMode::parseFromCommandArgs(commandCstr + 8, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,
