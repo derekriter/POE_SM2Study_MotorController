@@ -124,7 +124,7 @@ Future<bool> _sendMessage(Uint8List msg) async {
 
   await Future.doWhile(() {
     return _lastSendTime != null &&
-        DateTime.now().difference(_lastSendTime!).inMilliseconds < 20;
+        DateTime.now().difference(_lastSendTime!).inMilliseconds < 40;
   });
 
   try {

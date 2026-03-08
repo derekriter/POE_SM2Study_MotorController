@@ -6,7 +6,7 @@
 
 bool startsWith(char const * const str, char const * const prefix);
 bool startsWithP(char const * const str, __FlashStringHelper const * const prefixP);
-int sign(float val);
+int sign(double val);
 bool parseDouble(char const * const str, double* const out, char** const end);
 bool parseUInt(char const * const str, uint8_t* const out, char** const end);
-double calcPIDS(double currentVal, double target, struct SlotConfig const * config, unsigned long deltaMicros, double lastErr, double* errOut, double* pOut, double* iOut, double* iAccum, double* dOut, double* sOut);
+double calcPIDS(double currentVal, double target, struct SlotConfig const * config, unsigned long deltaMicros, double* lastError, double* pFactor, double* iFactor, double* iAccum, double* dFactor, double* sFactor);

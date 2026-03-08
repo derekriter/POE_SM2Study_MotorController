@@ -20,6 +20,14 @@ struct ControlModeData {
     double target;
     bool hasError;
     double error;
+    bool hasPFactor;
+    double pFactor;
+    bool hasIFactor;
+    double iFactor;
+    bool hasDFactor;
+    double dFactor;
+    bool hasSFactor;
+    double sFactor;
 };
 struct DataFrame {
     bool enabled;

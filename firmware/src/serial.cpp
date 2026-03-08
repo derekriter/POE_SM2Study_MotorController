@@ -20,16 +20,32 @@ void sendDataFrame(DataFrame const * const data) {
     Serial.print(F(",\"cm\":{\"id\":"));
     Serial.print(data->controlModeData->controlID);
     Serial.print(F(",\"do\":"));
-    Serial.print(data->controlModeData->dutyOut, 4);
+    Serial.print(data->controlModeData->dutyOut, 2);
     Serial.print(F(",\"vo\":"));
-    Serial.print(data->controlModeData->voltageOut, 4);
+    Serial.print(data->controlModeData->voltageOut, 2);
     if(data->controlModeData->hasTarget) {
         Serial.print(F(",\"ct\":"));
-        Serial.print(data->controlModeData->target);
+        Serial.print(data->controlModeData->target, 4);
     }
     if(data->controlModeData->hasError) {
         Serial.print(F(",\"ce\":"));
-        Serial.print(data->controlModeData->error);
+        Serial.print(data->controlModeData->error, 2);
+    }
+    if(data->controlModeData->hasPFactor) {
+        Serial.print(F(",\"cp\":"));
+        Serial.print(data->controlModeData->pFactor, 2);
+    }
+    if(data->controlModeData->hasIFactor) {
+        Serial.print(F(",\"ci\":"));
+        Serial.print(data->controlModeData->iFactor, 2);
+    }
+    if(data->controlModeData->hasDFactor) {
+        Serial.print(F(",\"cd\":"));
+        Serial.print(data->controlModeData->dFactor, 2);
+    }
+    if(data->controlModeData->hasSFactor) {
+        Serial.print(F(",\"cs\":"));
+        Serial.print(data->controlModeData->sFactor, 2);
     }
     
     Serial.print(F("},\"ms\":"));
@@ -69,28 +85,28 @@ void sendSlotFrame(SlotFrame const * const slot) {
     Serial.print(slot->slotNum);
     
     Serial.print(F(",\"p\":"));
-    Serial.print(slot->kP);
+    Serial.print(slot->kP, 8);
     
     Serial.print(F(",\"i\":"));
-    Serial.print(slot->kI);
+    Serial.print(slot->kI, 8);
     
     Serial.print(F(",\"d\":"));
-    Serial.print(slot->kD);
+    Serial.print(slot->kD, 8);
     
     Serial.print(F(",\"s\":"));
-    Serial.print(slot->kS);
+    Serial.print(slot->kS, 8);
     
     Serial.print(F(",\"sm\":"));
     Serial.print(slot->kSMode);
     
     Serial.print(F(",\"v\":"));
-    Serial.print(slot->vMax);
+    Serial.print(slot->vMax, 2);
     
     Serial.print(F(",\"as\":"));
-    Serial.print(slot->aStart);
+    Serial.print(slot->aStart, 2);
     
     Serial.print(F(",\"ae\":"));
-    Serial.print(slot->aEnd);
+    Serial.print(slot->aEnd, 2);
     
     Serial.println(F("}}"));
 }
@@ -142,7 +158,7 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
     }
     else if(startsWithP(commandCstr, F("dutyCycle "))) {
         DutyCycleControlMode* control = nullptr;
-        if(DutyCycleControlMode::parseFromCommandArgs(command->c_str() + 10, &control)) {
+        if(DutyCycleControlMode::parseFromCommandArgs(commandCstr + 10, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,
@@ -159,7 +175,7 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
     }
     else if(startsWithP(commandCstr, F("voltage "))) {
         VoltageControlMode* control = nullptr;
-        if(VoltageControlMode::parseFromCommandArgs(command->c_str() + 8, &control)) {
+        if(VoltageControlMode::parseFromCommandArgs(commandCstr + 8, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,
@@ -176,7 +192,24 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
     }
     else if(startsWithP(commandCstr, F("pidPos "))) {
         PIDPositionControlMode* control = nullptr;
-        if(PIDPositionControlMode::parseFromCommandArgs(command->c_str() + 7, &control)) {
+        if(PIDPositionControlMode::parseFromCommandArgs(commandCstr + 7, &control)) {
+            *instructions = ReceivedCommand {
+                NO_CHANGE,
+                control,
+                nullptr,
+                static_cast<uint8_t>(NULL),
+                NO_CHANGE
+            };
+            
+            sendOKFrame();
+            return true;
+        }
+        
+        return false;
+    }
+    else if(startsWithP(commandCstr, F("pidVel "))) {
+        PIDVelocityControlMode* control = nullptr;
+        if(PIDVelocityControlMode::parseFromCommandArgs(commandCstr + 7, &control)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 control,
@@ -194,7 +227,7 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
     else if(startsWithP(commandCstr, F("setSlot "))) {
         SlotConfig* slot = nullptr;
         uint8_t slotNum = static_cast<uint8_t>(NULL);
-        if(parseSlotConfigFromCommandArgs(command->c_str() + 8, &slot, &slotNum)) {
+        if(parseSlotConfigFromCommandArgs(commandCstr + 8, &slot, &slotNum)) {
             *instructions = ReceivedCommand {
                 NO_CHANGE,
                 nullptr,

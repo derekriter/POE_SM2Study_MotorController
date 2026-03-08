@@ -7,7 +7,8 @@ enum DeviceControlMode {
   stop(0, "stop"),
   dutyCycle(1, "dutyCycle"),
   voltage(2, "voltage"),
-  pidPos(3, "pidPos");
+  pidPos(3, "pidPos"),
+  pidVel(4, "pidVel");
 
   final int id;
   final String name;
@@ -25,6 +26,8 @@ enum DeviceControlMode {
       return voltage;
     } else if (id == pidPos.id) {
       return pidPos;
+    } else if (id == pidVel.id) {
+      return pidVel;
     }
 
     return null;
@@ -37,6 +40,10 @@ class DeviceControlModeData {
   final double voltageOut;
   final double? target;
   final double? error;
+  final double? pFactor;
+  final double? iFactor;
+  final double? dFactor;
+  final double? sFactor;
 
   DeviceControlModeData._({
     required this.mode,
@@ -44,6 +51,10 @@ class DeviceControlModeData {
     required this.voltageOut,
     required this.target,
     required this.error,
+    required this.pFactor,
+    required this.iFactor,
+    required this.dFactor,
+    required this.sFactor,
   });
 
   static DeviceControlModeData? parseJSON(Map<String, dynamic> json) {
@@ -87,12 +98,44 @@ class DeviceControlModeData {
     }
     error = json["ce"] as double?;
 
+    late final double? pFactor;
+    if (json["cp"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'cp' parameter");
+      return null;
+    }
+    pFactor = json["cp"] as double?;
+
+    late final double? iFactor;
+    if (json["ci"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'ci' parameter");
+      return null;
+    }
+    iFactor = json["ci"] as double?;
+
+    late final double? dFactor;
+    if (json["cd"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'cd' parameter");
+      return null;
+    }
+    dFactor = json["cd"] as double?;
+
+    late final double? sFactor;
+    if (json["cs"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'cs' parameter");
+      return null;
+    }
+    sFactor = json["cs"] as double?;
+
     return DeviceControlModeData._(
       mode: mode,
       dutyOut: dutyOut,
       voltageOut: voltageOut,
       target: target,
       error: error,
+      pFactor: pFactor,
+      iFactor: iFactor,
+      dFactor: dFactor,
+      sFactor: sFactor,
     );
   }
 
@@ -106,6 +149,10 @@ class DeviceControlModeData {
       voltageOut: voltageOut,
       target: target,
       error: error,
+      pFactor: pFactor,
+      iFactor: iFactor,
+      dFactor: dFactor,
+      sFactor: sFactor,
     );
   }
 }

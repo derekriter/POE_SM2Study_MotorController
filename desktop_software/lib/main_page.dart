@@ -25,6 +25,10 @@ class MainPage extends StatelessWidget {
       "voltageOut": appState.voltageOut.toString(),
       "closedLoopTarget": appState.closedLoopTarget.toString(),
       "closedLoopError": appState.closedLoopError.toString(),
+      "closedLoopP": appState.closedLoopP.toString(),
+      "closedLoopI": appState.closedLoopI.toString(),
+      "closedLoopD": appState.closedLoopD.toString(),
+      "closedLoopS": appState.closedLoopS.toString(),
     };
 
     return Scaffold(
@@ -83,6 +87,14 @@ class MainPage extends StatelessWidget {
                 },
                 child: Text("PID Pos"),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  appState.sendControlRequest(
+                    DevicePIDVelocityRequest(3000, 1),
+                  );
+                },
+                child: Text("PID Vel"),
+              ),
             ],
           ),
           Row(
@@ -93,9 +105,9 @@ class MainPage extends StatelessWidget {
                     DeviceSlotConfigRequest(
                       0,
                       DeviceSlotConfig(
-                        kP: 0.02,
+                        kP: 0.03,
                         kI: 0,
-                        kD: 0.0003,
+                        kD: 0.01,
                         kS: 0.17,
                         kSMode: KSMode.errorBased,
                         vMax: 25000,
@@ -109,9 +121,31 @@ class MainPage extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  appState.sendControlRequest(DeviceGetSlotRequest(0));
+                  appState.sendControlRequest(
+                    DeviceSlotConfigRequest(
+                      1,
+                      DeviceSlotConfig(
+                        kP: 0.002,
+                        kI: 0.00001,
+                        kD: 0,
+                        kS: 0.17,
+                        kSMode: KSMode.velocityBased,
+                        vMax: 0,
+                        aStart: 0,
+                        aEnd: 0,
+                      ),
+                    ),
+                  );
                 },
-                child: Text("Get Slot 0"),
+                child: Text("Dummy Slot 1"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  for (int i = 0; i < 6; i++) {
+                    appState.sendControlRequest(DeviceGetSlotRequest(i));
+                  }
+                },
+                child: Text("Refresh slots"),
               ),
             ],
           ),

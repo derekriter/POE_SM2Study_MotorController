@@ -52,21 +52,21 @@ class DevicePIDPositionRequest extends DeviceControlRequest {
 
   @override
   List<String> toSerialCommands() {
-    return <String>["pidPos $rots $slot"];
+    return <String>["pidPos ${rots.toStringAsFixed(4)} $slot"];
   }
 }
 
-// class DevicePIDVelocityRequest extends DeviceControlRequest {
-//   final int slot;
-//   final double tps;
+class DevicePIDVelocityRequest extends DeviceControlRequest {
+  final int slot;
+  final double rpm;
 
-//   DevicePIDVelocityRequest(this.tps, this.slot);
+  DevicePIDVelocityRequest(this.rpm, this.slot);
 
-//   @override
-//   List<String> toSerialCommands() {
-//     return <String>["pidVel ${tps.toStringAsFixed(4)} $slot"];
-//   }
-// }
+  @override
+  List<String> toSerialCommands() {
+    return <String>["pidVel ${rpm.toStringAsFixed(4)} $slot"];
+  }
+}
 
 // class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
 //   final int slot;
@@ -89,7 +89,7 @@ class DeviceSlotConfigRequest extends DeviceControlRequest {
   @override
   List<String> toSerialCommands() {
     return <String>[
-      "setSlot $slotNum ${config.kP} ${config.kI} ${config.kD} ${config.kS} ${config.kSMode.id} ${config.vMax} ${config.aStart} ${config.aEnd}",
+      "setSlot $slotNum ${config.kP.toStringAsFixed(8)} ${config.kI.toStringAsFixed(8)} ${config.kD.toStringAsFixed(8)} ${config.kS.toStringAsFixed(8)} ${config.kSMode.id} ${config.vMax.toStringAsFixed(2)} ${config.aStart.toStringAsFixed(2)} ${config.aEnd.toStringAsFixed(2)}",
     ];
   }
 }

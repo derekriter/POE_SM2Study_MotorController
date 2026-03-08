@@ -9,21 +9,21 @@ class ControlMode {
     
         virtual void update(unsigned long deltaMicros, struct SlotConfig const * const slots) = 0;
         virtual const uint8_t getID() const = 0;
-        virtual void getControlModeData(struct ControlModeData* data) const = 0;
+        virtual void getControlModeData(struct ControlModeData* data) = 0;
 };
 
 class DisabledControlMode : public ControlMode {
     public:
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
         const uint8_t getID() const override;
-        void getControlModeData(struct ControlModeData* data) const override;
+        void getControlModeData(struct ControlModeData* data) override;
 };
 
 class StopControlMode : public ControlMode {
     public:
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
         const uint8_t getID() const override;
-        void getControlModeData(struct ControlModeData* data) const override;
+        void getControlModeData(struct ControlModeData* data) override;
 };
 
 class DutyCycleControlMode : public ControlMode {
@@ -32,7 +32,7 @@ class DutyCycleControlMode : public ControlMode {
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
         const uint8_t getID() const override;
-        void getControlModeData(struct ControlModeData* data) const override;
+        void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, DutyCycleControlMode** const controlOut);
     
@@ -46,7 +46,7 @@ class VoltageControlMode : public ControlMode {
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
         const uint8_t getID() const override;
-        void getControlModeData(struct ControlModeData* data) const override;
+        void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, VoltageControlMode** const controlOut);
     
@@ -62,7 +62,7 @@ class PIDPositionControlMode : public ControlMode {
         
         void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
         const uint8_t getID() const override;
-        void getControlModeData(struct ControlModeData* data) const override;
+        void getControlModeData(struct ControlModeData* data) override;
         
         static bool parseFromCommandArgs(char const * const commandArgs, PIDPositionControlMode** const controlOut);
         
@@ -72,4 +72,30 @@ class PIDPositionControlMode : public ControlMode {
         double _lastDuty;
         double _lastVS;
         double _lastError;
+        double _iAccum;
+        
+        unsigned int _updatesSinceLastFrame;
+        double _totalP, _totalI, _totalD, _totalS;
+};
+
+class PIDVelocityControlMode : public ControlMode {
+    public:
+        PIDVelocityControlMode(double targetRPM, uint8_t slot);
+        
+        void update(unsigned long deltaMicros, struct SlotConfig const * const slots) override;
+        const uint8_t getID() const override;
+        void getControlModeData(struct ControlModeData* data) override;
+        
+        static bool parseFromCommandArgs(char const * const commandArgs, PIDVelocityControlMode** const controlOut);
+        
+    private:
+        double _target;
+        uint8_t _slot;
+        double _lastDuty;
+        double _lastVS;
+        double _lastError;
+        double _iAccum;
+        
+        unsigned int _updatesSinceLastFrame;
+        double _totalP, _totalI, _totalD, _totalS;
 };

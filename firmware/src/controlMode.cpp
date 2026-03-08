@@ -9,7 +9,7 @@ inline void DisabledControlMode::update(unsigned long deltaMicros, struct SlotCo
     dutyCycle(0);
 }
 inline const uint8_t DisabledControlMode::getID() const {return 255u;}
-void DisabledControlMode::getControlModeData(ControlModeData* data) const {
+void DisabledControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = 0;
@@ -17,13 +17,17 @@ void DisabledControlMode::getControlModeData(ControlModeData* data) const {
     
     data->hasTarget = false;
     data->hasError = false;
+    data->hasPFactor = false;
+    data->hasIFactor = false;
+    data->hasDFactor = false;
+    data->hasSFactor = false;
 }
 
 inline void StopControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     dutyCycle(0);
 }
 inline const uint8_t StopControlMode::getID() const {return 0u;}
-void StopControlMode::getControlModeData(ControlModeData* data) const {
+void StopControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = 0;
@@ -31,6 +35,10 @@ void StopControlMode::getControlModeData(ControlModeData* data) const {
     
     data->hasTarget = false;
     data->hasError = false;
+    data->hasPFactor = false;
+    data->hasIFactor = false;
+    data->hasDFactor = false;
+    data->hasSFactor = false;
 }
 
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
@@ -40,7 +48,7 @@ inline void DutyCycleControlMode::update(unsigned long deltaMicros, struct SlotC
     dutyCycle(_duty);
 }
 inline const uint8_t DutyCycleControlMode::getID() const {return 1u;}
-void DutyCycleControlMode::getControlModeData(ControlModeData* data) const {
+void DutyCycleControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _duty;
@@ -48,6 +56,10 @@ void DutyCycleControlMode::getControlModeData(ControlModeData* data) const {
     
     data->hasTarget = false;
     data->hasError = false;
+    data->hasPFactor = false;
+    data->hasIFactor = false;
+    data->hasDFactor = false;
+    data->hasSFactor = false;
 }
 bool DutyCycleControlMode::parseFromCommandArgs(char const * const commandArgs, DutyCycleControlMode** const controlOut) {
     double duty;
@@ -86,7 +98,7 @@ void VoltageControlMode::update(unsigned long deltaMicros, struct SlotConfig con
     dutyCycle(_lastDuty);
 }
 inline const uint8_t VoltageControlMode::getID() const {return 2u;}
-void VoltageControlMode::getControlModeData(ControlModeData* data) const {
+void VoltageControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _lastDuty;
@@ -94,6 +106,10 @@ void VoltageControlMode::getControlModeData(ControlModeData* data) const {
     
     data->hasTarget = false;
     data->hasError = false;
+    data->hasPFactor = false;
+    data->hasIFactor = false;
+    data->hasDFactor = false;
+    data->hasSFactor = false;
 }
 bool VoltageControlMode::parseFromCommandArgs(char const * const commandArgs, VoltageControlMode** const controlOut) {
     double voltage;
@@ -121,18 +137,36 @@ PIDPositionControlMode::PIDPositionControlMode(double targetRots, uint8_t slot) 
     
     assert(slot < 6);
     _slot = slot;
+    
+    _lastDuty = 0;
+    _lastVS = 0;
+    _lastError = 0;
+    _iAccum = 0;
+    _totalP = 0;
+    _totalI = 0;
+    _totalD = 0;
+    _totalS = 0;
+    _updatesSinceLastFrame = 0;
 }
 void PIDPositionControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     _lastVS = getSourceVoltage();
     
     SlotConfig const * config = slots + _slot;
+    double p, i, d, s;
     
-    _lastDuty = -0.4;
-    _lastError = 10;
+    _lastDuty = calcPIDS(getEncoderRotations(), _target, config, deltaMicros, &_lastError, &p, &i, &_iAccum, &d, &s);
+    
+    _totalP += p;
+    _totalI += i;
+    _totalD += d;
+    _totalS += s;
+    _updatesSinceLastFrame++;
+    _lastDuty = min(max(_lastDuty, -1), 1);
+    
     dutyCycle(_lastDuty);
 }
 inline const uint8_t PIDPositionControlMode::getID() const {return 3u;}
-void PIDPositionControlMode::getControlModeData(ControlModeData* data) const {
+void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _lastDuty;
@@ -142,6 +176,20 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) const {
     data->target = _target;
     data->hasError = true;
     data->error = _lastError;
+    data->hasPFactor = true;
+    data->pFactor = _totalP / _updatesSinceLastFrame;
+    data->hasIFactor = true;
+    data->iFactor = _totalI / _updatesSinceLastFrame;
+    data->hasDFactor = true;
+    data->dFactor = _totalD / _updatesSinceLastFrame;
+    data->hasSFactor = true;
+    data->sFactor = _totalS / _updatesSinceLastFrame;
+    
+    _updatesSinceLastFrame = 0;
+    _totalP = 0;
+    _totalI = 0;
+    _totalD = 0;
+    _totalS = 0;
 }
 bool PIDPositionControlMode::parseFromCommandArgs(char const * const commandArgs, PIDPositionControlMode** const controlOut) {
     double target;
@@ -182,5 +230,106 @@ bool PIDPositionControlMode::parseFromCommandArgs(char const * const commandArgs
     }
     
     *controlOut = new PIDPositionControlMode(target, slot);
+    return true;
+}
+
+PIDVelocityControlMode::PIDVelocityControlMode(double targetRPM, uint8_t slot) {
+    _target = targetRPM;
+    
+    assert(slot < 6);
+    _slot = slot;
+    
+    _lastDuty = 0;
+    _lastVS = 0;
+    _lastError = 0;
+    _iAccum = 0;
+    _totalP = 0;
+    _totalI = 0;
+    _totalD = 0;
+    _totalS = 0;
+    _updatesSinceLastFrame = 0;
+}
+void PIDVelocityControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
+    _lastVS = getSourceVoltage();
+    
+    SlotConfig const * config = slots + _slot;
+    double p, i, d, s;
+    
+    _lastDuty = calcPIDS(getEncoderRPM(), _target, config, deltaMicros, &_lastError, &p, &i, &_iAccum, &d, &s);
+    
+    _totalP += p;
+    _totalI += i;
+    _totalD += d;
+    _totalS += s;
+    _updatesSinceLastFrame++;
+    _lastDuty = min(max(_lastDuty, -1), 1);
+    
+    dutyCycle(_lastDuty);
+}
+inline const uint8_t PIDVelocityControlMode::getID() const {return 4u;}
+void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
+    *data = ControlModeData {};
+    data->controlID = getID();
+    data->dutyOut = _lastDuty;
+    data->voltageOut = _lastDuty * _lastVS;
+    
+    data->hasTarget = true;
+    data->target = _target;
+    data->hasError = true;
+    data->error = _lastError;
+    data->hasPFactor = true;
+    data->pFactor = _totalP / _updatesSinceLastFrame;
+    data->hasIFactor = true;
+    data->iFactor = _totalI / _updatesSinceLastFrame;
+    data->hasDFactor = true;
+    data->dFactor = _totalD / _updatesSinceLastFrame;
+    data->hasSFactor = true;
+    data->sFactor = _totalS / _updatesSinceLastFrame;
+    
+    _updatesSinceLastFrame = 0;
+    _totalP = 0;
+    _totalI = 0;
+    _totalD = 0;
+    _totalS = 0;
+}
+bool PIDVelocityControlMode::parseFromCommandArgs(char const * const commandArgs, PIDVelocityControlMode** const controlOut) {
+    double target;
+    char* arg2Start;
+    if(!parseDouble(commandArgs, &target, &arg2Start)) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed PIDVelocityControlMode, failed to parse arg1 as a double")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    if(*arg2Start == '\0') {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed PIDVelocityControlMode, too few arguments")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    uint8_t slot;
+    char* arg3Start;
+    if(!parseUInt(arg2Start, &slot, &arg3Start)) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed PIDVelocityControlMode, failed to parse arg2 as uint8_t")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    if(slot >= 6) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed PIDVelocityControlMode, slot must be in range [0, 5]")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    if(*arg3Start != '\0') {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed PIDVelocityControlMode, too many arguments")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    *controlOut = new PIDVelocityControlMode(target, slot);
     return true;
 }
