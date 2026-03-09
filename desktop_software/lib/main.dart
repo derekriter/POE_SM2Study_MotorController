@@ -25,7 +25,7 @@ class AppRoot extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),
-        home: const MainPage(),
+        home: Scaffold(body: const MainPage()),
       ),
     );
   }
