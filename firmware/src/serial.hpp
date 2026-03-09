@@ -30,6 +30,10 @@ struct ControlModeData {
     double sFactor;
     bool hasSubError;
     double subError;
+    bool hasSecsToCompletion;
+    double secsToCompletion;
+    bool hasPhase;
+    uint8_t phase;
 };
 struct DataFrame {
     bool enabled;

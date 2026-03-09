@@ -51,6 +51,14 @@ void sendDataFrame(DataFrame const * const data) {
         Serial.print(F(",\"se\":"));
         Serial.print(data->controlModeData->subError, 4);
     }
+    if(data->controlModeData->hasSecsToCompletion) {
+        Serial.print(F(",\"tc\":"));
+        Serial.print(data->controlModeData->secsToCompletion, 3);
+    }
+    if(data->controlModeData->hasPhase) {
+        Serial.print(F(",\"ph\":"));
+        Serial.print(data->controlModeData->phase);
+    }
     
     Serial.print(F("},\"ms\":"));
     Serial.print(data->millis);

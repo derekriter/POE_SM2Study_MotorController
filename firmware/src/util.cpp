@@ -76,8 +76,14 @@ However, when using position closed loop with zero velocity reference (no motion
     *sFactor = s;
     return p + i + d + s;
 }
-double calcTrapProfile(unsigned long microsSinceStart, double startPos, double targetPos, struct SlotConfig const * config) {
+double calcTrapProfile(unsigned long microsSinceStart, double startPos, double targetPos, struct SlotConfig const * config, double* secsToCompletion, uint8_t* phase) {
     //https://www.desmos.com/calculator/1rzl2ysfkp
+    
+    if(config->aStart == 0.0 || config->aEnd == 0.0 || config->vMax == 0.0) {
+        *secsToCompletion = NAN;
+        *phase = 255u;
+        return startPos;
+    }
     
     double minsSinceStart = microsSinceStart / (double) 1e6 / 60.0;
     double deltaPos = targetPos - startPos;
@@ -91,7 +97,7 @@ double calcTrapProfile(unsigned long microsSinceStart, double startPos, double t
     double posDeccel = tDeccel * vel / 2;
     
     double posConst = deltaPos - posAccel - posDeccel;
-    double tConst = vel == 0.0 ? 0 : abs(posConst / vel);
+    double tConst = abs(posConst / vel);
     
     double iAccel = min(minsSinceStart, tAccel);
     double iConst = min(max(minsSinceStart - tAccel, 0), tConst);
@@ -100,6 +106,20 @@ double calcTrapProfile(unsigned long microsSinceStart, double startPos, double t
     double accelSeg = config->aStart / 2 * iAccel * iAccel;
     double constSeg = abs(vel) * iConst;
     double deccelSeg = -config->aEnd / 2 * iDeccel * iDeccel + abs(vel) * iDeccel;
+    
+    *secsToCompletion = (tAccel + tConst + tDeccel - minsSinceStart) * 60;
+    if(minsSinceStart > tAccel + tConst + tDeccel) {
+        *phase = 3;
+    }
+    else if(iDeccel > 0) {
+        *phase = 2;
+    }
+    else if(iConst > 0) {
+        *phase = 1;
+    }
+    else {
+        *phase = 0;
+    }
     
     return startPos + sign(vel) * (accelSeg + constSeg + deccelSeg);
 }

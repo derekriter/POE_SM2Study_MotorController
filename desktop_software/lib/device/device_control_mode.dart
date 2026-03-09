@@ -48,6 +48,8 @@ class DeviceControlModeData {
   final double? dFactor;
   final double? sFactor;
   final double? subError;
+  final double? secsToCompletion;
+  final int? phase;
 
   DeviceControlModeData._({
     required this.mode,
@@ -60,6 +62,8 @@ class DeviceControlModeData {
     required this.dFactor,
     required this.sFactor,
     required this.subError,
+    required this.secsToCompletion,
+    required this.phase,
   });
 
   static DeviceControlModeData? parseJSON(Map<String, dynamic> json) {
@@ -138,6 +142,20 @@ class DeviceControlModeData {
     }
     subError = json["se"] as double?;
 
+    late final double? secsToCompletion;
+    if (json["tc"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'tc' parameter");
+      return null;
+    }
+    secsToCompletion = json["tc"] as double?;
+
+    late final int? phase;
+    if (json["ph"] is! int?) {
+      _logger.w("Invalid control mode, invalid 'ph' parameter");
+      return null;
+    }
+    phase = json["ph"] as int?;
+
     return DeviceControlModeData._(
       mode: mode,
       dutyOut: dutyOut,
@@ -149,11 +167,48 @@ class DeviceControlModeData {
       dFactor: dFactor,
       sFactor: sFactor,
       subError: subError,
+      secsToCompletion: secsToCompletion,
+      phase: phase,
     );
   }
 
   int get id => mode.id;
   String get name => mode.name;
+  String? get phaseName {
+    if (phase == null) return null;
+
+    switch (mode) {
+      case DeviceControlMode.trapPos:
+        {
+          switch (phase) {
+            case 0:
+              {
+                return "accel";
+              }
+            case 1:
+              {
+                return "const vel";
+              }
+            case 2:
+              {
+                return "deccel";
+              }
+            case 3:
+              {
+                return "completed";
+              }
+            default:
+              {
+                return "unknown";
+              }
+          }
+        }
+      default:
+        {
+          return "unknown";
+        }
+    }
+  }
 
   DeviceControlModeData copy() {
     return DeviceControlModeData._(
@@ -167,6 +222,8 @@ class DeviceControlModeData {
       dFactor: dFactor,
       sFactor: sFactor,
       subError: subError,
+      secsToCompletion: secsToCompletion,
+      phase: phase,
     );
   }
 }

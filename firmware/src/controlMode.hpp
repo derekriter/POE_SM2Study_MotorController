@@ -121,6 +121,8 @@ class TrapezoidalPIDPositionControlMode : public ControlMode {
         double _iAccum;
         unsigned long _microsSinceStart;
         double _startRots;
+        uint8_t _lastPhase;
+        double _lastSecsToCompletion;
         
         unsigned int _updatesSinceLastFrame;
         double _totalP, _totalI, _totalD, _totalS;

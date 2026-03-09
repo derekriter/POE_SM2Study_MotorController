@@ -14,12 +14,13 @@ class MainPage extends StatelessWidget {
     final Map<String, String> data = {
       "isConnected": appState.isConnected.toString(),
       "isReady": appState.isReady.toString(),
-      "port": appState.port ?? "null",
+      "port": appState.port.toString(),
       "enabled": appState.enabled.toString(),
       "sourceVoltage": appState.sourceVoltage.toString(),
       "position": appState.position.toString(),
       "velocity": appState.velocity.toString(),
       "timestamp": appState.timestamp.toString(),
+      "controlModeID": appState.controlModeID.toString(),
       "controlModeName": appState.controlModeName.toString(),
       "dutyOut": appState.dutyOut.toString(),
       "voltageOut": appState.voltageOut.toString(),
@@ -30,6 +31,9 @@ class MainPage extends StatelessWidget {
       "closedLoopD": appState.closedLoopD.toString(),
       "closedLoopS": appState.closedLoopS.toString(),
       "closedLoopSubError": appState.closedLoopSubError.toString(),
+      "secsToCompletion": appState.secsToCompletion.toString(),
+      "closedLoopPhase": appState.closedLoopPhase.toString(),
+      "closedLoopPhaseName": appState.closedLoopPhaseName.toString(),
     };
 
     return Scaffold(
@@ -128,8 +132,8 @@ class MainPage extends StatelessWidget {
                         kS: 0.17,
                         kSMode: KSMode.errorBased,
                         vMax: 25000 / 400 * 60,
-                        aStart: 10000 / 400 * 60,
-                        aEnd: 10000 / 400 * 60,
+                        aStart: 10000 / 400 * 60 * 60,
+                        aEnd: 10000 / 400 * 60 * 60,
                       ),
                     ),
                   );

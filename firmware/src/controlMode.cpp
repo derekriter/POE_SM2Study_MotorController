@@ -22,6 +22,8 @@ void DisabledControlMode::getControlModeData(ControlModeData* data) {
     data->hasDFactor = false;
     data->hasSFactor = false;
     data->hasSubError = false;
+    data->hasSecsToCompletion = false;
+    data->hasPhase = false;
 }
 
 inline void StopControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
@@ -41,6 +43,8 @@ void StopControlMode::getControlModeData(ControlModeData* data) {
     data->hasDFactor = false;
     data->hasSFactor = false;
     data->hasSubError = false;
+    data->hasSecsToCompletion = false;
+    data->hasPhase = false;
 }
 
 DutyCycleControlMode::DutyCycleControlMode(double dutyCycle) {
@@ -63,6 +67,8 @@ void DutyCycleControlMode::getControlModeData(ControlModeData* data) {
     data->hasDFactor = false;
     data->hasSFactor = false;
     data->hasSubError = false;
+    data->hasSecsToCompletion = false;
+    data->hasPhase = false;
 }
 bool DutyCycleControlMode::parseFromCommandArgs(char const * const commandArgs, DutyCycleControlMode** const controlOut) {
     double duty;
@@ -114,6 +120,8 @@ void VoltageControlMode::getControlModeData(ControlModeData* data) {
     data->hasDFactor = false;
     data->hasSFactor = false;
     data->hasSubError = false;
+    data->hasSecsToCompletion = false;
+    data->hasPhase = false;
 }
 bool VoltageControlMode::parseFromCommandArgs(char const * const commandArgs, VoltageControlMode** const controlOut) {
     double voltage;
@@ -189,6 +197,8 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
     data->hasSubError = false;
+    data->hasSecsToCompletion = false;
+    data->hasPhase = false;
     
     _updatesSinceLastFrame = 0;
     _totalP = 0;
@@ -291,6 +301,8 @@ void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
     data->hasSubError = false;
+    data->hasSecsToCompletion = false;
+    data->hasPhase = false;
     
     _updatesSinceLastFrame = 0;
     _totalP = 0;
@@ -358,6 +370,8 @@ TrapezoidalPIDPositionControlMode::TrapezoidalPIDPositionControlMode(double targ
     _totalD = 0;
     _totalS = 0;
     _startRots = NAN;
+    _lastPhase = 0;
+    _lastSecsToCompletion = 0;
 }
 void TrapezoidalPIDPositionControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     _microsSinceStart += deltaMicros;
@@ -368,7 +382,7 @@ void TrapezoidalPIDPositionControlMode::update(unsigned long deltaMicros, struct
     }
     
     SlotConfig const * config = slots + _slot;
-    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config);
+    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config, &_lastSecsToCompletion, &_lastPhase);
     
     double currentPosition = getEncoderRotations();
     _lastMajorError = _target - currentPosition;
@@ -406,6 +420,10 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     data->sFactor = _totalS / _updatesSinceLastFrame;
     data->hasSubError = true;
     data->subError = _lastMinorError;
+    data->hasSecsToCompletion = true;
+    data->secsToCompletion = _lastSecsToCompletion;
+    data->hasPhase = true;
+    data->phase = _lastPhase;
     
     _updatesSinceLastFrame = 0;
     _totalP = 0;
