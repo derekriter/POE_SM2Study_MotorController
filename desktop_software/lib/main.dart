@@ -23,7 +23,10 @@ class AppRoot extends StatelessWidget {
       child: MaterialApp(
         title: "Remote Motor Control",
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+          ),
         ),
         home: Scaffold(body: const MainPage()),
       ),

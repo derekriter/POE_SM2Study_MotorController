@@ -1,4 +1,4 @@
-import 'package:desktop_software/widgets/header.dart';
+import 'package:desktop_software/widgets/footer.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatelessWidget {
@@ -8,8 +8,8 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Header(),
         Expanded(child: Placeholder()),
+        Footer(),
       ],
     );
   }
