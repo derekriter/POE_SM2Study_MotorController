@@ -52,6 +52,17 @@ abstract class DeviceFrame {
 
           return DeviceSlotFrame._parsePayload(payload);
         }
+      case "info":
+        {
+          late final Map<String, dynamic> payload;
+          if (json["py"] is! Map<String, dynamic>) {
+            _logger.w("Invalid info frame, missing or invalid 'py' parameter");
+            return null;
+          }
+          payload = json["py"] as Map<String, dynamic>;
+
+          return DeviceInfoFrame._parsePayload(payload);
+        }
       default:
         {
           _logger.w("Invalid device frame, invalid 'ty' parameter");
@@ -413,6 +424,42 @@ class DeviceSlotFrame extends DeviceFrame {
       vMax: vMax,
       aStart: aStart,
       aEnd: aEnd,
+    );
+  }
+}
+
+class DeviceInfoFrame extends DeviceFrame {
+  final String deviceName;
+  final String firmwareVersion;
+
+  DeviceInfoFrame._({required this.deviceName, required this.firmwareVersion});
+
+  static DeviceInfoFrame? _parsePayload(Map<String, dynamic> json) {
+    late final String deviceName;
+    if (json["nm"] is! String) {
+      _logger.w("Invalid info frame, missing or invalid 'nm' parameter");
+      return null;
+    }
+    deviceName = json["nm"] as String;
+
+    late final String firmwareVersion;
+    if (json["fv"] is! String) {
+      _logger.w("Invalid info frame, missing or invalid 'nm' parameter");
+      return null;
+    }
+    firmwareVersion = json["fv"] as String;
+
+    return DeviceInfoFrame._(
+      deviceName: deviceName,
+      firmwareVersion: firmwareVersion,
+    );
+  }
+
+  @override
+  DeviceFrame copy() {
+    return DeviceInfoFrame._(
+      deviceName: deviceName,
+      firmwareVersion: firmwareVersion,
     );
   }
 }

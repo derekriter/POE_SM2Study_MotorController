@@ -11,6 +11,9 @@
 #define SET_ENABLE 1u
 #define SET_DISABLE 2u
 
+#define DEVICE_NAME F("Custom Motor Controller v1.0")
+#define FIRMWARE_VERSION F("v2.0")
+
 struct ControlModeData {
     uint8_t controlID;
     double dutyOut;
@@ -71,6 +74,7 @@ void sendMessageFrame(MessageFrame const * const msg);
 void sendMessageFrameP(MessageFrameP const * const msgP);
 void sendOKFrame();
 void sendSlotFrame(SlotFrame const * const slot);
+void sendDeviceInfo();
 
 bool getIncomingIfAvailable(String* const incoming);
 bool processCommand(String const * const command, ReceivedCommand* const instructions);

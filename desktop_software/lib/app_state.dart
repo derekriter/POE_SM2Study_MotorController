@@ -76,6 +76,9 @@ class AppState extends ChangeNotifier {
   int? get closedLoopPhase => _deviceState?.lastData?.controlMode.phase;
   String? get closedLoopPhaseName =>
       _deviceState?.lastData?.controlMode.phaseName;
+  int? get updatesPerSec => _deviceState?.updatesPerSec;
+  String? get deviceName => _deviceState?.deviceName;
+  String? get firmwareVersion => _deviceState?.firmwareVersion;
 
   void sendControlRequest(DeviceControlRequest req) {
     _deviceSend?.send(req);

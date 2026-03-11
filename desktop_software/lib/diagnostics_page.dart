@@ -34,6 +34,9 @@ class DiagnosticsPage extends StatelessWidget {
       "secsToCompletion": appState.secsToCompletion.toString(),
       "closedLoopPhase": appState.closedLoopPhase.toString(),
       "closedLoopPhaseName": appState.closedLoopPhaseName.toString(),
+      "updatesPerSec": appState.updatesPerSec.toString(),
+      "deviceName": appState.deviceName.toString(),
+      "firmwareVersion": appState.firmwareVersion.toString(),
     };
 
     return Column(

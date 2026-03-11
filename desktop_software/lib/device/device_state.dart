@@ -7,6 +7,9 @@ class DeviceState {
   String? port;
   DeviceDataFrame? lastData;
   List<DeviceSlotConfig?> slots;
+  int? updatesPerSec;
+  String? deviceName;
+  String? firmwareVersion;
 
   DeviceState() : slots = List.filled(6, null, growable: false);
 
@@ -16,7 +19,10 @@ class DeviceState {
       ..isReady = isReady
       ..port = port
       ..lastData = lastData?.copy()
-      ..slots = List.from(slots);
+      ..slots = List.from(slots)
+      ..updatesPerSec = updatesPerSec
+      ..deviceName = deviceName
+      ..firmwareVersion = firmwareVersion;
   }
 
   @override
@@ -26,6 +32,9 @@ class DeviceState {
         other.isReady == isReady &&
         other.port == port &&
         other.lastData == lastData &&
-        other.slots == slots;
+        other.slots == slots &&
+        other.updatesPerSec == updatesPerSec &&
+        other.deviceName == deviceName &&
+        other.firmwareVersion == firmwareVersion;
   }
 }

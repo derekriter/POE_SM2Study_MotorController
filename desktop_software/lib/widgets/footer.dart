@@ -1,4 +1,5 @@
 import 'package:desktop_software/app_state.dart';
+import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,30 +18,47 @@ class Footer extends StatelessWidget {
       width: double.maxFinite,
       padding: EdgeInsets.all(4),
       child: Row(
-        spacing: 36,
         children: [
-          Text(
-            appState.isConnected
-                ? "Connected - ${appState.port ?? "UNKNOWN"}"
-                : "Disconnected",
-            style: TextStyle(
-              color: appState.isConnected
-                  ? theme.colorScheme.onPrimaryContainer
-                  : theme.colorScheme.onErrorContainer,
+          Expanded(
+            child: Row(
+              spacing: 36,
+              children: [
+                OverflowText(
+                  appState.isConnected
+                      ? "Connected - ${appState.port ?? "UNKNOWN"}"
+                      : "Disconnected",
+                  style: TextStyle(
+                    color: appState.isConnected
+                        ? theme.colorScheme.onPrimaryContainer
+                        : theme.colorScheme.onErrorContainer,
+                  ),
+                ),
+                OverflowText(
+                  appState.isReady ? "Ready" : "Not ready",
+                  style: TextStyle(
+                    color: appState.isConnected
+                        ? theme.colorScheme.onPrimaryContainer
+                        : theme.colorScheme.onErrorContainer,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            appState.isReady ? "Ready" : "Not ready",
-            style: TextStyle(
-              color: appState.isConnected
-                  ? theme.colorScheme.onPrimaryContainer
-                  : theme.colorScheme.onErrorContainer,
+          if (appState.isConnected)
+            Expanded(
+              child: Align(
+                alignment: Alignment.center,
+                child: OverflowText(
+                  "${appState.deviceName ?? "UNKNOWN DEVICE"} (firmware ${appState.firmwareVersion ?? "UNKNOWN FIRMWARE"})",
+                ),
+              ),
             ),
-          ),
           Expanded(
             child: Align(
-              alignment: AlignmentGeometry.centerRight,
-              child: Text("UPS: UNKNOWN"),
+              alignment: Alignment.centerRight,
+              child: OverflowText(
+                "UPS: ${appState.isConnected ? appState.updatesPerSec ?? "UNKNOWN" : "-"}",
+              ),
             ),
           ),
         ],

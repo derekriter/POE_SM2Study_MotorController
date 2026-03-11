@@ -104,3 +104,10 @@ class DeviceGetSlotRequest extends DeviceControlRequest {
     return <String>["getSlot $slotNum"];
   }
 }
+
+class DeviceGetInfoRequest extends DeviceControlRequest {
+  @override
+  List<String> toSerialCommands() {
+    return <String>["getInfo"];
+  }
+}

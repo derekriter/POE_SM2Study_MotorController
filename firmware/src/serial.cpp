@@ -122,6 +122,17 @@ void sendSlotFrame(SlotFrame const * const slot) {
     
     Serial.println(F("}}"));
 }
+void sendDeviceInfo() {
+    Serial.print(F("{\"ty\":\"info\",\"py\":{"));
+    
+    Serial.print(F("\"nm\":\""));
+    Serial.print(DEVICE_NAME);
+    
+    Serial.print(F("\",\"fv\":\""));
+    Serial.print(FIRMWARE_VERSION);
+    
+    Serial.println(F("\"}}"));
+}
 
 bool getIncomingIfAvailable(String* const incoming) {
     if(!Serial.available()) return false;
@@ -304,6 +315,11 @@ bool processCommand(String const * const command, ReceivedCommand* const instruc
         
         sendOKFrame();
         return true;
+    }
+    else if(strcmp_P(commandCstr, (const char*) F("getInfo")) == 0) {
+        sendDeviceInfo();
+        sendOKFrame();
+        return false;
     }
     else {
         size_t len = strlen_P((char const *) F("Unknown command ''")) + strlen(commandCstr) + 1;

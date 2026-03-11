@@ -8,7 +8,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  windowManager.setTitle("Remote Motor Control");
+  windowManager.setTitle("Remote Motor Control (v2.0)");
 
   runApp(const AppRoot());
 }
@@ -21,7 +21,7 @@ class AppRoot extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => AppState(),
       child: MaterialApp(
-        title: "Remote Motor Control",
+        title: "Remote Motor Control (v2.0)",
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.deepPurple,
