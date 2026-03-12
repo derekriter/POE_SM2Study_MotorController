@@ -28,7 +28,7 @@ class AppRoot extends StatelessWidget {
             brightness: Brightness.dark,
           ),
         ),
-        home: Scaffold(body: const MainPage()),
+        home: const Scaffold(body: MainPage()),
       ),
     );
   }

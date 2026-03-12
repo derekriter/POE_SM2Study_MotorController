@@ -54,7 +54,11 @@ Future<void> _deviceLoop(SendPort send) async {
     disconnect();
     state.isConnected = false;
     state.isReady = false;
+    state.port = null;
+    state.lastData = null;
     state.updatesPerSec = null;
+    state.deviceName = null;
+    state.firmwareVersion = null;
   }
 
   if (state.isReady) {

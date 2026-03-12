@@ -46,8 +46,7 @@ class Footer extends StatelessWidget {
           ),
           if (appState.isConnected)
             Expanded(
-              child: Align(
-                alignment: Alignment.center,
+              child: Center(
                 child: OverflowText(
                   "${appState.deviceName ?? "UNKNOWN DEVICE"} (firmware ${appState.firmwareVersion ?? "UNKNOWN FIRMWARE"})",
                 ),

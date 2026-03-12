@@ -1,5 +1,6 @@
 import 'package:desktop_software/widgets/data_tab.dart';
 import 'package:desktop_software/widgets/footer.dart';
+import 'package:desktop_software/widgets/horizontal_tab.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatelessWidget {
@@ -7,7 +8,7 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
         Expanded(
           child: Row(
@@ -18,15 +19,24 @@ class MainPage extends StatelessWidget {
                   length: 3,
                   child: Column(
                     children: [
-                      const TabBar(
+                      TabBar(
                         tabs: [
-                          Tab(text: "Data", icon: Icon(Icons.data_array)),
-                          Tab(text: "Control", icon: Icon(Icons.gamepad)),
-                          Tab(text: "Slots", icon: Icon(Icons.settings)),
+                          HorizontalTab(
+                            text: "Data",
+                            icon: Icon(Icons.data_array),
+                          ),
+                          HorizontalTab(
+                            text: "Control",
+                            icon: Icon(Icons.gamepad),
+                          ),
+                          HorizontalTab(
+                            text: "Slots",
+                            icon: Icon(Icons.settings),
+                          ),
                         ],
                       ),
                       Expanded(
-                        child: const TabBarView(
+                        child: TabBarView(
                           children: [DataTab(), Text("b"), Text("c")],
                         ),
                       ),
