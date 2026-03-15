@@ -1,4 +1,6 @@
 import 'package:desktop_software/app_state.dart';
+import 'package:desktop_software/device/device_control_mode.dart';
+import 'package:desktop_software/widgets/data_widgets.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -17,23 +19,94 @@ class DataTab extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    final Map<String, String?> data = {
-      "enabled": appState.enabled?.toString(),
-      "sourceVoltage": appState.sourceVoltage?.toString(),
-      "position": appState.position?.toString(),
-      "velocity": appState.velocity?.toString(),
-      "controlMode": appState.controlModeName?.toString(),
-      "dutyOut": appState.dutyOut?.toString(),
-      "voltageOut": appState.voltageOut?.toString(),
-      "target": appState.closedLoopTarget?.toString(),
-      "error": appState.closedLoopError?.toString(),
-      "pFactor": appState.closedLoopP?.toString(),
-      "iFactor": appState.closedLoopI?.toString(),
-      "dFactor": appState.closedLoopD?.toString(),
-      "sFactor": appState.closedLoopS?.toString(),
-      "subError": appState.closedLoopSubError?.toString(),
-      "secsToCompletion": appState.secsToCompletion?.toString(),
-      "phaseName": appState.closedLoopPhaseName?.toString(),
+    late final String closedLoopUnit;
+    switch (appState.controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      case null:
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final Map<String, DataWidget?> data = {
+      "enabled": appState.enabled != null
+          ? BooleanDataWidget(appState.enabled!)
+          : null,
+      "sourceVoltage": appState.sourceVoltage != null
+          ? TextDataWidget("${appState.sourceVoltage!.toStringAsFixed(2)} V")
+          : null,
+      "position": appState.position != null
+          ? TextDataWidget("${appState.position!.toStringAsFixed(4)} rots")
+          : null,
+      "velocity": appState.velocity != null
+          ? TextDataWidget("${appState.velocity!.toStringAsFixed(4)} rpm")
+          : null,
+      "controlMode": appState.controlMode != null
+          ? ControlModeDataWidget(appState.controlMode!)
+          : null,
+      "dutyOut": appState.dutyOut != null
+          ? PercentOutDataWidget(appState.dutyOut!, 3, appState.dutyOut!)
+          : null,
+      "voltageOut": appState.voltageOut != null
+          ? PercentOutDataWidget(
+              appState.voltageOut!,
+              3,
+              appState.sourceVoltage != null
+                  ? (appState.voltageOut! / appState.sourceVoltage!)
+                  : 0,
+              suffix: " V",
+            )
+          : null,
+      "target": appState.closedLoopTarget != null
+          ? TextDataWidget(
+              "${appState.closedLoopTarget!.toStringAsFixed(4)}$closedLoopUnit",
+            )
+          : null,
+      "error": appState.closedLoopError != null
+          ? TextDataWidget(
+              "${appState.closedLoopError!.toStringAsFixed(4)}$closedLoopUnit",
+            )
+          : null,
+      "pFactor": appState.closedLoopP != null
+          ? TextDataWidget(
+              "${appState.closedLoopP!.toStringAsFixed(3)}$closedLoopUnit",
+            )
+          : null,
+      "iFactor": appState.closedLoopI != null
+          ? TextDataWidget(
+              "${appState.closedLoopI!.toStringAsFixed(3)}$closedLoopUnit",
+            )
+          : null,
+      "dFactor": appState.closedLoopD != null
+          ? TextDataWidget(
+              "${appState.closedLoopD!.toStringAsFixed(3)}$closedLoopUnit",
+            )
+          : null,
+      "sFactor": appState.closedLoopS != null
+          ? TextDataWidget(
+              "${appState.closedLoopS!.toStringAsFixed(3)}$closedLoopUnit",
+            )
+          : null,
+      "subError": appState.closedLoopSubError != null
+          ? TextDataWidget(
+              "${appState.closedLoopSubError!.toStringAsFixed(3)}$closedLoopUnit",
+            )
+          : null,
+      "secsToCompletion": appState.secsToCompletion != null
+          ? TextDataWidget("${appState.secsToCompletion!.toStringAsFixed(3)} s")
+          : null,
+      "phaseName": appState.closedLoopPhaseName != null
+          ? TextDataWidget(appState.closedLoopPhaseName!)
+          : null,
     };
 
     return Padding(
@@ -55,13 +128,7 @@ class DataTab extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (entry.value != null)
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: OverflowText(entry.value!),
-                    ),
-                  ),
+                if (entry.value != null) Expanded(child: entry.value!),
               ],
             ),
           );

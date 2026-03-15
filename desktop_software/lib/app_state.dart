@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:desktop_software/device/device_loop.dart';
@@ -60,6 +61,8 @@ class AppState extends ChangeNotifier {
   int? get timestamp => _deviceState?.lastData?.timestamp;
   int? get controlModeID => _deviceState?.lastData?.controlMode.id;
   String? get controlModeName => _deviceState?.lastData?.controlMode.name;
+  DeviceControlMode? get controlMode =>
+      _deviceState?.lastData?.controlMode.mode;
   double? get dutyOut => _deviceState?.lastData?.controlMode.dutyOut;
   double? get voltageOut => _deviceState?.lastData?.controlMode.voltageOut;
   List<DeviceSlotConfig?>? get slotConfigs => _deviceState?.slots;

@@ -1,6 +1,9 @@
+import 'package:desktop_software/widgets/control_tab.dart';
 import 'package:desktop_software/widgets/data_tab.dart';
 import 'package:desktop_software/widgets/footer.dart';
+import 'package:desktop_software/widgets/graph_region.dart';
 import 'package:desktop_software/widgets/horizontal_tab.dart';
+import 'package:desktop_software/widgets/slots_tab.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatelessWidget {
@@ -37,7 +40,7 @@ class MainPage extends StatelessWidget {
                       ),
                       Expanded(
                         child: TabBarView(
-                          children: [DataTab(), Text("b"), Text("c")],
+                          children: [DataTab(), ControlTab(), SlotsTab()],
                         ),
                       ),
                     ],
@@ -45,7 +48,7 @@ class MainPage extends StatelessWidget {
                 ),
               ),
               VerticalDivider(indent: 0, endIndent: 0, radius: null, width: 4),
-              Expanded(flex: 2, child: Placeholder()),
+              Expanded(flex: 2, child: GraphRegion()),
             ],
           ),
         ),
