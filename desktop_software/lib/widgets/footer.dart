@@ -8,11 +8,22 @@ class Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+    final isConnected = context.select(
+      (AppState appState) => appState.isConnected,
+    );
+    final isReady = context.select((AppState appState) => appState.isReady);
+    final port = context.select((AppState appState) => appState.port);
+    final deviceName = context.select(
+      (AppState appState) => appState.deviceName,
+    );
+    final firmwareVersion = context.select(
+      (AppState appState) => appState.firmwareVersion,
+    );
+
     final theme = Theme.of(context);
 
     return Container(
-      color: appState.isConnected
+      color: isConnected
           ? theme.colorScheme.primaryContainer
           : theme.colorScheme.errorContainer,
       width: double.maxFinite,
@@ -24,19 +35,19 @@ class Footer extends StatelessWidget {
               spacing: 36,
               children: [
                 OverflowText(
-                  appState.isConnected
-                      ? "Connected - ${appState.port ?? "UNKNOWN"}"
+                  isConnected
+                      ? "Connected - ${port ?? "UNKNOWN"}"
                       : "Disconnected",
                   style: TextStyle(
-                    color: appState.isConnected
+                    color: isConnected
                         ? theme.colorScheme.onPrimaryContainer
                         : theme.colorScheme.onErrorContainer,
                   ),
                 ),
                 OverflowText(
-                  appState.isReady ? "Ready" : "Not ready",
+                  isReady ? "Ready" : "Not ready",
                   style: TextStyle(
-                    color: appState.isConnected
+                    color: isConnected
                         ? theme.colorScheme.onPrimaryContainer
                         : theme.colorScheme.onErrorContainer,
                   ),
@@ -44,24 +55,38 @@ class Footer extends StatelessWidget {
               ],
             ),
           ),
-          if (appState.isConnected)
+          if (isConnected)
             Expanded(
               child: Center(
                 child: OverflowText(
-                  "${appState.deviceName ?? "UNKNOWN DEVICE"} (firmware ${appState.firmwareVersion ?? "UNKNOWN FIRMWARE"})",
+                  "${deviceName ?? "UNKNOWN DEVICE"} (firmware ${firmwareVersion ?? "UNKNOWN FIRMWARE"})",
                 ),
               ),
             ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OverflowText(
-                "UPS: ${appState.isConnected ? appState.updatesPerSec ?? "UNKNOWN" : "-"}",
-              ),
-            ),
+          const Expanded(
+            child: Align(alignment: Alignment.centerRight, child: _UPSText()),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _UPSText extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _UPSText({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isConnected = context.select(
+      (AppState appState) => appState.isConnected,
+    );
+    final updatesPerSec = context.select(
+      (AppState appState) => appState.updatesPerSec,
+    );
+
+    return OverflowText(
+      "UPS: ${isConnected ? updatesPerSec ?? "UNKNOWN" : "-"}",
     );
   }
 }

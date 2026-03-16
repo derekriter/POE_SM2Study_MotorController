@@ -8,9 +8,65 @@ import 'package:provider/provider.dart';
 class DataTab extends StatelessWidget {
   const DataTab({super.key});
 
+  static const Widget _divider = Divider(
+    indent: 0,
+    endIndent: 0,
+    radius: null,
+    height: 8,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: ListView(
+        children: const [
+          _EnabledWidget(),
+          _divider,
+          _SourceVoltageWidget(),
+          _divider,
+          _PositionWidget(),
+          _divider,
+          _VelocityWidget(),
+          _divider,
+          _ControlModeWidget(),
+          _divider,
+          _DutyOutWidget(),
+          _divider,
+          _VoltageOutWidget(),
+          _divider,
+          _TargetWidget(),
+          _divider,
+          _ErrorWidget(),
+          _divider,
+          _PFactorWidget(),
+          _divider,
+          _IFactorWidget(),
+          _divider,
+          _DFactorWidget(),
+          _divider,
+          _SFactorWidget(),
+          _divider,
+          _SubErrorWidget(),
+          _divider,
+          _SecsToCompletionWidget(),
+          _divider,
+          _PhaseNameWidget(),
+          _divider,
+        ],
+      ),
+    );
+  }
+}
+
+class _EnabledWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _EnabledWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = context.select((AppState appState) => appState.enabled);
+
     final theme = Theme.of(context);
 
     final validStyle = TextStyle(color: theme.colorScheme.onSurface);
@@ -19,8 +75,276 @@ class DataTab extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "enabled",
+                style: enabled == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (enabled != null) Expanded(child: BooleanDataWidget(enabled)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SourceVoltageWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _SourceVoltageWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final sv = context.select((AppState appState) => appState.sourceVoltage);
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "sourceVoltage",
+                style: sv == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (sv != null)
+            Expanded(child: TextDataWidget("${sv.toStringAsFixed(2)} V")),
+        ],
+      ),
+    );
+  }
+}
+
+class _PositionWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _PositionWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final pos = context.select((AppState appState) => appState.position);
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "position",
+                style: pos == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (pos != null)
+            Expanded(child: TextDataWidget("${pos.toStringAsFixed(4)} rots")),
+        ],
+      ),
+    );
+  }
+}
+
+class _VelocityWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _VelocityWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final vel = context.select((AppState appState) => appState.velocity);
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "velocity",
+                style: vel == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (vel != null)
+            Expanded(child: TextDataWidget("${vel.toStringAsFixed(4)} rpm")),
+        ],
+      ),
+    );
+  }
+}
+
+class _ControlModeWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _ControlModeWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final cm = context.select((AppState appState) => appState.controlMode);
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "controlMode",
+                style: cm == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (cm != null) Expanded(child: ControlModeDataWidget(cm)),
+        ],
+      ),
+    );
+  }
+}
+
+class _DutyOutWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _DutyOutWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final dutyOut = context.select((AppState appState) => appState.dutyOut);
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "dutyOut",
+                style: dutyOut == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (dutyOut != null)
+            Expanded(child: PercentOutDataWidget(dutyOut, 3, dutyOut)),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoltageOutWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _VoltageOutWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final voltageOut = context.select(
+      (AppState appState) => appState.voltageOut,
+    );
+    final source = context.select(
+      (AppState appState) => appState.sourceVoltage,
+    );
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "voltageOut",
+                style: voltageOut == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (voltageOut != null && source != null)
+            Expanded(
+              child: PercentOutDataWidget(
+                voltageOut,
+                3,
+                voltageOut / source,
+                suffix: " V",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TargetWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _TargetWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final target = context.select(
+      (AppState appState) => appState.closedLoopTarget,
+    );
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
     late final String closedLoopUnit;
-    switch (appState.controlMode) {
+    switch (controlMode) {
       case DeviceControlMode.pidPos:
       case DeviceControlMode.trapPos:
         {
@@ -30,112 +354,485 @@ class DataTab extends StatelessWidget {
         {
           closedLoopUnit = " rpm";
         }
-      case null:
       default:
         {
           closedLoopUnit = "";
         }
     }
 
-    final Map<String, DataWidget?> data = {
-      "enabled": appState.enabled != null
-          ? BooleanDataWidget(appState.enabled!)
-          : null,
-      "sourceVoltage": appState.sourceVoltage != null
-          ? TextDataWidget("${appState.sourceVoltage!.toStringAsFixed(2)} V")
-          : null,
-      "position": appState.position != null
-          ? TextDataWidget("${appState.position!.toStringAsFixed(4)} rots")
-          : null,
-      "velocity": appState.velocity != null
-          ? TextDataWidget("${appState.velocity!.toStringAsFixed(4)} rpm")
-          : null,
-      "controlMode": appState.controlMode != null
-          ? ControlModeDataWidget(appState.controlMode!)
-          : null,
-      "dutyOut": appState.dutyOut != null
-          ? PercentOutDataWidget(appState.dutyOut!, 3, appState.dutyOut!)
-          : null,
-      "voltageOut": appState.voltageOut != null
-          ? PercentOutDataWidget(
-              appState.voltageOut!,
-              3,
-              appState.sourceVoltage != null
-                  ? (appState.voltageOut! / appState.sourceVoltage!)
-                  : 0,
-              suffix: " V",
-            )
-          : null,
-      "target": appState.closedLoopTarget != null
-          ? TextDataWidget(
-              "${appState.closedLoopTarget!.toStringAsFixed(4)}$closedLoopUnit",
-            )
-          : null,
-      "error": appState.closedLoopError != null
-          ? TextDataWidget(
-              "${appState.closedLoopError!.toStringAsFixed(4)}$closedLoopUnit",
-            )
-          : null,
-      "pFactor": appState.closedLoopP != null
-          ? TextDataWidget(
-              "${appState.closedLoopP!.toStringAsFixed(3)}$closedLoopUnit",
-            )
-          : null,
-      "iFactor": appState.closedLoopI != null
-          ? TextDataWidget(
-              "${appState.closedLoopI!.toStringAsFixed(3)}$closedLoopUnit",
-            )
-          : null,
-      "dFactor": appState.closedLoopD != null
-          ? TextDataWidget(
-              "${appState.closedLoopD!.toStringAsFixed(3)}$closedLoopUnit",
-            )
-          : null,
-      "sFactor": appState.closedLoopS != null
-          ? TextDataWidget(
-              "${appState.closedLoopS!.toStringAsFixed(3)}$closedLoopUnit",
-            )
-          : null,
-      "subError": appState.closedLoopSubError != null
-          ? TextDataWidget(
-              "${appState.closedLoopSubError!.toStringAsFixed(3)}$closedLoopUnit",
-            )
-          : null,
-      "secsToCompletion": appState.secsToCompletion != null
-          ? TextDataWidget("${appState.secsToCompletion!.toStringAsFixed(3)} s")
-          : null,
-      "phaseName": appState.closedLoopPhaseName != null
-          ? TextDataWidget(appState.closedLoopPhaseName!)
-          : null,
-    };
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: ListView.separated(
-        itemBuilder: (_, int i) {
-          final entry = data.entries.elementAt(i);
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: OverflowText(
-                      entry.key,
-                      style: entry.value == null ? invalidStyle : validStyle,
-                    ),
-                  ),
-                ),
-                if (entry.value != null) Expanded(child: entry.value!),
-              ],
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "target",
+                style: target == null ? invalidStyle : validStyle,
+              ),
             ),
-          );
-        },
-        separatorBuilder: (_, _) =>
-            Divider(indent: 0, endIndent: 0, radius: null, height: 8),
-        itemCount: data.length,
+          ),
+          if (target != null)
+            Expanded(
+              child: TextDataWidget(
+                "${target.toStringAsFixed(4)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _ErrorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final error = context.select(
+      (AppState appState) => appState.closedLoopError,
+    );
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
+    late final String closedLoopUnit;
+    switch (controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "error",
+                style: error == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (error != null)
+            Expanded(
+              child: TextDataWidget(
+                "${error.toStringAsFixed(4)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PFactorWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _PFactorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final pFactor = context.select((AppState appState) => appState.closedLoopP);
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
+    late final String closedLoopUnit;
+    switch (controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "pFactor",
+                style: pFactor == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (pFactor != null)
+            Expanded(
+              child: TextDataWidget(
+                "${pFactor.toStringAsFixed(3)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IFactorWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _IFactorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final iFactor = context.select((AppState appState) => appState.closedLoopI);
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
+    late final String closedLoopUnit;
+    switch (controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "iFactor",
+                style: iFactor == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (iFactor != null)
+            Expanded(
+              child: TextDataWidget(
+                "${iFactor.toStringAsFixed(3)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DFactorWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _DFactorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final dFactor = context.select((AppState appState) => appState.closedLoopD);
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
+    late final String closedLoopUnit;
+    switch (controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "dFactor",
+                style: dFactor == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (dFactor != null)
+            Expanded(
+              child: TextDataWidget(
+                "${dFactor.toStringAsFixed(3)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SFactorWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _SFactorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final sFactor = context.select((AppState appState) => appState.closedLoopS);
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
+    late final String closedLoopUnit;
+    switch (controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "sFactor",
+                style: sFactor == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (sFactor != null)
+            Expanded(
+              child: TextDataWidget(
+                "${sFactor.toStringAsFixed(3)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubErrorWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _SubErrorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final subError = context.select(
+      (AppState appState) => appState.closedLoopSubError,
+    );
+    final controlMode = context.select(
+      (AppState appState) => appState.controlMode,
+    );
+
+    final theme = Theme.of(context);
+
+    late final String closedLoopUnit;
+    switch (controlMode) {
+      case DeviceControlMode.pidPos:
+      case DeviceControlMode.trapPos:
+        {
+          closedLoopUnit = " rots";
+        }
+      case DeviceControlMode.pidVel:
+        {
+          closedLoopUnit = " rpm";
+        }
+      default:
+        {
+          closedLoopUnit = "";
+        }
+    }
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "subError",
+                style: subError == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (subError != null)
+            Expanded(
+              child: TextDataWidget(
+                "${subError.toStringAsFixed(4)}$closedLoopUnit",
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SecsToCompletionWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _SecsToCompletionWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final secs = context.select(
+      (AppState appState) => appState.secsToCompletion,
+    );
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "secsToCompletion",
+                style: secs == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (secs != null)
+            Expanded(child: TextDataWidget("${secs.toStringAsFixed(3)} s")),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhaseNameWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _PhaseNameWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final phase = context.select(
+      (AppState appState) => appState.closedLoopPhaseName,
+    );
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "phaseName",
+                style: phase == null ? invalidStyle : validStyle,
+              ),
+            ),
+          ),
+          if (phase != null) Expanded(child: TextDataWidget(phase)),
+        ],
       ),
     );
   }

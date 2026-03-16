@@ -23,37 +23,34 @@ class _ControlTabState extends State<ControlTab> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+    final isReady = context.select((AppState appState) => appState.isReady);
 
-    if (!appState.isReady) {
-      return Center(child: OverflowText("Please connect a device to control"));
+    if (!isReady) {
+      return const Center(
+        child: OverflowText("Please connect a device to control"),
+      );
     }
 
-    return Column(
-      children: [
-        DropdownMenu<DeviceControlMode>(
-          initialSelection: _defaultMode,
-          requestFocusOnTap: true,
-          enableSearch: false,
-          controller: _modeController,
-          onSelected: (selected) {
-            setState(() {
-              _selectedMode = selected ?? _defaultMode;
-            });
-            _logger.d(selected);
-          },
-          dropdownMenuEntries: [
-            const DropdownMenuEntry(
-              value: DeviceControlMode.stop,
-              label: "Stop",
-            ),
-            const DropdownMenuEntry(
-              value: DeviceControlMode.dutyCycle,
-              label: "Duty Cycle",
-            ),
-          ],
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+      child: Column(
+        children: [
+          DropdownMenu<DeviceControlMode>(
+            initialSelection: _defaultMode,
+            enableSearch: false,
+            controller: _modeController,
+            width: double.maxFinite,
+            onSelected: (DeviceControlMode? selected) {
+              setState(() {
+                _selectedMode = selected ?? _defaultMode;
+              });
+              _logger.d(selected);
+            },
+            dropdownMenuEntries: DeviceControlMode.asDropdownEntries(),
+          ),
+          OverflowText(_selectedMode.name),
+        ],
+      ),
     );
   }
 }

@@ -1,15 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
 final _logger = Logger();
 
 enum DeviceControlMode {
-  disabled(255, "disabled"),
-  stop(0, "stop"),
-  dutyCycle(1, "dutyCycle"),
-  voltage(2, "voltage"),
-  pidPos(3, "pidPos"),
-  pidVel(4, "pidVel"),
-  trapPos(5, "trapPos");
+  disabled(255, "Disabled"),
+  stop(0, "Stop"),
+  dutyCycle(1, "Duty Cycle"),
+  voltage(2, "Voltage"),
+  pidPos(3, "PID Position"),
+  pidVel(4, "PID Velocity"),
+  trapPos(5, "Trapezoidal Position");
 
   final int id;
   final String name;
@@ -34,6 +35,17 @@ enum DeviceControlMode {
     }
 
     return null;
+  }
+
+  static List<DropdownMenuEntry<DeviceControlMode>> asDropdownEntries() {
+    return <DropdownMenuEntry<DeviceControlMode>>[
+      DropdownMenuEntry(value: stop, label: stop.name),
+      DropdownMenuEntry(value: dutyCycle, label: dutyCycle.name),
+      DropdownMenuEntry(value: voltage, label: voltage.name),
+      DropdownMenuEntry(value: pidPos, label: pidPos.name),
+      DropdownMenuEntry(value: pidVel, label: pidVel.name),
+      DropdownMenuEntry(value: trapPos, label: trapPos.name),
+    ];
   }
 }
 
