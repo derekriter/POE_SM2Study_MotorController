@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 
+final _logger = Logger();
+
 class AppState extends ChangeNotifier {
   AppState() {
     _logger.i("Spawning device isolate...");
@@ -86,8 +88,6 @@ class AppState extends ChangeNotifier {
   void sendControlRequest(DeviceControlRequest req) {
     _deviceSend?.send(req);
   }
-
-  final _logger = Logger();
 
   late final ReceivePort _deviceReceive;
   Isolate? _deviceIsolate;
