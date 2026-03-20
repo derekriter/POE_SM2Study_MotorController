@@ -20,9 +20,9 @@ void sendDataFrame(DataFrame const * const data) {
     Serial.print(F(",\"cm\":{\"id\":"));
     Serial.print(data->controlModeData->controlID);
     Serial.print(F(",\"do\":"));
-    Serial.print(data->controlModeData->dutyOut, 2);
+    Serial.print(data->controlModeData->dutyOut, 3);
     Serial.print(F(",\"vo\":"));
-    Serial.print(data->controlModeData->voltageOut, 2);
+    Serial.print(data->controlModeData->voltageOut, 3);
     if(data->controlModeData->hasTarget) {
         Serial.print(F(",\"ct\":"));
         Serial.print(data->controlModeData->target, 4);
@@ -33,19 +33,19 @@ void sendDataFrame(DataFrame const * const data) {
     }
     if(data->controlModeData->hasPFactor) {
         Serial.print(F(",\"cp\":"));
-        Serial.print(data->controlModeData->pFactor, 2);
+        Serial.print(data->controlModeData->pFactor, 3);
     }
     if(data->controlModeData->hasIFactor) {
         Serial.print(F(",\"ci\":"));
-        Serial.print(data->controlModeData->iFactor, 2);
+        Serial.print(data->controlModeData->iFactor, 3);
     }
     if(data->controlModeData->hasDFactor) {
         Serial.print(F(",\"cd\":"));
-        Serial.print(data->controlModeData->dFactor, 2);
+        Serial.print(data->controlModeData->dFactor, 3);
     }
     if(data->controlModeData->hasSFactor) {
         Serial.print(F(",\"cs\":"));
-        Serial.print(data->controlModeData->sFactor, 2);
+        Serial.print(data->controlModeData->sFactor, 3);
     }
     if(data->controlModeData->hasSubError) {
         Serial.print(F(",\"se\":"));

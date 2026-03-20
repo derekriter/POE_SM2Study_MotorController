@@ -1,13 +1,15 @@
 import 'package:desktop_software/device/device_control_slot.dart';
 
 abstract class DeviceControlRequest {
+  const DeviceControlRequest();
+
   List<String> toSerialCommands();
 }
 
 class DeviceEnableDisableRequest extends DeviceControlRequest {
   final bool enable;
 
-  DeviceEnableDisableRequest(this.enable);
+  const DeviceEnableDisableRequest(this.enable);
 
   @override
   List<String> toSerialCommands() {
@@ -16,6 +18,8 @@ class DeviceEnableDisableRequest extends DeviceControlRequest {
 }
 
 class DeviceStopRequest extends DeviceControlRequest {
+  const DeviceStopRequest();
+
   @override
   List<String> toSerialCommands() {
     return <String>["stop"];
@@ -25,7 +29,7 @@ class DeviceStopRequest extends DeviceControlRequest {
 class DeviceDutyCycleRequest extends DeviceControlRequest {
   final double duty;
 
-  DeviceDutyCycleRequest(this.duty);
+  const DeviceDutyCycleRequest(this.duty);
 
   @override
   List<String> toSerialCommands() {
@@ -36,7 +40,7 @@ class DeviceDutyCycleRequest extends DeviceControlRequest {
 class DeviceVoltageRequest extends DeviceControlRequest {
   final double voltage;
 
-  DeviceVoltageRequest(this.voltage);
+  const DeviceVoltageRequest(this.voltage);
 
   @override
   List<String> toSerialCommands() {
@@ -48,7 +52,7 @@ class DevicePIDPositionRequest extends DeviceControlRequest {
   final double rots;
   final int slot;
 
-  DevicePIDPositionRequest(this.rots, this.slot);
+  const DevicePIDPositionRequest(this.rots, this.slot);
 
   @override
   List<String> toSerialCommands() {
@@ -60,7 +64,7 @@ class DevicePIDVelocityRequest extends DeviceControlRequest {
   final int slot;
   final double rpm;
 
-  DevicePIDVelocityRequest(this.rpm, this.slot);
+  const DevicePIDVelocityRequest(this.rpm, this.slot);
 
   @override
   List<String> toSerialCommands() {
@@ -72,7 +76,7 @@ class DeviceTrapezoidalMotionPositionRequest extends DeviceControlRequest {
   final double rots;
   final int slot;
 
-  DeviceTrapezoidalMotionPositionRequest(this.rots, this.slot);
+  const DeviceTrapezoidalMotionPositionRequest(this.rots, this.slot);
 
   @override
   List<String> toSerialCommands() {
@@ -84,7 +88,7 @@ class DeviceSlotConfigRequest extends DeviceControlRequest {
   final DeviceSlotConfig config;
   final int slotNum;
 
-  DeviceSlotConfigRequest(this.slotNum, this.config);
+  const DeviceSlotConfigRequest(this.slotNum, this.config);
 
   @override
   List<String> toSerialCommands() {
@@ -97,7 +101,7 @@ class DeviceSlotConfigRequest extends DeviceControlRequest {
 class DeviceGetSlotRequest extends DeviceControlRequest {
   final int slotNum;
 
-  DeviceGetSlotRequest(this.slotNum);
+  const DeviceGetSlotRequest(this.slotNum);
 
   @override
   List<String> toSerialCommands() {
@@ -106,6 +110,8 @@ class DeviceGetSlotRequest extends DeviceControlRequest {
 }
 
 class DeviceGetInfoRequest extends DeviceControlRequest {
+  const DeviceGetInfoRequest();
+
   @override
   List<String> toSerialCommands() {
     return <String>["getInfo"];
