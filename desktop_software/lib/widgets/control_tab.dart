@@ -96,6 +96,12 @@ class _ControlTabState extends State<ControlTab>
             onChange: () => _sendControlToDevice(context),
           );
         }
+      case DeviceControlMode.voltage:
+        {
+          _selectedDetails = VoltageDetails(
+            onChange: () => _sendControlToDevice(context),
+          );
+        }
       default:
         {
           _selectedDetails = null;

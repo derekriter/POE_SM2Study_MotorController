@@ -33,7 +33,7 @@ class DeviceDutyCycleRequest extends DeviceControlRequest {
 
   @override
   List<String> toSerialCommands() {
-    return <String>["dutyCycle ${duty.toStringAsFixed(4)}"];
+    return <String>["dutyCycle ${duty.toStringAsFixed(3)}"];
   }
 }
 
@@ -44,7 +44,7 @@ class DeviceVoltageRequest extends DeviceControlRequest {
 
   @override
   List<String> toSerialCommands() {
-    return <String>["voltage ${voltage.toStringAsFixed(4)}"];
+    return <String>["voltage ${voltage.toStringAsFixed(3)}"];
   }
 }
 
