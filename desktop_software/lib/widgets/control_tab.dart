@@ -73,8 +73,10 @@ class _ControlTabState extends State<ControlTab>
             ),
           ),
           const Divider(indent: 0, endIndent: 0, radius: null),
-          _selectedDetails ??
-              const Center(child: OverflowText("Something went wrong")),
+          if (_selectedDetails == null)
+            const Center(child: OverflowText("Something went wrong"))
+          else
+            Expanded(child: SingleChildScrollView(child: _selectedDetails)),
         ],
       ),
     );

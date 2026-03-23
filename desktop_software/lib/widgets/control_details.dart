@@ -1,5 +1,6 @@
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
+import 'package:desktop_software/widgets/slot_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -145,7 +146,7 @@ class PIDPosDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OverflowText("Slot:", style: theme.textTheme.labelLarge),
-                _SlotSelector(
+                SlotSelector(
                   onChangeEnd: (int newSlot) {
                     _slot = newSlot;
                     onChange();
@@ -202,7 +203,7 @@ class PIDVelDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OverflowText("Slot:", style: theme.textTheme.labelLarge),
-                _SlotSelector(
+                SlotSelector(
                   onChangeEnd: (int newSlot) {
                     _slot = newSlot;
                     onChange();
@@ -262,7 +263,7 @@ class TrapPosDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OverflowText("Slot:", style: theme.textTheme.labelLarge),
-                _SlotSelector(
+                SlotSelector(
                   onChangeEnd: (int newSlot) {
                     _slot = newSlot;
                     onChange();
@@ -439,48 +440,5 @@ class _OutputTextFieldState extends State<_OutputTextField> {
       _currentVal = val;
       widget.onChangeEnd(_currentVal);
     });
-  }
-}
-
-class _SlotSelector extends StatefulWidget {
-  final void Function(int) onChangeEnd;
-
-  const _SlotSelector({
-    required this.onChangeEnd,
-    // ignore: unused_element_parameter
-    super.key,
-  });
-
-  @override
-  State<_SlotSelector> createState() => _SlotSelectorState();
-}
-
-class _SlotSelectorState extends State<_SlotSelector> {
-  int _selectedSlot = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<int>(
-      segments: const [
-        ButtonSegment(value: 0, label: OverflowText("0")),
-        ButtonSegment(value: 1, label: OverflowText("1")),
-        ButtonSegment(value: 2, label: OverflowText("2")),
-        ButtonSegment(value: 3, label: OverflowText("3")),
-        ButtonSegment(value: 4, label: OverflowText("4")),
-        ButtonSegment(value: 5, label: OverflowText("5")),
-      ],
-      selected: {_selectedSlot},
-      multiSelectionEnabled: false,
-      emptySelectionAllowed: false,
-      showSelectedIcon: false,
-      onSelectionChanged: (Set<int> newSlot) {
-        assert(newSlot.length == 1);
-
-        setState(() {
-          _selectedSlot = newSlot.elementAt(0);
-        });
-        widget.onChangeEnd(_selectedSlot);
-      },
-    );
   }
 }

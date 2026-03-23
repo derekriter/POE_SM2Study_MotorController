@@ -320,7 +320,7 @@ class _VoltageOutWidget extends StatelessWidget {
               child: PercentOutDataWidget(
                 voltageOut,
                 3,
-                voltageOut / source,
+                source == 0 ? 0 : voltageOut / source, //prevent divide by zero
                 suffix: " V",
               ),
             ),
