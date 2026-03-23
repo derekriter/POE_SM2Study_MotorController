@@ -47,6 +47,10 @@ void sendDataFrame(DataFrame const * const data) {
         Serial.print(F(",\"cs\":"));
         Serial.print(data->controlModeData->sFactor, 3);
     }
+    if(data->controlModeData->hasSlot) {
+        Serial.print(F(",\"sl\":"));
+        Serial.print(data->controlModeData->slot);
+    }
     if(data->controlModeData->hasSubError) {
         Serial.print(F(",\"se\":"));
         Serial.print(data->controlModeData->subError, 4);

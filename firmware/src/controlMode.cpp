@@ -21,6 +21,7 @@ void DisabledControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
     data->hasPhase = false;
@@ -42,6 +43,7 @@ void StopControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
     data->hasPhase = false;
@@ -66,6 +68,7 @@ void DutyCycleControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
     data->hasPhase = false;
@@ -119,6 +122,7 @@ void VoltageControlMode::getControlModeData(ControlModeData* data) {
     data->hasIFactor = false;
     data->hasDFactor = false;
     data->hasSFactor = false;
+    data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
     data->hasPhase = false;
@@ -196,6 +200,8 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     data->dFactor = _totalD / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasSlot = true;
+    data->slot = _slot;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
     data->hasPhase = false;
@@ -300,6 +306,8 @@ void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
     data->dFactor = _totalD / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasSlot = true;
+    data->slot = _slot;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
     data->hasPhase = false;
@@ -418,11 +426,13 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     data->dFactor = _totalD / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasSlot = true;
+    data->slot = _slot;
     data->hasSubError = true;
     data->subError = _lastMinorError;
-    data->hasSecsToCompletion = true;
+    data->hasSecsToCompletion = !isnan(_lastSecsToCompletion);
     data->secsToCompletion = _lastSecsToCompletion;
-    data->hasPhase = true;
+    data->hasPhase = _lastPhase != 255u;
     data->phase = _lastPhase;
     
     _updatesSinceLastFrame = 0;

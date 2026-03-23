@@ -47,6 +47,8 @@ class DataTab extends StatelessWidget {
           _divider,
           _SFactorWidget(),
           _divider,
+          _SlotWidget(),
+          _divider,
           _SubErrorWidget(),
           _divider,
           _SecsToCompletionWidget(),
@@ -461,28 +463,8 @@ class _PFactorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pFactor = context.select((AppState appState) => appState.closedLoopP);
-    final controlMode = context.select(
-      (AppState appState) => appState.controlMode,
-    );
 
     final theme = Theme.of(context);
-
-    late final String closedLoopUnit;
-    switch (controlMode) {
-      case DeviceControlMode.pidPos:
-      case DeviceControlMode.trapPos:
-        {
-          closedLoopUnit = " rots";
-        }
-      case DeviceControlMode.pidVel:
-        {
-          closedLoopUnit = " rpm";
-        }
-      default:
-        {
-          closedLoopUnit = "";
-        }
-    }
 
     final validStyle = TextStyle(color: theme.colorScheme.onSurface);
     final invalidStyle = TextStyle(
@@ -504,11 +486,7 @@ class _PFactorWidget extends StatelessWidget {
             ),
           ),
           if (pFactor != null)
-            Expanded(
-              child: TextDataWidget(
-                "${pFactor.toStringAsFixed(3)}$closedLoopUnit",
-              ),
-            ),
+            Expanded(child: PercentOutDataWidget(pFactor, 3, pFactor)),
         ],
       ),
     );
@@ -522,28 +500,8 @@ class _IFactorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iFactor = context.select((AppState appState) => appState.closedLoopI);
-    final controlMode = context.select(
-      (AppState appState) => appState.controlMode,
-    );
 
     final theme = Theme.of(context);
-
-    late final String closedLoopUnit;
-    switch (controlMode) {
-      case DeviceControlMode.pidPos:
-      case DeviceControlMode.trapPos:
-        {
-          closedLoopUnit = " rots";
-        }
-      case DeviceControlMode.pidVel:
-        {
-          closedLoopUnit = " rpm";
-        }
-      default:
-        {
-          closedLoopUnit = "";
-        }
-    }
 
     final validStyle = TextStyle(color: theme.colorScheme.onSurface);
     final invalidStyle = TextStyle(
@@ -565,11 +523,7 @@ class _IFactorWidget extends StatelessWidget {
             ),
           ),
           if (iFactor != null)
-            Expanded(
-              child: TextDataWidget(
-                "${iFactor.toStringAsFixed(3)}$closedLoopUnit",
-              ),
-            ),
+            Expanded(child: PercentOutDataWidget(iFactor, 3, iFactor)),
         ],
       ),
     );
@@ -583,28 +537,8 @@ class _DFactorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dFactor = context.select((AppState appState) => appState.closedLoopD);
-    final controlMode = context.select(
-      (AppState appState) => appState.controlMode,
-    );
 
     final theme = Theme.of(context);
-
-    late final String closedLoopUnit;
-    switch (controlMode) {
-      case DeviceControlMode.pidPos:
-      case DeviceControlMode.trapPos:
-        {
-          closedLoopUnit = " rots";
-        }
-      case DeviceControlMode.pidVel:
-        {
-          closedLoopUnit = " rpm";
-        }
-      default:
-        {
-          closedLoopUnit = "";
-        }
-    }
 
     final validStyle = TextStyle(color: theme.colorScheme.onSurface);
     final invalidStyle = TextStyle(
@@ -627,9 +561,7 @@ class _DFactorWidget extends StatelessWidget {
           ),
           if (dFactor != null)
             Expanded(
-              child: TextDataWidget(
-                "${dFactor.toStringAsFixed(3)}$closedLoopUnit",
-              ),
+              child: PercentOutDataWidget(dFactor, 3, dFactor.clamp(-1, 1)),
             ),
         ],
       ),
@@ -644,28 +576,8 @@ class _SFactorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sFactor = context.select((AppState appState) => appState.closedLoopS);
-    final controlMode = context.select(
-      (AppState appState) => appState.controlMode,
-    );
 
     final theme = Theme.of(context);
-
-    late final String closedLoopUnit;
-    switch (controlMode) {
-      case DeviceControlMode.pidPos:
-      case DeviceControlMode.trapPos:
-        {
-          closedLoopUnit = " rots";
-        }
-      case DeviceControlMode.pidVel:
-        {
-          closedLoopUnit = " rpm";
-        }
-      default:
-        {
-          closedLoopUnit = "";
-        }
-    }
 
     final validStyle = TextStyle(color: theme.colorScheme.onSurface);
     final invalidStyle = TextStyle(
@@ -688,10 +600,44 @@ class _SFactorWidget extends StatelessWidget {
           ),
           if (sFactor != null)
             Expanded(
-              child: TextDataWidget(
-                "${sFactor.toStringAsFixed(3)}$closedLoopUnit",
+              child: PercentOutDataWidget(sFactor, 3, sFactor.clamp(-1, 1)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotWidget extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _SlotWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final slot = context.select((AppState appState) => appState.closedLoopSlot);
+
+    final theme = Theme.of(context);
+
+    final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invalidStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(127),
+      fontStyle: FontStyle.italic,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowText(
+                "slot",
+                style: slot == null ? invalidStyle : validStyle,
               ),
             ),
+          ),
+          if (slot != null) Expanded(child: TextDataWidget(slot.toString())),
         ],
       ),
     );

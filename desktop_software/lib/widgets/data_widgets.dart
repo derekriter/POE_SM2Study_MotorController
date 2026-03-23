@@ -68,10 +68,10 @@ class PercentOutDataWidget<T> extends DataWidget {
   const PercentOutDataWidget(
     this.val,
     this.precision,
-    this.percent, {
+    double _perc, {
     this.suffix,
     super.key,
-  });
+  }) : percent = _perc > 1 ? 1 : (_perc < -1 ? -1 : _perc);
 
   static const _positiveCol = Colors.green;
   static const _negativeCol = Colors.red;

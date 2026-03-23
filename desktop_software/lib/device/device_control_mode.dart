@@ -59,6 +59,7 @@ class DeviceControlModeData {
   final double? iFactor;
   final double? dFactor;
   final double? sFactor;
+  final int? slot;
   final double? subError;
   final double? secsToCompletion;
   final int? phase;
@@ -73,6 +74,7 @@ class DeviceControlModeData {
     required this.iFactor,
     required this.dFactor,
     required this.sFactor,
+    required this.slot,
     required this.subError,
     required this.secsToCompletion,
     required this.phase,
@@ -147,6 +149,13 @@ class DeviceControlModeData {
     }
     sFactor = json["cs"] as double?;
 
+    late final int? slot;
+    if (json["sl"] is! int?) {
+      _logger.w("Invalid control mode, invalid 'sl' parameter");
+      return null;
+    }
+    slot = json["sl"] as int?;
+
     late final double? subError;
     if (json["se"] is! double?) {
       _logger.w("Invalid control mode, invalid 'se' parameter");
@@ -178,6 +187,7 @@ class DeviceControlModeData {
       iFactor: iFactor,
       dFactor: dFactor,
       sFactor: sFactor,
+      slot: slot,
       subError: subError,
       secsToCompletion: secsToCompletion,
       phase: phase,
@@ -233,6 +243,7 @@ class DeviceControlModeData {
       iFactor: iFactor,
       dFactor: dFactor,
       sFactor: sFactor,
+      slot: slot,
       subError: subError,
       secsToCompletion: secsToCompletion,
       phase: phase,

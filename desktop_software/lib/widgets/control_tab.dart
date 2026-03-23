@@ -63,7 +63,7 @@ class _ControlTabState extends State<ControlTab>
                         }
 
                         _updateSelectedDetails();
-                        _sendControlToDevice(context);
+                        _sendControlToDevice();
                       });
                     },
                   ),
@@ -73,7 +73,8 @@ class _ControlTabState extends State<ControlTab>
             ),
           ),
           const Divider(indent: 0, endIndent: 0, radius: null),
-          _selectedDetails ?? const Placeholder(child: OverflowText("WIP")),
+          _selectedDetails ??
+              const Center(child: OverflowText("Something went wrong")),
         ],
       ),
     );
@@ -92,24 +93,28 @@ class _ControlTabState extends State<ControlTab>
         }
       case DeviceControlMode.dutyCycle:
         {
-          _selectedDetails = DutyCycleDetails(
-            onChange: () => _sendControlToDevice(context),
-          );
+          _selectedDetails = DutyCycleDetails(onChange: _sendControlToDevice);
         }
       case DeviceControlMode.voltage:
         {
-          _selectedDetails = VoltageDetails(
-            onChange: () => _sendControlToDevice(context),
-          );
+          _selectedDetails = VoltageDetails(onChange: _sendControlToDevice);
         }
-      default:
+      case DeviceControlMode.pidPos:
         {
-          _selectedDetails = null;
+          _selectedDetails = PIDPosDetails(onChange: _sendControlToDevice);
+        }
+      case DeviceControlMode.pidVel:
+        {
+          _selectedDetails = PIDVelDetails(onChange: _sendControlToDevice);
+        }
+      case DeviceControlMode.trapPos:
+        {
+          _selectedDetails = TrapPosDetails(onChange: _sendControlToDevice);
         }
     }
   }
 
-  void _sendControlToDevice(BuildContext context) {
+  void _sendControlToDevice() {
     final appStateRead = context.read<AppState>();
 
     appStateRead.sendControlRequest(

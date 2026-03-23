@@ -31,6 +31,8 @@ struct ControlModeData {
     double dFactor;
     bool hasSFactor;
     double sFactor;
+    bool hasSlot;
+    uint8_t slot;
     bool hasSubError;
     double subError;
     bool hasSecsToCompletion;

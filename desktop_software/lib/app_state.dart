@@ -74,6 +74,7 @@ class AppState extends ChangeNotifier {
   double? get closedLoopI => _deviceState?.lastData?.controlMode.iFactor;
   double? get closedLoopD => _deviceState?.lastData?.controlMode.dFactor;
   double? get closedLoopS => _deviceState?.lastData?.controlMode.sFactor;
+  int? get closedLoopSlot => _deviceState?.lastData?.controlMode.slot;
   double? get closedLoopSubError =>
       _deviceState?.lastData?.controlMode.subError;
   double? get secsToCompletion =>
