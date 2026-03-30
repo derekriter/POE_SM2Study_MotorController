@@ -18,7 +18,9 @@ extension ToStringShort on double {
       return toString();
     }
 
-    return toStringAsFixed(maxPrecision);
+    String reg = toString();
+    String fixed = toStringAsFixed(maxPrecision);
+    return reg.length < fixed.length ? reg : fixed;
   }
 }
 
