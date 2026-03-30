@@ -4,6 +4,7 @@ import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/state/control_tab_state.dart';
 import 'package:desktop_software/widgets/control_details.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
+import 'package:desktop_software/widgets/smooth_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -89,7 +90,20 @@ class _ControlTabState extends State<ControlTab>
           if (_selectedDetails == null)
             const Center(child: OverflowText("Something went wrong"))
           else
-            Expanded(child: SingleChildScrollView(child: _selectedDetails)),
+            Expanded(
+              child: SmoothScroll(
+                builder:
+                    (
+                      BuildContext _,
+                      ScrollController controller,
+                      ScrollPhysics physics,
+                    ) => SingleChildScrollView(
+                      controller: controller,
+                      physics: physics,
+                      child: _selectedDetails,
+                    ),
+              ),
+            ),
         ],
       ),
     );

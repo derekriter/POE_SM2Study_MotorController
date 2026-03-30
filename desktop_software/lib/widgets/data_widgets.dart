@@ -6,13 +6,19 @@ abstract class DataWidget extends StatelessWidget {
   const DataWidget({super.key});
 }
 
-class BooleanDataWidget<T> extends DataWidget {
+class BooleanDataWidget extends DataWidget {
   final bool val;
 
   const BooleanDataWidget(this.val, {super.key});
 
-  static const _falseStyle = TextStyle(color: Colors.red);
-  static const _trueStyle = TextStyle(color: Colors.green);
+  static const _falseStyle = TextStyle(
+    color: Colors.red,
+    // fontFamily: "Space Mono",
+  );
+  static const _trueStyle = TextStyle(
+    color: Colors.green,
+    // fontFamily: "Space Mono",
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +32,7 @@ class BooleanDataWidget<T> extends DataWidget {
   }
 }
 
-class TextDataWidget<T> extends DataWidget {
+class TextDataWidget extends DataWidget {
   final String val;
 
   const TextDataWidget(this.val, {super.key});
@@ -37,7 +43,29 @@ class TextDataWidget<T> extends DataWidget {
   }
 }
 
-class ControlModeDataWidget<T> extends DataWidget {
+class NumberDataWidget extends DataWidget {
+  final num val;
+  final int? precision;
+  final String? suffix;
+
+  const NumberDataWidget(this.val, {this.precision, this.suffix, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OverflowText(
+          precision != null ? val.toStringAsFixed(precision!) : val.toString(),
+          // style: const TextStyle(fontFamily: "Space Mono"),
+        ),
+        if (suffix != null) OverflowText(suffix!),
+      ],
+    );
+  }
+}
+
+class ControlModeDataWidget extends DataWidget {
   final DeviceControlMode val;
 
   const ControlModeDataWidget(this.val, {super.key});
@@ -47,6 +75,7 @@ class ControlModeDataWidget<T> extends DataWidget {
     final theme = Theme.of(context);
     final disabledStyle = TextStyle(
       color: theme.colorScheme.onSurface.withAlpha(127),
+      // fontFamily: "Space Mono",
     );
 
     return Align(
@@ -59,7 +88,7 @@ class ControlModeDataWidget<T> extends DataWidget {
   }
 }
 
-class PercentOutDataWidget<T> extends DataWidget {
+class PercentOutDataWidget extends DataWidget {
   final double val;
   final double percent;
   final int precision;
@@ -95,17 +124,10 @@ class PercentOutDataWidget<T> extends DataWidget {
     final actuationDist = _sliderWidth / 2 - textHeight / 4;
     final barCenter = _sliderWidth / 2 - textHeight / 4;
 
-    var text = suffix == null
-        ? val.toStringAsFixed(precision)
-        : "${val.toStringAsFixed(precision)}$suffix";
-    if (!text.contains("-")) {
-      //TODO: monospace font?
-      text = " $text"; //not perfect but its pretty close
-    }
+    var text = val.toStringAsFixed(precision);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
-      spacing: 8,
       children: [
         Stack(
           children: [
@@ -132,7 +154,11 @@ class PercentOutDataWidget<T> extends DataWidget {
             ),
           ],
         ),
+        const SizedBox(width: 8),
+        if (!text.contains("-"))
+          OverflowText("-", style: TextStyle(color: Colors.transparent)),
         OverflowText(text),
+        if (suffix != null) OverflowText(suffix!),
       ],
     );
   }

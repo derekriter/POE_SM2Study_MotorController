@@ -2,6 +2,7 @@ import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/widgets/data_widgets.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
+import 'package:desktop_software/widgets/smooth_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,43 +20,52 @@ class DataTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: ListView(
-        children: const [
-          _EnabledWidget(),
-          _divider,
-          _SourceVoltageWidget(),
-          _divider,
-          _PositionWidget(),
-          _divider,
-          _VelocityWidget(),
-          _divider,
-          _ControlModeWidget(),
-          _divider,
-          _DutyOutWidget(),
-          _divider,
-          _VoltageOutWidget(),
-          _divider,
-          _TargetWidget(),
-          _divider,
-          _ErrorWidget(),
-          _divider,
-          _PFactorWidget(),
-          _divider,
-          _IFactorWidget(),
-          _divider,
-          _DFactorWidget(),
-          _divider,
-          _SFactorWidget(),
-          _divider,
-          _SlotWidget(),
-          _divider,
-          _SubErrorWidget(),
-          _divider,
-          _SecsToCompletionWidget(),
-          _divider,
-          _PhaseNameWidget(),
-          _divider,
-        ],
+      child: SmoothScroll(
+        builder:
+            (
+              BuildContext _,
+              ScrollController controller,
+              ScrollPhysics physics,
+            ) => ListView(
+              controller: controller,
+              physics: physics,
+              children: const [
+                _EnabledWidget(),
+                _divider,
+                _SourceVoltageWidget(),
+                _divider,
+                _PositionWidget(),
+                _divider,
+                _VelocityWidget(),
+                _divider,
+                _ControlModeWidget(),
+                _divider,
+                _DutyOutWidget(),
+                _divider,
+                _VoltageOutWidget(),
+                _divider,
+                _TargetWidget(),
+                _divider,
+                _ErrorWidget(),
+                _divider,
+                _PFactorWidget(),
+                _divider,
+                _IFactorWidget(),
+                _divider,
+                _DFactorWidget(),
+                _divider,
+                _SFactorWidget(),
+                _divider,
+                _SlotWidget(),
+                _divider,
+                _SubErrorWidget(),
+                _divider,
+                _SecsToCompletionWidget(),
+                _divider,
+                _PhaseNameWidget(),
+                _divider,
+              ],
+            ),
       ),
     );
   }
@@ -127,7 +137,7 @@ class _SourceVoltageWidget extends StatelessWidget {
             ),
           ),
           if (sv != null)
-            Expanded(child: TextDataWidget("${sv.toStringAsFixed(2)} V")),
+            Expanded(child: NumberDataWidget(sv, precision: 2, suffix: " V")),
         ],
       ),
     );
@@ -164,7 +174,9 @@ class _PositionWidget extends StatelessWidget {
             ),
           ),
           if (pos != null)
-            Expanded(child: TextDataWidget("${pos.toStringAsFixed(4)} rots")),
+            Expanded(
+              child: NumberDataWidget(pos, precision: 4, suffix: " rots"),
+            ),
         ],
       ),
     );
@@ -201,7 +213,9 @@ class _VelocityWidget extends StatelessWidget {
             ),
           ),
           if (vel != null)
-            Expanded(child: TextDataWidget("${vel.toStringAsFixed(4)} rpm")),
+            Expanded(
+              child: NumberDataWidget(vel, precision: 4, suffix: " rpm"),
+            ),
         ],
       ),
     );
@@ -383,8 +397,10 @@ class _TargetWidget extends StatelessWidget {
           ),
           if (target != null)
             Expanded(
-              child: TextDataWidget(
-                "${target.toStringAsFixed(4)}$closedLoopUnit",
+              child: NumberDataWidget(
+                target,
+                precision: 4,
+                suffix: closedLoopUnit,
               ),
             ),
         ],
@@ -446,8 +462,10 @@ class _ErrorWidget extends StatelessWidget {
           ),
           if (error != null)
             Expanded(
-              child: TextDataWidget(
-                "${error.toStringAsFixed(4)}$closedLoopUnit",
+              child: NumberDataWidget(
+                error,
+                precision: 4,
+                suffix: closedLoopUnit,
               ),
             ),
         ],
@@ -637,7 +655,7 @@ class _SlotWidget extends StatelessWidget {
               ),
             ),
           ),
-          if (slot != null) Expanded(child: TextDataWidget(slot.toString())),
+          if (slot != null) Expanded(child: NumberDataWidget(slot)),
         ],
       ),
     );
@@ -697,8 +715,10 @@ class _SubErrorWidget extends StatelessWidget {
           ),
           if (subError != null)
             Expanded(
-              child: TextDataWidget(
-                "${subError.toStringAsFixed(4)}$closedLoopUnit",
+              child: NumberDataWidget(
+                subError,
+                precision: 4,
+                suffix: closedLoopUnit,
               ),
             ),
         ],
@@ -739,7 +759,7 @@ class _SecsToCompletionWidget extends StatelessWidget {
             ),
           ),
           if (secs != null)
-            Expanded(child: TextDataWidget("${secs.toStringAsFixed(3)} s")),
+            Expanded(child: NumberDataWidget(secs, precision: 3, suffix: " s")),
         ],
       ),
     );

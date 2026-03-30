@@ -5,6 +5,7 @@ import 'package:desktop_software/state/slots_tab_state.dart';
 import 'package:desktop_software/widgets/number_field.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:desktop_software/widgets/slot_selector.dart';
+import 'package:desktop_software/widgets/smooth_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -77,7 +78,18 @@ class _SlotsTabState extends State<SlotsTab>
           ),
           const Divider(indent: 0, endIndent: 0, radius: null),
           Expanded(
-            child: SingleChildScrollView(child: _settingsPages[_selectedSlot]),
+            child: SmoothScroll(
+              builder:
+                  (
+                    BuildContext _,
+                    ScrollController controller,
+                    ScrollPhysics physics,
+                  ) => SingleChildScrollView(
+                    controller: controller,
+                    physics: physics,
+                    child: _settingsPages[_selectedSlot],
+                  ),
+            ),
           ),
           const Divider(indent: 0, endIndent: 0, radius: null),
           FilledButton(

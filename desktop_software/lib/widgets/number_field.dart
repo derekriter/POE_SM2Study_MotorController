@@ -7,7 +7,7 @@ class DoubleField extends StatefulWidget {
   final double? min, max;
   final int? precision;
   final InputDecoration? decoration;
-  final Function(double) onChangeEnd;
+  final Function(double) onConfirmed;
 
   const DoubleField({
     required this.defaultVal,
@@ -15,7 +15,7 @@ class DoubleField extends StatefulWidget {
     this.max,
     this.precision,
     this.decoration,
-    required this.onChangeEnd,
+    required this.onConfirmed,
     super.key,
   });
 
@@ -79,7 +79,7 @@ class _DoubleFieldState extends State<DoubleField> {
     setState(() {
       _currentVal = val;
       _controller.text = val.toMinimizedString(maxPrecision: widget.precision);
-      widget.onChangeEnd(val);
+      widget.onConfirmed(val);
     });
   }
 }

@@ -211,6 +211,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.5+1"
+  resizable_splitter:
+    dependency: "direct main"
+    description:
+      name: resizable_splitter
+      sha256: "181c4c18ad47ccc404c4ed6109af29a64744fee4f2f989367ea433ea615d226d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   screen_retriever:
     dependency: transitive
     description:
@@ -256,6 +264,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  smooth_scroll_multiplatform:
+    dependency: "direct main"
+    description:
+      name: smooth_scroll_multiplatform
+      sha256: c3b8998c3c70eaf480e8ce16608ffc80c0aac1722697a08992fde10e1c97a742
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.8"
   source_span:
     dependency: transitive
     description:
@@ -330,4 +346,4 @@ packages:
     version: "0.5.1"
 sdks:
   dart: ">=3.11.0 <4.0.0"
-  flutter: ">=3.18.0-18.0.pre.54"
+  flutter: ">=3.22.0"
