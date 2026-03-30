@@ -1,18 +1,16 @@
-import 'dart:math';
-
 import 'package:desktop_software/device/device_control_request.dart';
-import 'package:desktop_software/double_helpers.dart';
+import 'package:desktop_software/state/control_tab_state.dart';
+import 'package:desktop_software/util/double_helpers.dart';
 import 'package:desktop_software/widgets/number_field.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:desktop_software/widgets/slot_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:logger/web.dart';
+import 'package:provider/provider.dart';
 
 abstract class ControlDetails extends StatelessWidget {
   const ControlDetails({super.key});
 
-  DeviceControlRequest generateRequest();
+  DeviceControlRequest generateRequest(BuildContext context);
 }
 
 class StopDetails extends ControlDetails {
@@ -24,16 +22,15 @@ class StopDetails extends ControlDetails {
   }
 
   @override
-  DeviceStopRequest generateRequest() {
-    return const DeviceStopRequest();
+  DeviceStopRequest generateRequest(BuildContext context) {
+    return DeviceStopRequest();
   }
 }
 
 class DutyCycleDetails extends ControlDetails {
-  final VoidCallback onChange;
-  double _duty = 0;
+  final VoidCallback onConfirmed;
 
-  DutyCycleDetails({required this.onChange, super.key});
+  const DutyCycleDetails({required this.onConfirmed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +49,13 @@ class DutyCycleDetails extends ControlDetails {
                   precision: 3,
                   min: -1,
                   max: 1,
-                  onChangeEnd: (double newDutyOut) {
-                    _duty = newDutyOut;
-                    onChange();
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.duty,
+                  ),
+                  writeVal: (BuildContext context, double newDuty) {
+                    context.read<ControlTabState>().duty = newDuty;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -66,16 +66,17 @@ class DutyCycleDetails extends ControlDetails {
   }
 
   @override
-  DeviceDutyCycleRequest generateRequest() {
-    return DeviceDutyCycleRequest(_duty);
+  DeviceDutyCycleRequest generateRequest(BuildContext context) {
+    final tabStateRead = context.read<ControlTabState>();
+
+    return DeviceDutyCycleRequest(tabStateRead.duty);
   }
 }
 
 class VoltageDetails extends ControlDetails {
-  final VoidCallback onChange;
-  double _voltage = 0;
+  final VoidCallback onConfirmed;
 
-  VoltageDetails({required this.onChange, super.key});
+  const VoltageDetails({required this.onConfirmed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -94,10 +95,13 @@ class VoltageDetails extends ControlDetails {
                   precision: 2,
                   min: -9,
                   max: 9,
-                  onChangeEnd: (double newVoltage) {
-                    _voltage = newVoltage;
-                    onChange();
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.voltage,
+                  ),
+                  writeVal: (BuildContext context, double newVoltage) {
+                    context.read<ControlTabState>().voltage = newVoltage;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -108,17 +112,17 @@ class VoltageDetails extends ControlDetails {
   }
 
   @override
-  DeviceVoltageRequest generateRequest() {
-    return DeviceVoltageRequest(_voltage);
+  DeviceVoltageRequest generateRequest(BuildContext context) {
+    final tabStateRead = context.read<ControlTabState>();
+
+    return DeviceVoltageRequest(tabStateRead.voltage);
   }
 }
 
 class PIDPosDetails extends ControlDetails {
-  final VoidCallback onChange;
-  double _target = 0;
-  int _slot = 0;
+  final VoidCallback onConfirmed;
 
-  PIDPosDetails({required this.onChange, super.key});
+  const PIDPosDetails({required this.onConfirmed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -136,12 +140,15 @@ class PIDPosDetails extends ControlDetails {
                   "Target Rotations:",
                   style: theme.textTheme.labelLarge,
                 ),
-                _OutputTextField(
+                _OutputDoubleField(
                   precision: 4,
-                  onChangeEnd: (double newTarget) {
-                    _target = newTarget;
-                    onChange();
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.pidPosTarget,
+                  ),
+                  writeVal: (BuildContext context, double newTarget) {
+                    context.read<ControlTabState>().pidPosTarget = newTarget;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -154,11 +161,14 @@ class PIDPosDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OverflowText("Slot:", style: theme.textTheme.labelLarge),
-                SlotSelector(
-                  onChangeEnd: (int newSlot) {
-                    _slot = newSlot;
-                    onChange();
+                ConsumerSlotSelector(
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.pidPosSlot,
+                  ),
+                  writeVal: (BuildContext context, int newSlot) {
+                    context.read<ControlTabState>().pidPosSlot = newSlot;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -169,17 +179,20 @@ class PIDPosDetails extends ControlDetails {
   }
 
   @override
-  DevicePIDPositionRequest generateRequest() {
-    return DevicePIDPositionRequest(_target, _slot);
+  DevicePIDPositionRequest generateRequest(BuildContext context) {
+    final tabStateRead = context.read<ControlTabState>();
+
+    return DevicePIDPositionRequest(
+      tabStateRead.pidPosTarget,
+      tabStateRead.pidPosSlot,
+    );
   }
 }
 
 class PIDVelDetails extends ControlDetails {
-  final VoidCallback onChange;
-  double _target = 0;
-  int _slot = 0;
+  final VoidCallback onConfirmed;
 
-  PIDVelDetails({required this.onChange, super.key});
+  const PIDVelDetails({required this.onConfirmed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -194,12 +207,15 @@ class PIDVelDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 OverflowText("Target RPM:", style: theme.textTheme.labelLarge),
-                _OutputTextField(
+                _OutputDoubleField(
                   precision: 4,
-                  onChangeEnd: (double newTarget) {
-                    _target = newTarget;
-                    onChange();
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.pidVelTarget,
+                  ),
+                  writeVal: (BuildContext context, double newTarget) {
+                    context.read<ControlTabState>().pidVelTarget = newTarget;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -212,11 +228,14 @@ class PIDVelDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OverflowText("Slot:", style: theme.textTheme.labelLarge),
-                SlotSelector(
-                  onChangeEnd: (int newSlot) {
-                    _slot = newSlot;
-                    onChange();
+                ConsumerSlotSelector(
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.pidVelSlot,
+                  ),
+                  writeVal: (BuildContext context, int newSlot) {
+                    context.read<ControlTabState>().pidVelSlot = newSlot;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -227,17 +246,20 @@ class PIDVelDetails extends ControlDetails {
   }
 
   @override
-  DevicePIDVelocityRequest generateRequest() {
-    return DevicePIDVelocityRequest(_target, _slot);
+  DevicePIDVelocityRequest generateRequest(BuildContext context) {
+    final tabStateRead = context.read<ControlTabState>();
+
+    return DevicePIDVelocityRequest(
+      tabStateRead.pidVelTarget,
+      tabStateRead.pidVelSlot,
+    );
   }
 }
 
 class TrapPosDetails extends ControlDetails {
-  final VoidCallback onChange;
-  double _target = 0;
-  int _slot = 0;
+  final VoidCallback onConfirmed;
 
-  TrapPosDetails({required this.onChange, super.key});
+  const TrapPosDetails({required this.onConfirmed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -255,12 +277,15 @@ class TrapPosDetails extends ControlDetails {
                   "Target Rotations:",
                   style: theme.textTheme.labelLarge,
                 ),
-                _OutputTextField(
+                _OutputDoubleField(
                   precision: 4,
-                  onChangeEnd: (double newTarget) {
-                    _target = newTarget;
-                    onChange();
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.trapPosTarget,
+                  ),
+                  writeVal: (BuildContext context, double newTarget) {
+                    context.read<ControlTabState>().trapPosTarget = newTarget;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -273,11 +298,14 @@ class TrapPosDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OverflowText("Slot:", style: theme.textTheme.labelLarge),
-                SlotSelector(
-                  onChangeEnd: (int newSlot) {
-                    _slot = newSlot;
-                    onChange();
+                ConsumerSlotSelector(
+                  watchVal: (BuildContext context) => context.select(
+                    (ControlTabState tabState) => tabState.trapPosSlot,
+                  ),
+                  writeVal: (BuildContext context, int newSlot) {
+                    context.read<ControlTabState>().trapPosSlot = newSlot;
                   },
+                  onConfirmed: (_) => onConfirmed(),
                 ),
               ],
             ),
@@ -288,23 +316,31 @@ class TrapPosDetails extends ControlDetails {
   }
 
   @override
-  DeviceTrapezoidalMotionPositionRequest generateRequest() {
-    return DeviceTrapezoidalMotionPositionRequest(_target, _slot);
+  DeviceTrapezoidalMotionPositionRequest generateRequest(BuildContext context) {
+    final tabStateRead = context.read<ControlTabState>();
+
+    return DeviceTrapezoidalMotionPositionRequest(
+      tabStateRead.trapPosTarget,
+      tabStateRead.trapPosSlot,
+    );
   }
 }
 
-final _logger = Logger();
-
-class _OutputSlider extends StatefulWidget {
+class _OutputSlider extends StatelessWidget {
   final double min, max;
   final int precision;
-  final void Function(double) onChangeEnd;
+  final double Function(BuildContext) watchVal;
+  final void Function(BuildContext, double) writeVal;
+  final void Function(double)? onConfirmed;
 
   const _OutputSlider({
     required this.min,
     required this.max,
     required this.precision,
-    required this.onChangeEnd,
+    required this.watchVal,
+    required this.writeVal,
+    // ignore: unused_element_parameter
+    this.onConfirmed,
     // ignore: unused_element_parameter
     super.key,
   }) : assert(precision >= 1),
@@ -312,60 +348,54 @@ class _OutputSlider extends StatefulWidget {
        assert(max >= 0);
 
   @override
-  State<_OutputSlider> createState() => _OutputSliderState();
-}
-
-class _OutputSliderState extends State<_OutputSlider> {
-  double _currentVal = 0;
-
-  @override
   Widget build(BuildContext context) {
-    _logger.d(_currentVal);
-
-    final numField = DoubleField(
-      defaultVal: 0,
-      min: widget.min,
-      max: widget.max,
-      precision: widget.precision,
-      onChangeEnd: (double newVal) {
-        setState(() {
-          _currentVal = newVal;
-        });
-      },
-    );
-    final slider = Slider(
-      value: _currentVal,
-      min: widget.min,
-      max: widget.max,
-      // divisions: widget.precision >= 2
-      //     ? null
-      //     : pow(10, widget.precision).toInt(),
-      onChanged: (double? newVal) {
-        setState(() {
-          _currentVal = newVal?.roundToPrecision(widget.precision) ?? 0;
-          numField.setValue(context, _currentVal, notify: false);
-        });
-      },
-      onChangeEnd: widget.onChangeEnd,
-    );
+    final val = watchVal(context);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(child: slider),
-        SizedBox(width: 100, child: numField),
+        Expanded(
+          child: Slider(
+            value: val,
+            min: min,
+            max: max,
+            // divisions: precision >= 2
+            //     ? null
+            //     : pow(10, precision).toInt(),
+            onChanged: (double? newVal) {
+              newVal ??= 0;
+
+              writeVal(context, newVal.roundToPrecision(precision));
+            },
+            onChangeEnd: onConfirmed,
+          ),
+        ),
+        SizedBox(
+          width: 100,
+          child: _OutputDoubleField(
+            min: min,
+            max: max,
+            precision: precision,
+            watchVal: watchVal,
+            writeVal: writeVal,
+            onConfirmed: onConfirmed,
+          ),
+        ),
       ],
     );
   }
 }
 
-class _OutputTextField extends DoubleField {
-  const _OutputTextField({
+class _OutputDoubleField extends ConsumerDoubleField {
+  const _OutputDoubleField({
     // ignore: unused_element_parameter
     super.min,
     // ignore: unused_element_parameter
     super.max,
     required super.precision,
-    required super.onChangeEnd,
+    required super.watchVal,
+    required super.writeVal,
+    // ignore: unused_element_parameter
+    super.onConfirmed,
   }) : super(defaultVal: 0, decoration: null);
 }

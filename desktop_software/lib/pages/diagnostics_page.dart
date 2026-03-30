@@ -1,4 +1,4 @@
-import 'package:desktop_software/app_state.dart';
+import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:flutter/material.dart';
@@ -140,7 +140,7 @@ class DiagnosticsPage extends StatelessWidget {
                   DeviceSlotConfigRequest(
                     1,
                     DeviceSlotConfig(
-                      kP: 0.002,
+                      kP: 0.0005,
                       kI: 0.00001,
                       kD: 0,
                       kS: 0.17,

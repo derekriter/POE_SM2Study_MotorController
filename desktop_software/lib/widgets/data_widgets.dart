@@ -95,6 +95,14 @@ class PercentOutDataWidget<T> extends DataWidget {
     final actuationDist = _sliderWidth / 2 - textHeight / 4;
     final barCenter = _sliderWidth / 2 - textHeight / 4;
 
+    var text = suffix == null
+        ? val.toStringAsFixed(precision)
+        : "${val.toStringAsFixed(precision)}$suffix";
+    if (!text.contains("-")) {
+      //TODO: monospace font?
+      text = " $text"; //not perfect but its pretty close
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       spacing: 8,
@@ -124,11 +132,7 @@ class PercentOutDataWidget<T> extends DataWidget {
             ),
           ],
         ),
-        OverflowText(
-          suffix == null
-              ? val.toStringAsFixed(precision)
-              : "${val.toStringAsFixed(precision)}$suffix",
-        ),
+        OverflowText(text),
       ],
     );
   }

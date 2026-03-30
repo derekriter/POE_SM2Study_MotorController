@@ -1,5 +1,5 @@
-import 'package:desktop_software/app_state.dart';
-import 'package:desktop_software/main_page.dart';
+import 'package:desktop_software/state/app_state.dart';
+import 'package:desktop_software/pages/main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';

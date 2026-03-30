@@ -1,9 +1,24 @@
 import 'dart:math';
 
 extension ToStringShort on double {
-  String toStringShort() {
+  String toMinimizedString({int? maxPrecision}) {
+    late bool isInt;
+    if (maxPrecision == null) {
+      isInt = (truncateToDouble() - this).abs() < pow(10, -20);
+    } else {
+      isInt = (truncateToDouble() - this).abs() < pow(10, -maxPrecision);
+    }
+
     //convert to an int if if possible to remove uneccessary decimals
-    return floorToDouble() == this ? floor().toString() : toString();
+    if (isInt) {
+      return truncate().toString();
+    }
+
+    if (maxPrecision == null) {
+      return toString();
+    }
+
+    return toStringAsFixed(maxPrecision);
   }
 }
 

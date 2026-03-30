@@ -12,7 +12,7 @@ SerialPortConfig? _portConfig;
 DateTime? _lastSendTime;
 DateTime? _connectTime;
 
-//NOTE: calling any functions in this file from any isolates other than the device loop will probably break things
+//NOTE: calling any functions in this file from any isolates other than the device loop will break things
 
 bool connect() {
   if (isConnected()) {

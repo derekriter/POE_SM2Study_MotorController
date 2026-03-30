@@ -1,16 +1,12 @@
-import 'package:desktop_software/double_helpers.dart';
+import 'package:desktop_software/util/double_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:logger/web.dart';
-
-final _logger = Logger();
 
 class DoubleField extends StatefulWidget {
   final double defaultVal;
   final double? min, max;
   final int? precision;
   final InputDecoration? decoration;
-
   final Function(double) onChangeEnd;
 
   const DoubleField({
@@ -21,22 +17,10 @@ class DoubleField extends StatefulWidget {
     this.decoration,
     required this.onChangeEnd,
     super.key,
-  }) : assert(min == null || min <= defaultVal),
-       assert(max == null || max >= defaultVal);
+  });
 
   @override
-  State<StatefulWidget> createState() => _DoubleFieldState();
-
-  //https://stackoverflow.com/a/49825756
-  void setValue(BuildContext context, double val, {bool notify = true}) {
-    final state = context.findAncestorStateOfType<_DoubleFieldState>();
-    if (state == null) {
-      _logger.w("Failed to find child state of DoubleField");
-      return;
-    }
-
-    state.setValue(val, notify: notify);
-  }
+  State<DoubleField> createState() => _DoubleFieldState();
 }
 
 class _DoubleFieldState extends State<DoubleField> {
@@ -50,10 +34,12 @@ class _DoubleFieldState extends State<DoubleField> {
     super.initState();
 
     _currentVal = widget.defaultVal;
-    _controller.text = _currentVal.toStringShort();
+    _controller.text = _currentVal.toMinimizedString(
+      maxPrecision: widget.precision,
+    );
 
     _focusNode.addListener(() {
-      if (!_focusNode.hasFocus) {
+      if (!_focusNode.hasPrimaryFocus) {
         _onTextSubmitted(_controller.text);
       }
     });
@@ -81,21 +67,101 @@ class _DoubleFieldState extends State<DoubleField> {
   }
 
   void _onTextSubmitted(String text) {
-    setValue(double.tryParse(text) ?? widget.defaultVal, notify: true);
+    var val = double.tryParse(text) ?? widget.defaultVal;
+
+    if (widget.min != null && val < widget.min!) val = widget.min!;
+    if (widget.max != null && val > widget.max!) val = widget.max!;
+
+    if (widget.precision != null) {
+      val = val.roundToPrecision(widget.precision!);
+    }
+
+    setState(() {
+      _currentVal = val;
+      _controller.text = val.toMinimizedString(maxPrecision: widget.precision);
+      widget.onChangeEnd(val);
+    });
+  }
+}
+
+class ConsumerDoubleField extends StatefulWidget {
+  final double defaultVal;
+  final double? min, max;
+  final int? precision;
+  final InputDecoration? decoration;
+  final double Function(BuildContext) watchVal;
+  final void Function(BuildContext, double) writeVal;
+  final void Function(double)? onConfirmed;
+
+  const ConsumerDoubleField({
+    required this.defaultVal,
+    this.min,
+    this.max,
+    this.precision,
+    this.decoration,
+    required this.watchVal,
+    required this.writeVal,
+    this.onConfirmed,
+    super.key,
+  });
+
+  @override
+  State<ConsumerDoubleField> createState() => _ConsumerDoubleFieldState();
+}
+
+class _ConsumerDoubleFieldState extends State<ConsumerDoubleField> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _focusNode.addListener(() {
+      if (!_focusNode.hasPrimaryFocus) {
+        _onTextSubmitted(_controller.text);
+      }
+    });
   }
 
-  void setValue(double val, {bool notify = true}) {
-    setState(() {
-      if (widget.min != null && val < widget.min!) val = widget.min!;
-      if (widget.max != null && val > widget.max!) val = widget.max!;
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
 
-      if (widget.precision != null) {
-        val = val.roundToPrecision(widget.precision!);
-      }
+    super.dispose();
+  }
 
-      _currentVal = val;
-      _controller.text = val.toStringShort();
-      if (notify) widget.onChangeEnd(_currentVal);
-    });
+  @override
+  Widget build(BuildContext context) {
+    _controller.text = widget
+        .watchVal(context)
+        .toMinimizedString(maxPrecision: widget.precision);
+
+    return TextField(
+      decoration:
+          widget.decoration ??
+          const InputDecoration(border: OutlineInputBorder()),
+      controller: _controller,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r"[0-9.eE-]")),
+      ],
+      onSubmitted: _onTextSubmitted,
+      focusNode: _focusNode,
+    );
+  }
+
+  void _onTextSubmitted(String text) {
+    var val = double.tryParse(text) ?? widget.defaultVal;
+
+    if (widget.min != null && val < widget.min!) val = widget.min!;
+    if (widget.max != null && val > widget.max!) val = widget.max!;
+
+    if (widget.precision != null) {
+      val = val.roundToPrecision(widget.precision!);
+    }
+
+    widget.writeVal(context, val);
+    widget.onConfirmed?.call(val);
   }
 }

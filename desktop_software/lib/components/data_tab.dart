@@ -1,4 +1,4 @@
-import 'package:desktop_software/app_state.dart';
+import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/widgets/data_widgets.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';

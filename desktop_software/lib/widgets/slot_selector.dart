@@ -44,3 +44,51 @@ class _SlotSelectorState extends State<SlotSelector> {
     );
   }
 }
+
+class ConsumerSlotSelector extends StatefulWidget {
+  final int Function(BuildContext) watchVal;
+  final void Function(BuildContext, int) writeVal;
+  final void Function(int)? onConfirmed;
+
+  const ConsumerSlotSelector({
+    required this.watchVal,
+    required this.writeVal,
+    this.onConfirmed,
+    // ignore: unused_element_parameter
+    super.key,
+  });
+
+  @override
+  State<ConsumerSlotSelector> createState() => _ConsumerSlotSelectorState();
+}
+
+class _ConsumerSlotSelectorState extends State<ConsumerSlotSelector> {
+  @override
+  Widget build(BuildContext context) {
+    final selected = widget.watchVal(context);
+
+    return SegmentedButton<int>(
+      segments: const [
+        ButtonSegment(value: 0, label: OverflowText("0")),
+        ButtonSegment(value: 1, label: OverflowText("1")),
+        ButtonSegment(value: 2, label: OverflowText("2")),
+        ButtonSegment(value: 3, label: OverflowText("3")),
+        ButtonSegment(value: 4, label: OverflowText("4")),
+        ButtonSegment(value: 5, label: OverflowText("5")),
+      ],
+      selected: {selected},
+      multiSelectionEnabled: false,
+      emptySelectionAllowed: false,
+      showSelectedIcon: false,
+      onSelectionChanged: (Set<int> newSlot) {
+        assert(newSlot.length == 1);
+
+        final tempSelected = newSlot.elementAt(0);
+        assert(tempSelected >= 0 && tempSelected <= 5);
+
+        widget.writeVal(context, tempSelected);
+        widget.onConfirmed?.call(tempSelected);
+      },
+    );
+  }
+}

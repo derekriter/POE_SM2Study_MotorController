@@ -1,4 +1,4 @@
-import 'package:desktop_software/app_state.dart';
+import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

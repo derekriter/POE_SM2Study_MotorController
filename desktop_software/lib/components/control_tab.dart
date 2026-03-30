@@ -1,6 +1,7 @@
-import 'package:desktop_software/app_state.dart';
+import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/device/device_control_request.dart';
+import 'package:desktop_software/state/control_tab_state.dart';
 import 'package:desktop_software/widgets/control_details.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:flutter/material.dart';
@@ -54,21 +55,33 @@ class _ControlTabState extends State<ControlTab>
                     onSelected: (DeviceControlMode? newVal) {
                       setState(() {
                         _selectedMode = newVal;
-
-                        //disable motor for safety reasons
-                        if (appStateRead.enabled ?? true) {
-                          appStateRead.sendControlRequest(
-                            DeviceEnableDisableRequest(false),
-                          );
-                        }
-
                         _updateSelectedDetails();
-                        _sendControlToDevice();
                       });
+
+                      //disable motor for safety reasons
+                      if (appStateRead.enabled ?? true) {
+                        appStateRead.sendControlRequest(
+                          DeviceEnableDisableRequest(false),
+                        );
+                      }
+
+                      final tabStateRead = context.read<ControlTabState>();
+                      tabStateRead.resetOutputs();
+
+                      _sendControlToDevice();
                     },
                   ),
                 ),
-                const Expanded(child: _EnabledButton()),
+                Expanded(
+                  child: _EnabledButton(
+                    onPress: (bool newState) {
+                      _sendControlToDevice(); //just in case
+                      appStateRead.sendControlRequest(
+                        DeviceEnableDisableRequest(newState),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -95,23 +108,25 @@ class _ControlTabState extends State<ControlTab>
         }
       case DeviceControlMode.dutyCycle:
         {
-          _selectedDetails = DutyCycleDetails(onChange: _sendControlToDevice);
+          _selectedDetails = DutyCycleDetails(
+            onConfirmed: _sendControlToDevice,
+          );
         }
       case DeviceControlMode.voltage:
         {
-          _selectedDetails = VoltageDetails(onChange: _sendControlToDevice);
+          _selectedDetails = VoltageDetails(onConfirmed: _sendControlToDevice);
         }
       case DeviceControlMode.pidPos:
         {
-          _selectedDetails = PIDPosDetails(onChange: _sendControlToDevice);
+          _selectedDetails = PIDPosDetails(onConfirmed: _sendControlToDevice);
         }
       case DeviceControlMode.pidVel:
         {
-          _selectedDetails = PIDVelDetails(onChange: _sendControlToDevice);
+          _selectedDetails = PIDVelDetails(onConfirmed: _sendControlToDevice);
         }
       case DeviceControlMode.trapPos:
         {
-          _selectedDetails = TrapPosDetails(onChange: _sendControlToDevice);
+          _selectedDetails = TrapPosDetails(onConfirmed: _sendControlToDevice);
         }
     }
   }
@@ -120,7 +135,7 @@ class _ControlTabState extends State<ControlTab>
     final appStateRead = context.read<AppState>();
 
     appStateRead.sendControlRequest(
-      _selectedDetails?.generateRequest() ?? const DeviceStopRequest(),
+      _selectedDetails?.generateRequest(context) ?? const DeviceStopRequest(),
     );
   }
 }
@@ -149,8 +164,10 @@ class _ModeDropdown extends StatelessWidget {
 }
 
 class _EnabledButton extends StatelessWidget {
+  final void Function(bool) onPress;
+
   // ignore: unused_element_parameter
-  const _EnabledButton({super.key});
+  const _EnabledButton({required this.onPress, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -160,10 +177,7 @@ class _EnabledButton extends StatelessWidget {
     final theme = Theme.of(context);
 
     return FilledButton(
-      onPressed: () {
-        final appStateRead = context.read<AppState>();
-        appStateRead.sendControlRequest(DeviceEnableDisableRequest(!enabled));
-      },
+      onPressed: () => onPress(!enabled),
       style: FilledButton.styleFrom(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadiusGeometry.circular(4),

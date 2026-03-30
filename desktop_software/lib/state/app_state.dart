@@ -13,7 +13,7 @@ import 'package:logger/logger.dart';
 
 final _logger = Logger();
 
-class AppState extends ChangeNotifier {
+class AppState with ChangeNotifier {
   AppState() {
     _logger.i("Spawning device isolate...");
 
