@@ -24,7 +24,7 @@ void deviceLoopInit(SendPort send) async {
 
   await Future.doWhile(() async {
     await _deviceLoop(send);
-    await Future.delayed(Duration(milliseconds: 10)); //limit rate
+    await Future.delayed(Duration(milliseconds: 1)); //limit rate
     return !_shouldClose;
   });
 
@@ -68,6 +68,60 @@ Future<void> _deviceLoop(SendPort send) async {
 
       if (frame is DeviceDataFrame) {
         state.lastData = frame;
+        state.enabledMap.setValueAtTime(frame.timestamp, frame.enabled);
+        state.sourceVoltageMap.setValueAtTime(
+          frame.timestamp,
+          frame.sourceVoltage,
+        );
+        state.positionMap.setValueAtTime(frame.timestamp, frame.position);
+        state.velocityMap.setValueAtTime(frame.timestamp, frame.velocity);
+        state.controlModeMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.mode,
+        );
+        state.dutyOutMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.dutyOut,
+        );
+        state.voltageOutMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.voltageOut,
+        );
+        state.targetMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.target,
+        );
+        state.errorMap.setValueAtTime(frame.timestamp, frame.controlMode.error);
+        state.pFactorMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.pFactor,
+        );
+        state.iFactorMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.iFactor,
+        );
+        state.dFactorMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.dFactor,
+        );
+        state.sFactorMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.sFactor,
+        );
+        state.slotMap.setValueAtTime(frame.timestamp, frame.controlMode.slot);
+        state.subErrorMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.subError,
+        );
+        state.secsToCompletionMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.secsToCompletion,
+        );
+        state.phaseNameMap.setValueAtTime(
+          frame.timestamp,
+          frame.controlMode.phaseName,
+        );
+
         _lastDataTime = now;
 
         _workingUPS = (_workingUPS ?? 0) + 1;
@@ -125,6 +179,24 @@ Future<void> _deviceLoop(SendPort send) async {
         _workingUPS = 0;
         _lastUPSTime = DateTime.now();
         flushBuffers(); //prevent unprocessed bad data from causing problems
+
+        state.enabledMap.clear();
+        state.sourceVoltageMap.clear();
+        state.positionMap.clear();
+        state.velocityMap.clear();
+        state.controlModeMap.clear();
+        state.dutyOutMap.clear();
+        state.voltageOutMap.clear();
+        state.targetMap.clear();
+        state.errorMap.clear();
+        state.pFactorMap.clear();
+        state.iFactorMap.clear();
+        state.dFactorMap.clear();
+        state.sFactorMap.clear();
+        state.slotMap.clear();
+        state.subErrorMap.clear();
+        state.secsToCompletionMap.clear();
+        state.phaseNameMap.clear();
 
         await sendControlRequest(DeviceGetInfoRequest());
         for (int i = 0; i < state.slots.length; i++) {

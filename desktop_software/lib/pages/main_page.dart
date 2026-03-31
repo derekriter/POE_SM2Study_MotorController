@@ -30,35 +30,47 @@ class MainPage extends StatelessWidget {
             dividerColor: theme.colorScheme.surfaceContainerHigh,
             dividerHoverColor: theme.colorScheme.surfaceContainerHighest,
             dividerActiveColor: theme.colorScheme.surfaceBright,
-            startPanel: DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  const TabBar(
-                    tabs: [
-                      HorizontalTab(text: "Data", icon: Icon(Icons.data_array)),
-                      HorizontalTab(text: "Control", icon: Icon(Icons.gamepad)),
-                      HorizontalTab(text: "Slots", icon: Icon(Icons.settings)),
-                    ],
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        const DataTab(),
-                        ChangeNotifierProvider(
-                          create: (_) => ControlTabState(),
-                          child: const ControlTab(),
+            startPanel: Container(
+              color: theme.colorScheme.surfaceContainer,
+              child: DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    const TabBar(
+                      tabs: [
+                        HorizontalTab(
+                          text: "Data",
+                          icon: Icon(Icons.data_array),
                         ),
-                        ChangeNotifierProvider(
-                          create: (_) => SlotsTabState(
-                            workingConfigs: appStateRead.slotConfigs,
-                          ),
-                          child: const SlotsTab(),
+                        HorizontalTab(
+                          text: "Control",
+                          icon: Icon(Icons.gamepad),
+                        ),
+                        HorizontalTab(
+                          text: "Slots",
+                          icon: Icon(Icons.settings),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          const DataTab(),
+                          ChangeNotifierProvider(
+                            create: (_) => ControlTabState(),
+                            child: const ControlTab(),
+                          ),
+                          ChangeNotifierProvider(
+                            create: (_) => SlotsTabState(
+                              workingConfigs: appStateRead.slotConfigs,
+                            ),
+                            child: const SlotsTab(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             endPanel: ChangeNotifierProvider(

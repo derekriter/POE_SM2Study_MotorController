@@ -7,6 +7,7 @@ import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:desktop_software/device/device_loop.dart';
 import 'package:desktop_software/device/device_state.dart';
+import 'package:desktop_software/util/time_map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
@@ -53,9 +54,12 @@ class AppState with ChangeNotifier {
     );
   }
 
+  //connection data
   bool get isConnected => _deviceState?.isConnected ?? false;
   bool get isReady => _deviceState?.isReady ?? false;
   String? get port => _deviceState?.port;
+
+  //device data
   bool? get enabled => _deviceState?.lastData?.enabled;
   double? get sourceVoltage => _deviceState?.lastData?.sourceVoltage;
   double? get position => _deviceState?.lastData?.position;
@@ -68,23 +72,42 @@ class AppState with ChangeNotifier {
   double? get dutyOut => _deviceState?.lastData?.controlMode.dutyOut;
   double? get voltageOut => _deviceState?.lastData?.controlMode.voltageOut;
   List<DeviceSlotConfig?>? get slotConfigs => _deviceState?.slots;
-  double? get closedLoopTarget => _deviceState?.lastData?.controlMode.target;
-  double? get closedLoopError => _deviceState?.lastData?.controlMode.error;
-  double? get closedLoopP => _deviceState?.lastData?.controlMode.pFactor;
-  double? get closedLoopI => _deviceState?.lastData?.controlMode.iFactor;
-  double? get closedLoopD => _deviceState?.lastData?.controlMode.dFactor;
-  double? get closedLoopS => _deviceState?.lastData?.controlMode.sFactor;
-  int? get closedLoopSlot => _deviceState?.lastData?.controlMode.slot;
-  double? get closedLoopSubError =>
-      _deviceState?.lastData?.controlMode.subError;
+  double? get target => _deviceState?.lastData?.controlMode.target;
+  double? get error => _deviceState?.lastData?.controlMode.error;
+  double? get pFactor => _deviceState?.lastData?.controlMode.pFactor;
+  double? get iFactor => _deviceState?.lastData?.controlMode.iFactor;
+  double? get dFactor => _deviceState?.lastData?.controlMode.dFactor;
+  double? get sFactor => _deviceState?.lastData?.controlMode.sFactor;
+  int? get slot => _deviceState?.lastData?.controlMode.slot;
+  double? get subError => _deviceState?.lastData?.controlMode.subError;
   double? get secsToCompletion =>
       _deviceState?.lastData?.controlMode.secsToCompletion;
-  int? get closedLoopPhase => _deviceState?.lastData?.controlMode.phase;
-  String? get closedLoopPhaseName =>
-      _deviceState?.lastData?.controlMode.phaseName;
+  int? get phase => _deviceState?.lastData?.controlMode.phase;
+  String? get phaseName => _deviceState?.lastData?.controlMode.phaseName;
   int? get updatesPerSec => _deviceState?.updatesPerSec;
   String? get deviceName => _deviceState?.deviceName;
   String? get firmwareVersion => _deviceState?.firmwareVersion;
+
+  //timed device data
+  TimeMap<bool?>? get enabledTimeMap => _deviceState?.enabledMap;
+  TimeMap<double?>? get sourceVoltageTimeMap => _deviceState?.sourceVoltageMap;
+  TimeMap<double?>? get positionTimeMap => _deviceState?.positionMap;
+  TimeMap<double?>? get velocityTimeMap => _deviceState?.velocityMap;
+  TimeMap<DeviceControlMode?>? get controlModeTimeMap =>
+      _deviceState?.controlModeMap;
+  TimeMap<double?>? get dutyOutTimeMap => _deviceState?.dutyOutMap;
+  TimeMap<double?>? get voltageOutTimeMap => _deviceState?.voltageOutMap;
+  TimeMap<double?>? get targetTimeMap => _deviceState?.targetMap;
+  TimeMap<double?>? get errorTimeMap => _deviceState?.errorMap;
+  TimeMap<double?>? get pFactorTimeMap => _deviceState?.pFactorMap;
+  TimeMap<double?>? get iFactorTimeMap => _deviceState?.iFactorMap;
+  TimeMap<double?>? get dFactorTimeMap => _deviceState?.dFactorMap;
+  TimeMap<double?>? get sFactorTimeMap => _deviceState?.sFactorMap;
+  TimeMap<int?>? get slotTimeMap => _deviceState?.slotMap;
+  TimeMap<double?>? get subErrorTimeMap => _deviceState?.subErrorMap;
+  TimeMap<double?>? get secsToCompletionTimeMap =>
+      _deviceState?.secsToCompletionMap;
+  TimeMap<String?>? get phaseNameTimeMap => _deviceState?.phaseNameMap;
 
   void sendControlRequest(DeviceControlRequest req) {
     _deviceSend?.send(req);
@@ -92,9 +115,10 @@ class AppState with ChangeNotifier {
 
   late final ReceivePort _deviceReceive;
   Isolate? _deviceIsolate;
-  DeviceState? _deviceState;
   SendPort? _deviceSend;
   Completer<void>? _deviceClosed;
+
+  DeviceState? _deviceState;
 
   void _onReceiveFromDevice(dynamic msg) {
     if (msg == null) {

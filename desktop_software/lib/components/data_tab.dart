@@ -1,5 +1,6 @@
 import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/device/device_control_mode.dart';
+import 'package:desktop_software/util/data_source.dart';
 import 'package:desktop_software/widgets/data_widgets.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:desktop_software/widgets/smooth_scroll.dart';
@@ -77,6 +78,7 @@ class _EnabledWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final enabled = context.select((AppState appState) => appState.enabled);
 
     final theme = Theme.of(context);
@@ -87,21 +89,37 @@ class _EnabledWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "enabled",
-                style: enabled == null ? invalidStyle : validStyle,
+    return Draggable<DiscreteDataSource>(
+      data: DiscreteDataSource(
+        name: "enabled",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.enabled)?.toString(),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.enabledTimeMap?.getValueAtTime(timestamp)?.toString(),
+        getAllValueChanges: () => appStateRead.enabledTimeMap
+            ?.getAllValueChanges()
+            .map((entry) => MapEntry(entry.key, entry.value?.toString())),
+      ),
+      feedback: OverflowText("enabled", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "enabled",
+                  style: enabled == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (enabled != null) Expanded(child: BooleanDataWidget(enabled)),
-        ],
+            if (enabled != null) Expanded(child: BooleanDataWidget(enabled)),
+          ],
+        ),
       ),
     );
   }
@@ -113,6 +131,7 @@ class _SourceVoltageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final sv = context.select((AppState appState) => appState.sourceVoltage);
 
     final theme = Theme.of(context);
@@ -123,22 +142,41 @@ class _SourceVoltageWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "sourceVoltage",
-                style: sv == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "sourceVoltage",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.sourceVoltage),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.sourceVoltageTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.sourceVoltageTimeMap?.getAllValueChanges(),
+        stringRepresentation: (volts) => "${volts.toStringAsFixed(2)} V",
+      ),
+      feedback: OverflowText(
+        "sourceVoltage",
+        style: theme.textTheme.bodyMedium,
+      ),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "sourceVoltage",
+                  style: sv == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (sv != null)
-            Expanded(child: NumberDataWidget(sv, precision: 2, suffix: " V")),
-        ],
+            if (sv != null)
+              Expanded(child: NumberDataWidget(sv, precision: 2, suffix: " V")),
+          ],
+        ),
       ),
     );
   }
@@ -150,6 +188,7 @@ class _PositionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final pos = context.select((AppState appState) => appState.position);
 
     final theme = Theme.of(context);
@@ -160,24 +199,40 @@ class _PositionWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "position",
-                style: pos == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "position",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.position),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.positionTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.positionTimeMap?.getAllValueChanges(),
+        stringRepresentation: (rots) => "${rots.toStringAsFixed(4)} rots",
+      ),
+      feedback: OverflowText("position", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "position",
+                  style: pos == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (pos != null)
-            Expanded(
-              child: NumberDataWidget(pos, precision: 4, suffix: " rots"),
-            ),
-        ],
+            if (pos != null)
+              Expanded(
+                child: NumberDataWidget(pos, precision: 4, suffix: " rots"),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -189,6 +244,7 @@ class _VelocityWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final vel = context.select((AppState appState) => appState.velocity);
 
     final theme = Theme.of(context);
@@ -199,24 +255,40 @@ class _VelocityWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "velocity",
-                style: vel == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "velocity",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.velocity),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.velocityTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.velocityTimeMap?.getAllValueChanges(),
+        stringRepresentation: (rpm) => "${rpm.toStringAsFixed(4)} rpm",
+      ),
+      feedback: OverflowText("velocity", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "velocity",
+                  style: vel == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (vel != null)
-            Expanded(
-              child: NumberDataWidget(vel, precision: 4, suffix: " rpm"),
-            ),
-        ],
+            if (vel != null)
+              Expanded(
+                child: NumberDataWidget(vel, precision: 4, suffix: " rpm"),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -228,6 +300,7 @@ class _ControlModeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final cm = context.select((AppState appState) => appState.controlMode);
 
     final theme = Theme.of(context);
@@ -238,21 +311,37 @@ class _ControlModeWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "controlMode",
-                style: cm == null ? invalidStyle : validStyle,
+    return Draggable<DiscreteDataSource>(
+      data: DiscreteDataSource(
+        name: "controlMode",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => appStateRead.controlModeName),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.controlModeTimeMap?.getValueAtTime(timestamp)?.name,
+        getAllValueChanges: () => appStateRead.controlModeTimeMap
+            ?.getAllValueChanges()
+            .map((entry) => MapEntry(entry.key, entry.value?.toString())),
+      ),
+      feedback: OverflowText("controlMode", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "controlMode",
+                  style: cm == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (cm != null) Expanded(child: ControlModeDataWidget(cm)),
-        ],
+            if (cm != null) Expanded(child: ControlModeDataWidget(cm)),
+          ],
+        ),
       ),
     );
   }
@@ -264,6 +353,7 @@ class _DutyOutWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final dutyOut = context.select((AppState appState) => appState.dutyOut);
 
     final theme = Theme.of(context);
@@ -274,22 +364,38 @@ class _DutyOutWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "dutyOut",
-                style: dutyOut == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "dutyOut",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.dutyOut),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.dutyOutTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.dutyOutTimeMap?.getAllValueChanges(),
+        stringRepresentation: (duty) => duty.toStringAsFixed(3),
+      ),
+      feedback: OverflowText("dutyOut", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "dutyOut",
+                  style: dutyOut == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (dutyOut != null)
-            Expanded(child: PercentOutDataWidget(dutyOut, 3, dutyOut)),
-        ],
+            if (dutyOut != null)
+              Expanded(child: PercentOutDataWidget(dutyOut, 3, dutyOut)),
+          ],
+        ),
       ),
     );
   }
@@ -301,6 +407,7 @@ class _VoltageOutWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final voltageOut = context.select(
       (AppState appState) => appState.voltageOut,
     );
@@ -316,29 +423,47 @@ class _VoltageOutWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "voltageOut",
-                style: voltageOut == null ? invalidStyle : validStyle,
-              ),
-            ),
-          ),
-          if (voltageOut != null && source != null)
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "voltageOut",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.voltageOut),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.voltageOutTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.voltageOutTimeMap?.getAllValueChanges(),
+        stringRepresentation: (volts) => "${volts.toStringAsFixed(3)} V",
+      ),
+      feedback: OverflowText("voltageOut", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
             Expanded(
-              child: PercentOutDataWidget(
-                voltageOut,
-                3,
-                source == 0 ? 0 : voltageOut / source, //prevent divide by zero
-                suffix: " V",
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "voltageOut",
+                  style: voltageOut == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-        ],
+            if (voltageOut != null && source != null)
+              Expanded(
+                child: PercentOutDataWidget(
+                  voltageOut,
+                  3,
+                  source == 0
+                      ? 0
+                      : voltageOut / source, //prevent divide by zero
+                  suffix: " V",
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -350,9 +475,8 @@ class _TargetWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final target = context.select(
-      (AppState appState) => appState.closedLoopTarget,
-    );
+    final appStateRead = context.read<AppState>();
+    final target = context.select((AppState appState) => appState.target);
     final controlMode = context.select(
       (AppState appState) => appState.controlMode,
     );
@@ -382,28 +506,45 @@ class _TargetWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "target",
-                style: target == null ? invalidStyle : validStyle,
-              ),
-            ),
-          ),
-          if (target != null)
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "target",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.target),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.targetTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.targetTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) =>
+            "${val.toStringAsFixed(4)}$closedLoopUnit",
+      ),
+      feedback: OverflowText("target", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
             Expanded(
-              child: NumberDataWidget(
-                target,
-                precision: 4,
-                suffix: closedLoopUnit,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "target",
+                  style: target == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-        ],
+            if (target != null)
+              Expanded(
+                child: NumberDataWidget(
+                  target,
+                  precision: 4,
+                  suffix: closedLoopUnit,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -415,9 +556,8 @@ class _ErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final error = context.select(
-      (AppState appState) => appState.closedLoopError,
-    );
+    final appStateRead = context.read<AppState>();
+    final error = context.select((AppState appState) => appState.error);
     final controlMode = context.select(
       (AppState appState) => appState.controlMode,
     );
@@ -447,28 +587,45 @@ class _ErrorWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "error",
-                style: error == null ? invalidStyle : validStyle,
-              ),
-            ),
-          ),
-          if (error != null)
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "error",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.error),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.errorTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.errorTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) =>
+            "${val.toStringAsFixed(4)}$closedLoopUnit",
+      ),
+      feedback: OverflowText("error", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
             Expanded(
-              child: NumberDataWidget(
-                error,
-                precision: 4,
-                suffix: closedLoopUnit,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "error",
+                  style: error == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-        ],
+            if (error != null)
+              Expanded(
+                child: NumberDataWidget(
+                  error,
+                  precision: 4,
+                  suffix: closedLoopUnit,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -480,7 +637,8 @@ class _PFactorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pFactor = context.select((AppState appState) => appState.closedLoopP);
+    final appStateRead = context.read<AppState>();
+    final pFactor = context.select((AppState appState) => appState.pFactor);
 
     final theme = Theme.of(context);
 
@@ -490,22 +648,38 @@ class _PFactorWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "pFactor",
-                style: pFactor == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "pFactor",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.pFactor),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.pFactorTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.pFactorTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) => val.toStringAsFixed(3),
+      ),
+      feedback: OverflowText("pFactor", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "pFactor",
+                  style: pFactor == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (pFactor != null)
-            Expanded(child: PercentOutDataWidget(pFactor, 3, pFactor)),
-        ],
+            if (pFactor != null)
+              Expanded(child: PercentOutDataWidget(pFactor, 3, pFactor)),
+          ],
+        ),
       ),
     );
   }
@@ -517,7 +691,8 @@ class _IFactorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iFactor = context.select((AppState appState) => appState.closedLoopI);
+    final appStateRead = context.read<AppState>();
+    final iFactor = context.select((AppState appState) => appState.iFactor);
 
     final theme = Theme.of(context);
 
@@ -527,22 +702,38 @@ class _IFactorWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "iFactor",
-                style: iFactor == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "iFactor",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.iFactor),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.iFactorTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.iFactorTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) => val.toStringAsFixed(3),
+      ),
+      feedback: OverflowText("iFactor", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "iFactor",
+                  style: iFactor == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (iFactor != null)
-            Expanded(child: PercentOutDataWidget(iFactor, 3, iFactor)),
-        ],
+            if (iFactor != null)
+              Expanded(child: PercentOutDataWidget(iFactor, 3, iFactor)),
+          ],
+        ),
       ),
     );
   }
@@ -554,7 +745,8 @@ class _DFactorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dFactor = context.select((AppState appState) => appState.closedLoopD);
+    final appStateRead = context.read<AppState>();
+    final dFactor = context.select((AppState appState) => appState.dFactor);
 
     final theme = Theme.of(context);
 
@@ -564,24 +756,40 @@ class _DFactorWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "dFactor",
-                style: dFactor == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "dFactor",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.dFactor),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.dFactorTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.dFactorTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) => val.toStringAsFixed(3),
+      ),
+      feedback: OverflowText("dFactor", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "dFactor",
+                  style: dFactor == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (dFactor != null)
-            Expanded(
-              child: PercentOutDataWidget(dFactor, 3, dFactor.clamp(-1, 1)),
-            ),
-        ],
+            if (dFactor != null)
+              Expanded(
+                child: PercentOutDataWidget(dFactor, 3, dFactor.clamp(-1, 1)),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -593,7 +801,8 @@ class _SFactorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sFactor = context.select((AppState appState) => appState.closedLoopS);
+    final appStateRead = context.read<AppState>();
+    final sFactor = context.select((AppState appState) => appState.sFactor);
 
     final theme = Theme.of(context);
 
@@ -603,24 +812,40 @@ class _SFactorWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "sFactor",
-                style: sFactor == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "sFactor",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.sFactor),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.sFactorTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.sFactorTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) => val.toStringAsFixed(3),
+      ),
+      feedback: OverflowText("sFactor", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "sFactor",
+                  style: sFactor == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (sFactor != null)
-            Expanded(
-              child: PercentOutDataWidget(sFactor, 3, sFactor.clamp(-1, 1)),
-            ),
-        ],
+            if (sFactor != null)
+              Expanded(
+                child: PercentOutDataWidget(sFactor, 3, sFactor.clamp(-1, 1)),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -632,7 +857,8 @@ class _SlotWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slot = context.select((AppState appState) => appState.closedLoopSlot);
+    final appStateRead = context.read<AppState>();
+    final slot = context.select((AppState appState) => appState.slot);
 
     final theme = Theme.of(context);
 
@@ -642,21 +868,37 @@ class _SlotWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "slot",
-                style: slot == null ? invalidStyle : validStyle,
+    return Draggable<DiscreteDataSource>(
+      data: DiscreteDataSource(
+        name: "slot",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.slot)?.toString(),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.slotTimeMap?.getValueAtTime(timestamp)?.toString(),
+        getAllValueChanges: () => appStateRead.slotTimeMap
+            ?.getAllValueChanges()
+            .map((entry) => MapEntry(entry.key, entry.value?.toString())),
+      ),
+      feedback: OverflowText("slot", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "slot",
+                  style: slot == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (slot != null) Expanded(child: NumberDataWidget(slot)),
-        ],
+            if (slot != null) Expanded(child: NumberDataWidget(slot)),
+          ],
+        ),
       ),
     );
   }
@@ -668,9 +910,8 @@ class _SubErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subError = context.select(
-      (AppState appState) => appState.closedLoopSubError,
-    );
+    final appStateRead = context.read<AppState>();
+    final subError = context.select((AppState appState) => appState.subError);
     final controlMode = context.select(
       (AppState appState) => appState.controlMode,
     );
@@ -700,28 +941,45 @@ class _SubErrorWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "subError",
-                style: subError == null ? invalidStyle : validStyle,
-              ),
-            ),
-          ),
-          if (subError != null)
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "subError",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.subError),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.subErrorTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.subErrorTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) =>
+            "${val.toStringAsFixed(4)}$closedLoopUnit",
+      ),
+      feedback: OverflowText("subError", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
             Expanded(
-              child: NumberDataWidget(
-                subError,
-                precision: 4,
-                suffix: closedLoopUnit,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "subError",
+                  style: subError == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-        ],
+            if (subError != null)
+              Expanded(
+                child: NumberDataWidget(
+                  subError,
+                  precision: 4,
+                  suffix: closedLoopUnit,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -733,6 +991,7 @@ class _SecsToCompletionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appStateRead = context.read<AppState>();
     final secs = context.select(
       (AppState appState) => appState.secsToCompletion,
     );
@@ -745,22 +1004,43 @@ class _SecsToCompletionWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "secsToCompletion",
-                style: secs == null ? invalidStyle : validStyle,
+    return Draggable<ContinousDataSource>(
+      data: ContinousDataSource(
+        name: "secsToCompletion",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.secsToCompletion),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.secsToCompletionTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.secsToCompletionTimeMap?.getAllValueChanges(),
+        stringRepresentation: (val) => "${val.toStringAsFixed(3)} s",
+      ),
+      feedback: OverflowText(
+        "secsToCompletion",
+        style: theme.textTheme.bodyMedium,
+      ),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "secsToCompletion",
+                  style: secs == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (secs != null)
-            Expanded(child: NumberDataWidget(secs, precision: 3, suffix: " s")),
-        ],
+            if (secs != null)
+              Expanded(
+                child: NumberDataWidget(secs, precision: 3, suffix: " s"),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -772,9 +1052,8 @@ class _PhaseNameWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final phase = context.select(
-      (AppState appState) => appState.closedLoopPhaseName,
-    );
+    final appStateRead = context.read<AppState>();
+    final phase = context.select((AppState appState) => appState.phaseName);
 
     final theme = Theme.of(context);
 
@@ -784,21 +1063,36 @@ class _PhaseNameWidget extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OverflowText(
-                "phaseName",
-                style: phase == null ? invalidStyle : validStyle,
+    return Draggable<DiscreteDataSource>(
+      data: DiscreteDataSource(
+        name: "phaseName",
+        watchCurrentValue: (context) =>
+            context.select((AppState state) => state.phaseName),
+        getValueAtTimestamp: (timestamp) =>
+            appStateRead.phaseNameTimeMap?.getValueAtTime(timestamp),
+        getAllValueChanges: () =>
+            appStateRead.phaseNameTimeMap?.getAllValueChanges(),
+      ),
+      feedback: OverflowText("phaseName", style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OverflowText(
+                  "phaseName",
+                  style: phase == null ? invalidStyle : validStyle,
+                ),
               ),
             ),
-          ),
-          if (phase != null) Expanded(child: TextDataWidget(phase)),
-        ],
+            if (phase != null) Expanded(child: TextDataWidget(phase)),
+          ],
+        ),
       ),
     );
   }
