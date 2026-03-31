@@ -151,7 +151,7 @@ class _SourceVoltageWidget extends StatelessWidget {
             appStateRead.sourceVoltageTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.sourceVoltageTimeMap?.getAllValueChanges(),
-        stringRepresentation: (volts) => "${volts.toStringAsFixed(2)} V",
+        asString: (volts) => "${volts.toStringAsFixed(2)} V",
       ),
       feedback: OverflowText(
         "sourceVoltage",
@@ -208,7 +208,7 @@ class _PositionWidget extends StatelessWidget {
             appStateRead.positionTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.positionTimeMap?.getAllValueChanges(),
-        stringRepresentation: (rots) => "${rots.toStringAsFixed(4)} rots",
+        asString: (rots) => "${rots.toStringAsFixed(4)} rots",
       ),
       feedback: OverflowText("position", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -264,7 +264,7 @@ class _VelocityWidget extends StatelessWidget {
             appStateRead.velocityTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.velocityTimeMap?.getAllValueChanges(),
-        stringRepresentation: (rpm) => "${rpm.toStringAsFixed(4)} rpm",
+        asString: (rpm) => "${rpm.toStringAsFixed(4)} rpm",
       ),
       feedback: OverflowText("velocity", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -373,7 +373,7 @@ class _DutyOutWidget extends StatelessWidget {
             appStateRead.dutyOutTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.dutyOutTimeMap?.getAllValueChanges(),
-        stringRepresentation: (duty) => duty.toStringAsFixed(3),
+        asString: (duty) => duty.toStringAsFixed(3),
       ),
       feedback: OverflowText("dutyOut", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -432,7 +432,7 @@ class _VoltageOutWidget extends StatelessWidget {
             appStateRead.voltageOutTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.voltageOutTimeMap?.getAllValueChanges(),
-        stringRepresentation: (volts) => "${volts.toStringAsFixed(3)} V",
+        asString: (volts) => "${volts.toStringAsFixed(3)} V",
       ),
       feedback: OverflowText("voltageOut", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -515,8 +515,7 @@ class _TargetWidget extends StatelessWidget {
             appStateRead.targetTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.targetTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) =>
-            "${val.toStringAsFixed(4)}$closedLoopUnit",
+        asString: (val) => "${val.toStringAsFixed(4)}$closedLoopUnit",
       ),
       feedback: OverflowText("target", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -596,8 +595,7 @@ class _ErrorWidget extends StatelessWidget {
             appStateRead.errorTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.errorTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) =>
-            "${val.toStringAsFixed(4)}$closedLoopUnit",
+        asString: (val) => "${val.toStringAsFixed(4)}$closedLoopUnit",
       ),
       feedback: OverflowText("error", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -657,7 +655,7 @@ class _PFactorWidget extends StatelessWidget {
             appStateRead.pFactorTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.pFactorTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) => val.toStringAsFixed(3),
+        asString: (val) => val.toStringAsFixed(3),
       ),
       feedback: OverflowText("pFactor", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -711,7 +709,7 @@ class _IFactorWidget extends StatelessWidget {
             appStateRead.iFactorTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.iFactorTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) => val.toStringAsFixed(3),
+        asString: (val) => val.toStringAsFixed(3),
       ),
       feedback: OverflowText("iFactor", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -765,7 +763,7 @@ class _DFactorWidget extends StatelessWidget {
             appStateRead.dFactorTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.dFactorTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) => val.toStringAsFixed(3),
+        asString: (val) => val.toStringAsFixed(3),
       ),
       feedback: OverflowText("dFactor", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -821,7 +819,7 @@ class _SFactorWidget extends StatelessWidget {
             appStateRead.sFactorTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.sFactorTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) => val.toStringAsFixed(3),
+        asString: (val) => val.toStringAsFixed(3),
       ),
       feedback: OverflowText("sFactor", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -950,8 +948,7 @@ class _SubErrorWidget extends StatelessWidget {
             appStateRead.subErrorTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.subErrorTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) =>
-            "${val.toStringAsFixed(4)}$closedLoopUnit",
+        asString: (val) => "${val.toStringAsFixed(4)}$closedLoopUnit",
       ),
       feedback: OverflowText("subError", style: theme.textTheme.bodyMedium),
       dragAnchorStrategy: (draggable, context, position) =>
@@ -1013,7 +1010,7 @@ class _SecsToCompletionWidget extends StatelessWidget {
             appStateRead.secsToCompletionTimeMap?.getValueAtTime(timestamp),
         getAllValueChanges: () =>
             appStateRead.secsToCompletionTimeMap?.getAllValueChanges(),
-        stringRepresentation: (val) => "${val.toStringAsFixed(3)} s",
+        asString: (val) => "${val.toStringAsFixed(3)} s",
       ),
       feedback: OverflowText(
         "secsToCompletion",

@@ -181,7 +181,7 @@ class _DiscreteDataSourceEntry extends StatelessWidget {
                     ? const SizedBox.shrink()
                     : Align(
                         alignment: Alignment.centerRight,
-                        child: OverflowText(source.stringRepresentation(value)),
+                        child: OverflowText(source.asString(value)),
                       ),
               ),
               const SizedBox(width: 4),
@@ -243,7 +243,7 @@ class _ContinousDataSourceEntry extends StatelessWidget {
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
-                    child: OverflowText(source.stringRepresentation(value)),
+                    child: OverflowText(source.asString(value)),
                   ),
                 ),
             ],
