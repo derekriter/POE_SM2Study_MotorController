@@ -27,13 +27,17 @@ class _ControlTabState extends State<ControlTab>
 
     final appStateRead = context.read<AppState>();
     final isReady = context.select((AppState appState) => appState.isReady);
+    final controlMode = context.select(
+      (AppState state) => state.controlModeLive,
+    );
 
-    _selectedMode ??= appStateRead.controlModeLive;
+    _selectedMode ??= controlMode;
     if (_selectedMode == DeviceControlMode.disabled) {
       _selectedMode = DeviceControlMode.stop;
     }
 
     if (!isReady) {
+      _selectedMode = null;
       return const Center(
         child: OverflowText("Please connect a device to control"),
       );

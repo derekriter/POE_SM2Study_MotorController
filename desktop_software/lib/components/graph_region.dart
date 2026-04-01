@@ -26,7 +26,7 @@ class GraphRegion extends StatelessWidget {
             child: _DataDropRegion(
               header: "Left Axis",
               watchSources: (context) =>
-                  context.select((GraphState state) => state.leftAxisSources),
+                  context.watch<GraphState>().leftAxisSources,
               addSource: (context, src) =>
                   context.read<GraphState>().addLeftAxisSource(src),
               removeSource: (context, src) =>
@@ -44,7 +44,7 @@ class GraphRegion extends StatelessWidget {
             child: _DataDropRegion(
               header: "Discrete",
               watchSources: (context) =>
-                  context.select((GraphState state) => state.discreteSources),
+                  context.watch<GraphState>().discreteSources,
               addSource: (context, src) =>
                   context.read<GraphState>().addDiscreteSource(src),
               removeSource: (context, src) =>
@@ -62,7 +62,7 @@ class GraphRegion extends StatelessWidget {
             child: _DataDropRegion(
               header: "Right Axis",
               watchSources: (context) =>
-                  context.select((GraphState state) => state.rightAxisSources),
+                  context.watch<GraphState>().rightAxisSources,
               addSource: (context, src) =>
                   context.read<GraphState>().addRightAxisSource(src),
               removeSource: (context, src) =>
@@ -75,7 +75,7 @@ class GraphRegion extends StatelessWidget {
   }
 }
 
-class _DataDropRegion<T extends DataSource<dynamic>> extends StatelessWidget {
+class _DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
   final String header;
   final List<T> Function(BuildContext) watchSources;
   final void Function(BuildContext, T) addSource;
@@ -104,12 +104,14 @@ class _DataDropRegion<T extends DataSource<dynamic>> extends StatelessWidget {
             OverflowText(header, style: theme.textTheme.labelLarge),
             Expanded(
               child: SmoothScroll(
-                builder: (_, controller, physics) => ListView(
+                builder: (_, controller, physics) => ListView.builder(
                   controller: controller,
                   physics: physics,
-                  children: sources
-                      .map((src) => Placeholder())
-                      .toList(growable: false),
+                  itemCount: sources.length,
+                  itemBuilder: (context, i) => _GraphEntry(
+                    source: sources[i],
+                    removeSource: removeSource,
+                  ),
                 ),
               ),
             ),
@@ -122,6 +124,58 @@ class _DataDropRegion<T extends DataSource<dynamic>> extends StatelessWidget {
         addSource(context, details.data);
       },
       hitTestBehavior: HitTestBehavior.opaque,
+    );
+  }
+}
+
+class _GraphEntry<T extends DataSource<S>, S> extends StatelessWidget {
+  final T source;
+  final void Function(BuildContext, T) removeSource;
+
+  const _GraphEntry({required this.source, required this.removeSource});
+
+  @override
+  Widget build(BuildContext context) {
+    final liveVal = source.watchCurrentValue(context);
+
+    final theme = Theme.of(context);
+
+    return Draggable<T>(
+      data: source,
+      feedback: OverflowText(source.name, style: theme.textTheme.bodyMedium),
+      dragAnchorStrategy: (draggable, context, position) =>
+          pointerDragAnchorStrategy(draggable, context, position),
+      hitTestBehavior: HitTestBehavior.opaque,
+      onDragCompleted: () => removeSource(context, source),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                ...source.asGraphEntryContents(context, liveVal),
+                const SizedBox(width: 4),
+                SizedBox.square(
+                  dimension: 24,
+                  child: IconButton(
+                    onPressed: () => removeSource(context, source),
+                    icon: const Icon(Icons.close),
+                    iconSize: 12,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(
+            indent: 0,
+            endIndent: 0,
+            radius: null,
+            height: 0.5,
+            thickness: 0.5,
+          ),
+        ],
+      ),
     );
   }
 }

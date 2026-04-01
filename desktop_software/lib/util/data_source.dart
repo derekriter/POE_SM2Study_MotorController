@@ -53,38 +53,12 @@ abstract class DataSource<T> {
   }
 
   @nonVirtual
-  Widget asGraphEntry<S extends DataSource<T>>(
-    T? displayValue,
-    void Function(BuildContext, S) removeSource,
-  ) {
-    return Builder(
-      builder: (context) {
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsetsGeometry.all(4),
-              child: Row(
-                children: [
-                  Expanded(child: _generateLabel(context, displayValue)),
-                  if (displayValue != null)
-                    _generateFormattedGraphData(context, displayValue),
-                  const SizedBox(width: 4),
-                  SizedBox.square(
-                    dimension: 24,
-                    child: IconButton(
-                      onPressed: () => removeSource(context, this as S),
-                      icon: const Icon(Icons.close),
-                      iconSize: 12,
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  List<Widget> asGraphEntryContents(BuildContext context, T? displayValue) {
+    return [
+      Expanded(child: _generateLabel(context, displayValue)),
+      if (displayValue != null)
+        _generateFormattedGraphData(context, displayValue),
+    ];
   }
 
   Widget _generateFormattedDataTabData(BuildContext context, T currentValue);
