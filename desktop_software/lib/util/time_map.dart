@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
+///Tracks changing data over time in a memory-efficient manner
 class TimeMap<T> {
   final SplayTreeMap<int, T> _internalMap;
 
@@ -16,7 +17,7 @@ class TimeMap<T> {
     return _internalMap.isNotEmpty && _internalMap.keys.first <= time;
   }
 
-  bool hasEntryAtTime(int time) {
+  bool hasChangeAtTime(int time) {
     return _internalMap.isNotEmpty && _internalMap.containsKey(time);
   }
 
@@ -45,9 +46,22 @@ class TimeMap<T> {
     return _internalMap.entries;
   }
 
+  int getNumberOfChanges() {
+    return _internalMap.length;
+  }
+
+  bool? isOldestValue(int time) {
+    if (_internalMap.isEmpty) return null;
+
+    final entry = _findTimeOfPreviousEntry(time);
+    if (entry == null) return null;
+
+    return entry == _internalMap.keys.elementAt(0);
+  }
+
   int? _findTimeOfPreviousEntry(int time) {
     if (!hasValueAtTime(time)) return null;
-    if (hasEntryAtTime(time)) return time;
+    if (hasChangeAtTime(time)) return time;
 
     final keys = _internalMap.keys;
 

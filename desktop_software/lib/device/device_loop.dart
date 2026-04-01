@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:desktop_software/device/device.dart';
-import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_frame.dart';
 import 'package:desktop_software/device/device_state.dart';
@@ -70,73 +69,7 @@ Future<void> _deviceLoop(SendPort send) async {
       if (frame is DeviceDataFrame) {
         state.lastData = frame;
 
-        state.enabledMap.setValueAtTime(frame.timestamp.value, frame.enabled);
-        state.sourceVoltageMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.sourceVoltage,
-        );
-        state.positionMap.setValueAtTime(frame.timestamp.value, frame.position);
-        state.velocityMap.setValueAtTime(frame.timestamp.value, frame.velocity);
-        state.controlModeMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.mode,
-        );
-        state.dutyOutMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.dutyOut,
-        );
-        state.voltageOutMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.voltageOut,
-        );
-        state.targetMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.target,
-        );
-        state.errorMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.error,
-        );
-        state.pFactorMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.pFactor,
-        );
-        state.iFactorMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.iFactor,
-        );
-        state.dFactorMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.dFactor,
-        );
-        state.sFactorMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.sFactor,
-        );
-        state.slotMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.slot,
-        );
-        state.subErrorMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.subError,
-        );
-        state.secsToCompletionMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.secsToCompletion,
-        );
-        state.phaseNameMap.setValueAtTime(
-          frame.timestamp.value,
-          frame.controlMode.phase == null
-              ? null
-              : DeviceControlModeData.getPhaseName(
-                  frame.controlMode.mode,
-                  frame.controlMode.phase!,
-                ),
-        );
-
         _lastDataTime = now;
-
         _workingUPS = (_workingUPS ?? 0) + 1;
       } else if (frame is DeviceMessageFrame) {
         final resp = frame.toResponse().toString();
@@ -192,24 +125,6 @@ Future<void> _deviceLoop(SendPort send) async {
         _workingUPS = 0;
         _lastUPSTime = DateTime.now();
         flushBuffers(); //prevent unprocessed bad data from causing problems
-
-        state.enabledMap.clear();
-        state.sourceVoltageMap.clear();
-        state.positionMap.clear();
-        state.velocityMap.clear();
-        state.controlModeMap.clear();
-        state.dutyOutMap.clear();
-        state.voltageOutMap.clear();
-        state.targetMap.clear();
-        state.errorMap.clear();
-        state.pFactorMap.clear();
-        state.iFactorMap.clear();
-        state.dFactorMap.clear();
-        state.sFactorMap.clear();
-        state.slotMap.clear();
-        state.subErrorMap.clear();
-        state.secsToCompletionMap.clear();
-        state.phaseNameMap.clear();
 
         await sendControlRequest(DeviceGetInfoRequest());
         for (int i = 0; i < state.slots.length; i++) {

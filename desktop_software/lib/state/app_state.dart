@@ -8,6 +8,7 @@ import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:desktop_software/device/device_loop.dart';
 import 'package:desktop_software/device/device_state.dart';
 import 'package:desktop_software/util/data_source.dart';
+import 'package:desktop_software/util/time_map.dart';
 import 'package:desktop_software/util/units.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -60,8 +61,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.enabledLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.enabledMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.enabledMap.getAllValueChanges(),
+          _enabledMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _enabledMap?.getAllValueChanges(),
       asString: (val) => val.toString(),
     );
     sourceVoltageSrc = ContinuousNumSource(
@@ -69,9 +70,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.sourceVoltageLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.sourceVoltageMap.getValueAtTime(timestamp),
-      getAllValueChanges: () =>
-          _deviceState?.sourceVoltageMap.getAllValueChanges(),
+          _sourceVoltageMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _sourceVoltageMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(2)),
     );
     positionSrc = ContinuousNumSource(
@@ -79,8 +79,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.positionLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.positionMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.positionMap.getAllValueChanges(),
+          _positionMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _positionMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
     );
     velocitySrc = ContinuousNumSource(
@@ -88,8 +88,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.velocityLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.velocityMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.velocityMap.getAllValueChanges(),
+          _velocityMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _velocityMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
     );
     controlModeSrc = DiscreteControlModeSource(
@@ -97,9 +97,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.controlModeLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.controlModeMap.getValueAtTime(timestamp),
-      getAllValueChanges: () =>
-          _deviceState?.controlModeMap.getAllValueChanges(),
+          _controlModeMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _controlModeMap?.getAllValueChanges(),
       asString: (val) => val.name,
     );
     dutyOutSrc = ContinuousPercentageSource(
@@ -107,8 +106,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.dutyOutLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.dutyOutMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.dutyOutMap.getAllValueChanges(),
+          _dutyOutMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _dutyOutMap?.getAllValueChanges(),
       watchCurrentPercentage: (context) =>
           context.select((AppState state) => state.dutyOutLive?.value),
       asString: (val) => val.value.toStringAsFixed(3),
@@ -118,9 +117,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.voltageOutLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.voltageOutMap.getValueAtTime(timestamp),
-      getAllValueChanges: () =>
-          _deviceState?.voltageOutMap.getAllValueChanges(),
+          _voltageOutMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _voltageOutMap?.getAllValueChanges(),
       watchCurrentPercentage: (context) {
         final out = context
             .select((AppState state) => state.voltageOutLive)
@@ -138,18 +136,16 @@ class AppState with ChangeNotifier {
       name: "target",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.targetLive),
-      getValueAtTimestamp: (timestamp) =>
-          _deviceState?.targetMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.targetMap.getAllValueChanges(),
+      getValueAtTimestamp: (timestamp) => _targetMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _targetMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
     );
     errorSrc = ContinuousNumSource(
       name: "error",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.errorLive),
-      getValueAtTimestamp: (timestamp) =>
-          _deviceState?.errorMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.errorMap.getAllValueChanges(),
+      getValueAtTimestamp: (timestamp) => _errorMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _errorMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
     );
     pFactorSrc = ContinuousNumSource(
@@ -157,8 +153,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.pFactorLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.pFactorMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.pFactorMap.getAllValueChanges(),
+          _pFactorMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _pFactorMap?.getAllValueChanges(),
       asString: (val) => val.value.toStringAsFixed(3),
     );
     iFactorSrc = ContinuousNumSource(
@@ -166,8 +162,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.iFactorLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.iFactorMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.iFactorMap.getAllValueChanges(),
+          _iFactorMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _iFactorMap?.getAllValueChanges(),
       asString: (val) => val.value.toStringAsFixed(3),
     );
     dFactorSrc = ContinuousNumSource(
@@ -175,8 +171,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.dFactorLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.dFactorMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.dFactorMap.getAllValueChanges(),
+          _dFactorMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _dFactorMap?.getAllValueChanges(),
       asString: (val) => val.value.toStringAsFixed(3),
     );
     sFactorSrc = ContinuousNumSource(
@@ -184,17 +180,16 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.sFactorLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.sFactorMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.sFactorMap.getAllValueChanges(),
+          _sFactorMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _sFactorMap?.getAllValueChanges(),
       asString: (val) => val.value.toStringAsFixed(3),
     );
     slotSrc = DiscreteIntSource(
       name: "slot",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.slotLive),
-      getValueAtTimestamp: (timestamp) =>
-          _deviceState?.slotMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.slotMap.getAllValueChanges(),
+      getValueAtTimestamp: (timestamp) => _slotMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _slotMap?.getAllValueChanges(),
       asString: (val) => val.value.toString(),
     );
     subErrorSrc = ContinuousNumSource(
@@ -202,8 +197,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.subErrorLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.subErrorMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.subErrorMap.getAllValueChanges(),
+          _subErrorMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _subErrorMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
     );
     secsToCompletionSrc = ContinuousValidatableNumSource(
@@ -211,9 +206,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.secsToCompletionLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.secsToCompletionMap.getValueAtTime(timestamp),
-      getAllValueChanges: () =>
-          _deviceState?.secsToCompletionMap.getAllValueChanges(),
+          _secsToCompletionMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _secsToCompletionMap?.getAllValueChanges(),
       asString: (val) => val.applySuffix(val.value.toStringAsFixed(3)),
       isValid: (val) => val.value >= 0,
     );
@@ -222,8 +216,8 @@ class AppState with ChangeNotifier {
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.phaseNameLive),
       getValueAtTimestamp: (timestamp) =>
-          _deviceState?.phaseNameMap.getValueAtTime(timestamp),
-      getAllValueChanges: () => _deviceState?.phaseNameMap.getAllValueChanges(),
+          _phaseNameMap?.getValueAtTime(timestamp),
+      getAllValueChanges: () => _phaseNameMap?.getAllValueChanges(),
       isValid: (val) => val != "completed" && val != "unknown",
     );
   }
@@ -305,7 +299,25 @@ class AppState with ChangeNotifier {
   Isolate? _deviceIsolate;
   SendPort? _deviceSend;
   Completer<void>? _deviceClosed;
+
   DeviceState? _deviceState;
+  TimeMap<bool?>? _enabledMap;
+  TimeMap<Volts<double>?>? _sourceVoltageMap;
+  TimeMap<Rotations<double>?>? _positionMap;
+  TimeMap<RPM<double>?>? _velocityMap;
+  TimeMap<DeviceControlMode?>? _controlModeMap;
+  TimeMap<Unitless<double>?>? _dutyOutMap;
+  TimeMap<Volts<double>?>? _voltageOutMap;
+  TimeMap<Unit<double>?>? _targetMap;
+  TimeMap<Unit<double>?>? _errorMap;
+  TimeMap<Unitless<double>?>? _pFactorMap;
+  TimeMap<Unitless<double>?>? _iFactorMap;
+  TimeMap<Unitless<double>?>? _dFactorMap;
+  TimeMap<Unitless<double>?>? _sFactorMap;
+  TimeMap<Unitless<int>?>? _slotMap;
+  TimeMap<Unit<double>?>? _subErrorMap;
+  TimeMap<Seconds<double>?>? _secsToCompletionMap;
+  TimeMap<String?>? _phaseNameMap;
 
   void _onReceiveFromDevice(dynamic msg) {
     if (msg == null) {
@@ -313,7 +325,122 @@ class AppState with ChangeNotifier {
     } else if (msg is SendPort) {
       _deviceSend = msg;
     } else if (msg is DeviceState) {
+      if (_deviceState == null ||
+          !_deviceState!.isConnected && msg.isConnected) {
+        //clear and setup timed data on device connection
+        _enabledMap?.clear();
+        _sourceVoltageMap?.clear();
+        _positionMap?.clear();
+        _velocityMap?.clear();
+        _controlModeMap?.clear();
+        _dutyOutMap?.clear();
+        _voltageOutMap?.clear();
+        _targetMap?.clear();
+        _errorMap?.clear();
+        _pFactorMap?.clear();
+        _iFactorMap?.clear();
+        _dFactorMap?.clear();
+        _sFactorMap?.clear();
+        _slotMap?.clear();
+        _subErrorMap?.clear();
+        _secsToCompletionMap?.clear();
+        _phaseNameMap?.clear();
+
+        _enabledMap ??= TimeMap();
+        _sourceVoltageMap ??= TimeMap();
+        _positionMap ??= TimeMap();
+        _velocityMap ??= TimeMap();
+        _controlModeMap ??= TimeMap();
+        _dutyOutMap ??= TimeMap();
+        _voltageOutMap ??= TimeMap();
+        _targetMap ??= TimeMap();
+        _errorMap ??= TimeMap();
+        _pFactorMap ??= TimeMap();
+        _iFactorMap ??= TimeMap();
+        _dFactorMap ??= TimeMap();
+        _sFactorMap ??= TimeMap();
+        _slotMap ??= TimeMap();
+        _subErrorMap ??= TimeMap();
+        _secsToCompletionMap ??= TimeMap();
+        _phaseNameMap ??= TimeMap();
+      }
+
       _deviceState = msg;
+      if (msg.lastData != null) {
+        _enabledMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.enabled,
+        );
+        _sourceVoltageMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.sourceVoltage,
+        );
+        _positionMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.position,
+        );
+        _velocityMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.velocity,
+        );
+        _controlModeMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.mode,
+        );
+        _dutyOutMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.dutyOut,
+        );
+        _voltageOutMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.voltageOut,
+        );
+        _targetMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.target,
+        );
+        _errorMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.error,
+        );
+        _pFactorMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.pFactor,
+        );
+        _iFactorMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.iFactor,
+        );
+        _dFactorMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.dFactor,
+        );
+        _sFactorMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.sFactor,
+        );
+        _slotMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.slot,
+        );
+        _subErrorMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.subError,
+        );
+        _secsToCompletionMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.secsToCompletion,
+        );
+        _phaseNameMap?.setValueAtTime(
+          msg.lastData!.timestamp.value,
+          msg.lastData!.controlMode.phase == null
+              ? null
+              : DeviceControlModeData.getPhaseName(
+                  msg.lastData!.controlMode.mode,
+                  msg.lastData!.controlMode.phase!,
+                ),
+        );
+      }
       notifyListeners();
     } else {
       _logger.w("Unknown message '$msg' received from device isolate");
