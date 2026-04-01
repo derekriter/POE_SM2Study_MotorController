@@ -1,3 +1,4 @@
+import 'package:desktop_software/util/units.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
@@ -51,18 +52,18 @@ enum DeviceControlMode {
 
 class DeviceControlModeData {
   final DeviceControlMode mode;
-  final double dutyOut;
-  final double voltageOut;
-  final double? target;
-  final double? error;
-  final double? pFactor;
-  final double? iFactor;
-  final double? dFactor;
-  final double? sFactor;
-  final int? slot;
-  final double? subError;
-  final double? secsToCompletion;
-  final int? phase;
+  final Unitless<double> dutyOut;
+  final Volts<double> voltageOut;
+  final Unit<double>? target;
+  final Unit<double>? error;
+  final Unitless<double>? pFactor;
+  final Unitless<double>? iFactor;
+  final Unitless<double>? dFactor;
+  final Unitless<double>? sFactor;
+  final Unitless<int>? slot;
+  final Unit<double>? subError;
+  final Seconds<double>? secsToCompletion;
+  final Unitless<int>? phase;
 
   DeviceControlModeData._({
     required this.mode,
@@ -93,89 +94,149 @@ class DeviceControlModeData {
     }
     mode = tempMode;
 
-    late final double dutyOut;
+    late final Unitless<double> dutyOut;
     if (json["do"] is! double) {
       _logger.w("Invalid control mode, missing or invalid 'do' parameter");
       return null;
     }
-    dutyOut = json["do"] as double;
+    dutyOut = Unitless(json["do"] as double);
 
-    late final double voltageOut;
+    late final Volts<double> voltageOut;
     if (json["vo"] is! double) {
       _logger.w("Invalid control mode, missing or invalid 'vo' parameter");
       return null;
     }
-    voltageOut = json["vo"] as double;
+    voltageOut = Volts(json["vo"] as double);
 
-    late final double? target;
+    late final double? rawTarget;
     if (json["ct"] is! double?) {
       _logger.w("Invalid control mode, invalid 'ct' parameter");
       return null;
     }
-    target = json["ct"] as double?;
+    rawTarget = json["ct"] as double?;
+    late final Unit<double>? target;
+    if (rawTarget == null) {
+      target = null;
+    } else {
+      switch (mode) {
+        case DeviceControlMode.pidPos:
+        case DeviceControlMode.trapPos:
+          {
+            target = Rotations(rawTarget);
+          }
+        case DeviceControlMode.pidVel:
+          {
+            target = RPM(rawTarget);
+          }
+        default:
+          {
+            target = UnknownUnit(rawTarget);
+          }
+      }
+    }
 
-    late final double? error;
+    late final double? rawError;
     if (json["ce"] is! double?) {
       _logger.w("Invalid control mode, invalid 'ce' parameter");
       return null;
     }
-    error = json["ce"] as double?;
+    rawError = json["ce"] as double?;
+    late final Unit<double>? error;
+    if (rawError == null) {
+      error = null;
+    } else {
+      switch (mode) {
+        case DeviceControlMode.pidPos:
+        case DeviceControlMode.trapPos:
+          {
+            error = Rotations(rawError);
+          }
+        case DeviceControlMode.pidVel:
+          {
+            error = RPM(rawError);
+          }
+        default:
+          {
+            error = UnknownUnit(rawError);
+          }
+      }
+    }
 
-    late final double? pFactor;
+    late final Unitless<double>? pFactor;
     if (json["cp"] is! double?) {
       _logger.w("Invalid control mode, invalid 'cp' parameter");
       return null;
     }
-    pFactor = json["cp"] as double?;
+    pFactor = Unitless.nullable(json["cp"] as double?);
 
-    late final double? iFactor;
+    late final Unitless<double>? iFactor;
     if (json["ci"] is! double?) {
       _logger.w("Invalid control mode, invalid 'ci' parameter");
       return null;
     }
-    iFactor = json["ci"] as double?;
+    iFactor = Unitless.nullable(json["ci"] as double?);
 
-    late final double? dFactor;
+    late final Unitless<double>? dFactor;
     if (json["cd"] is! double?) {
       _logger.w("Invalid control mode, invalid 'cd' parameter");
       return null;
     }
-    dFactor = json["cd"] as double?;
+    dFactor = Unitless.nullable(json["cd"] as double?);
 
-    late final double? sFactor;
+    late final Unitless<double>? sFactor;
     if (json["cs"] is! double?) {
       _logger.w("Invalid control mode, invalid 'cs' parameter");
       return null;
     }
-    sFactor = json["cs"] as double?;
+    sFactor = Unitless.nullable(json["cs"] as double?);
 
-    late final int? slot;
+    late final Unitless<int>? slot;
     if (json["sl"] is! int?) {
       _logger.w("Invalid control mode, invalid 'sl' parameter");
       return null;
     }
-    slot = json["sl"] as int?;
+    slot = Unitless.nullable(json["sl"] as int?);
 
-    late final double? subError;
+    late final double? rawSubError;
     if (json["se"] is! double?) {
       _logger.w("Invalid control mode, invalid 'se' parameter");
       return null;
     }
-    subError = json["se"] as double?;
+    rawSubError = json["se"] as double?;
+    late final Unit<double>? subError;
+    if (rawSubError == null) {
+      subError = null;
+    } else {
+      switch (mode) {
+        case DeviceControlMode.pidPos:
+        case DeviceControlMode.trapPos:
+          {
+            subError = Rotations(rawSubError);
+          }
+        case DeviceControlMode.pidVel:
+          {
+            subError = RPM(rawSubError);
+          }
+        default:
+          {
+            subError = UnknownUnit(rawSubError);
+          }
+      }
+    }
 
-    late final double? secsToCompletion;
+    late final Seconds<double>? secsToCompletion;
     if (json["tc"] is! double?) {
       _logger.w("Invalid control mode, invalid 'tc' parameter");
       return null;
     }
-    secsToCompletion = json["tc"] as double?;
+    secsToCompletion = Seconds.nullable(json["tc"] as double?);
 
-    late final int? phase;
+    late final Unitless<int>? phase;
     if (json["ph"] is! int?) {
       _logger.w("Invalid control mode, invalid 'ph' parameter");
       return null;
     }
-    phase = json["ph"] as int?;
+    phase = Unitless.nullable(json["ph"] as int?);
 
     return DeviceControlModeData._(
       mode: mode,
@@ -194,15 +255,11 @@ class DeviceControlModeData {
     );
   }
 
-  int get id => mode.id;
-  String get name => mode.name;
-  String? get phaseName {
-    if (phase == null) return null;
-
+  static String? getPhaseName(DeviceControlMode mode, Unitless<int> phase) {
     switch (mode) {
       case DeviceControlMode.trapPos:
         {
-          switch (phase) {
+          switch (phase.value) {
             case 0:
               {
                 return "accel";
@@ -227,7 +284,7 @@ class DeviceControlModeData {
         }
       default:
         {
-          return "unknown";
+          return null;
         }
     }
   }
@@ -235,18 +292,18 @@ class DeviceControlModeData {
   DeviceControlModeData copy() {
     return DeviceControlModeData._(
       mode: mode,
-      dutyOut: dutyOut,
-      voltageOut: voltageOut,
-      target: target,
-      error: error,
-      pFactor: pFactor,
-      iFactor: iFactor,
-      dFactor: dFactor,
-      sFactor: sFactor,
-      slot: slot,
-      subError: subError,
-      secsToCompletion: secsToCompletion,
-      phase: phase,
+      dutyOut: dutyOut.copy(),
+      voltageOut: voltageOut.copy(),
+      target: target?.copy(),
+      error: error?.copy(),
+      pFactor: pFactor?.copy(),
+      iFactor: iFactor?.copy(),
+      dFactor: dFactor?.copy(),
+      sFactor: sFactor?.copy(),
+      slot: slot?.copy(),
+      subError: subError?.copy(),
+      secsToCompletion: secsToCompletion?.copy(),
+      phase: phase?.copy(),
     );
   }
 }

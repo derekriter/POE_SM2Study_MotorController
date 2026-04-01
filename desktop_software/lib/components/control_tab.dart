@@ -28,7 +28,7 @@ class _ControlTabState extends State<ControlTab>
     final appStateRead = context.read<AppState>();
     final isReady = context.select((AppState appState) => appState.isReady);
 
-    _selectedMode ??= appStateRead.controlMode;
+    _selectedMode ??= appStateRead.controlModeLive;
     if (_selectedMode == DeviceControlMode.disabled) {
       _selectedMode = DeviceControlMode.stop;
     }
@@ -60,7 +60,7 @@ class _ControlTabState extends State<ControlTab>
                       });
 
                       //disable motor for safety reasons
-                      if (appStateRead.enabled ?? true) {
+                      if (appStateRead.enabledLive ?? true) {
                         appStateRead.sendControlRequest(
                           DeviceEnableDisableRequest(false),
                         );
@@ -186,7 +186,7 @@ class _EnabledButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled =
-        context.select((AppState appState) => appState.enabled) ?? false;
+        context.select((AppState appState) => appState.enabledLive) ?? false;
 
     final theme = Theme.of(context);
 

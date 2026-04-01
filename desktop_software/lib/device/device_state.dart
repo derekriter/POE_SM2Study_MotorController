@@ -2,6 +2,7 @@ import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:desktop_software/device/device_frame.dart';
 import 'package:desktop_software/util/time_map.dart';
+import 'package:desktop_software/util/units.dart';
 
 class DeviceState {
   bool isConnected = false;
@@ -14,21 +15,21 @@ class DeviceState {
   String? firmwareVersion;
 
   TimeMap<bool?> enabledMap = TimeMap();
-  TimeMap<double?> sourceVoltageMap = TimeMap();
-  TimeMap<double?> positionMap = TimeMap();
-  TimeMap<double?> velocityMap = TimeMap();
+  TimeMap<Volts<double>?> sourceVoltageMap = TimeMap();
+  TimeMap<Rotations<double>?> positionMap = TimeMap();
+  TimeMap<RPM<double>?> velocityMap = TimeMap();
   TimeMap<DeviceControlMode?> controlModeMap = TimeMap();
-  TimeMap<double?> dutyOutMap = TimeMap();
-  TimeMap<double?> voltageOutMap = TimeMap();
-  TimeMap<double?> targetMap = TimeMap();
-  TimeMap<double?> errorMap = TimeMap();
-  TimeMap<double?> pFactorMap = TimeMap();
-  TimeMap<double?> iFactorMap = TimeMap();
-  TimeMap<double?> dFactorMap = TimeMap();
-  TimeMap<double?> sFactorMap = TimeMap();
-  TimeMap<int?> slotMap = TimeMap();
-  TimeMap<double?> subErrorMap = TimeMap();
-  TimeMap<double?> secsToCompletionMap = TimeMap();
+  TimeMap<Unitless<double>?> dutyOutMap = TimeMap();
+  TimeMap<Volts<double>?> voltageOutMap = TimeMap();
+  TimeMap<Unit<double>?> targetMap = TimeMap();
+  TimeMap<Unit<double>?> errorMap = TimeMap();
+  TimeMap<Unitless<double>?> pFactorMap = TimeMap();
+  TimeMap<Unitless<double>?> iFactorMap = TimeMap();
+  TimeMap<Unitless<double>?> dFactorMap = TimeMap();
+  TimeMap<Unitless<double>?> sFactorMap = TimeMap();
+  TimeMap<Unitless<int>?> slotMap = TimeMap();
+  TimeMap<Unit<double>?> subErrorMap = TimeMap();
+  TimeMap<Seconds<double>?> secsToCompletionMap = TimeMap();
   TimeMap<String?> phaseNameMap = TimeMap();
 
   DeviceState() : slots = List.filled(6, null, growable: false);

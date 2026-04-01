@@ -1,5 +1,6 @@
 import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/device/device_control_slot.dart';
+import 'package:desktop_software/util/units.dart';
 import 'package:logger/logger.dart';
 
 final _logger = Logger();
@@ -76,11 +77,11 @@ abstract class DeviceFrame {
 
 class DeviceDataFrame extends DeviceFrame {
   final bool enabled;
-  final double sourceVoltage;
+  final Volts<double> sourceVoltage;
   final DeviceControlModeData controlMode;
-  final double position;
-  final double velocity;
-  final int timestamp;
+  final Rotations<double> position;
+  final RPM<double> velocity;
+  final Milliseconds<int> timestamp;
 
   DeviceDataFrame._({
     required this.enabled,
@@ -99,12 +100,12 @@ class DeviceDataFrame extends DeviceFrame {
     }
     enabled = json["en"] as bool;
 
-    late final double sourceVoltage;
+    late final Volts<double> sourceVoltage;
     if (json["sv"] is! double) {
       _logger.w("Invalid data frame, missing or invalid 'sv' parameter");
       return null;
     }
-    sourceVoltage = json["sv"] as double;
+    sourceVoltage = Volts(json["sv"] as double);
 
     late final DeviceControlModeData controlMode;
     if (json["cm"] is! Map<String, dynamic>) {
@@ -120,26 +121,26 @@ class DeviceDataFrame extends DeviceFrame {
     }
     controlMode = temp;
 
-    late final double position;
+    late final Rotations<double> position;
     if (json["pr"] is! double) {
       _logger.w("Invalid data frame, missing or invalid 'pr' parameter");
       return null;
     }
-    position = json["pr"] as double;
+    position = Rotations(json["pr"] as double);
 
-    late final double velocity;
+    late final RPM<double> velocity;
     if (json["vr"] is! double) {
       _logger.w("Invalid data frame, missing or invalid 'vr' parameter");
       return null;
     }
-    velocity = json["vr"] as double;
+    velocity = RPM(json["vr"] as double);
 
-    late final int timestamp;
+    late final Milliseconds<int> timestamp;
     if (json["ms"] is! int) {
       _logger.w("Invalid data frame, missing or invalid 'ms' parameter");
       return null;
     }
-    timestamp = json["ms"] as int;
+    timestamp = Milliseconds(json["ms"] as int);
 
     return DeviceDataFrame._(
       enabled: enabled,
@@ -155,11 +156,11 @@ class DeviceDataFrame extends DeviceFrame {
   DeviceDataFrame copy() {
     return DeviceDataFrame._(
       enabled: enabled,
-      sourceVoltage: sourceVoltage,
+      sourceVoltage: sourceVoltage.copy(),
       controlMode: controlMode.copy(),
-      position: position,
-      velocity: velocity,
-      timestamp: timestamp,
+      position: position.copy(),
+      velocity: velocity.copy(),
+      timestamp: timestamp.copy(),
     );
   }
 
