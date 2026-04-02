@@ -502,7 +502,7 @@ class AppState with ChangeNotifier {
   ) {
     map.setValueAtTime(timestamp.value, newVal);
 
-    //remove any unneeded date older than the expiration time
+    //remove any unneeded data older than the expiration time
     while (!(map.isOldestValue(timestamp.value - _dataExpirationTime.value) ??
         true)) {
       map.removeOldestEntry();

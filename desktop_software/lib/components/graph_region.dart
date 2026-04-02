@@ -1,5 +1,7 @@
+import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/state/graph_state.dart';
 import 'package:desktop_software/util/data_source.dart';
+import 'package:desktop_software/util/units.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:desktop_software/widgets/smooth_scroll.dart';
 import 'package:flutter/material.dart';
@@ -75,17 +77,41 @@ class GraphRegion extends StatelessWidget {
   }
 }
 
-class _GraphView extends StatefulWidget {
+class _GraphView extends StatelessWidget {
   const _GraphView();
 
   @override
-  State<StatefulWidget> createState() => _GraphViewState();
+  Widget build(BuildContext context) {
+    final currentTime = context.select((AppState s) => s.lastTimestamp);
+
+    return CustomPaint(
+      foregroundPainter: _GraphPainter(time: currentTime),
+      child: const SizedBox.expand(),
+    );
+  }
 }
 
-class _GraphViewState extends State<_GraphView> {
+class _GraphPainter extends CustomPainter {
+  final Milliseconds<int>? time;
+
+  const _GraphPainter({required this.time});
+
   @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
+  void paint(Canvas canvas, Size size) {
+    if (time == null) {
+      canvas.drawCircle(Offset(50, 50), 25, Paint()..color = Colors.white);
+      return;
+    }
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, 30, 30),
+      Paint()..color = HSVColor.fromAHSV(1, time!.value % 360, 1, 1).toColor(),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false; //TODO: shouldRepaint logic?
   }
 }
 
