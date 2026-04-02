@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:desktop_software/device/device_control_mode.dart';
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_control_slot.dart';
+import 'package:desktop_software/device/device_frame.dart';
 import 'package:desktop_software/device/device_loop.dart';
 import 'package:desktop_software/device/device_state.dart';
 import 'package:desktop_software/util/data_source.dart';
@@ -319,131 +320,192 @@ class AppState with ChangeNotifier {
   TimeMap<Seconds<double>?>? _secsToCompletionMap;
   TimeMap<String?>? _phaseNameMap;
 
+  //expire after 3 minutes, allows a theoretical maximum of 7200 entries per map
+  static final Milliseconds<int> _dataExpirationTime = Milliseconds(
+    3 * 60 * 1000,
+  );
+
   void _onReceiveFromDevice(dynamic msg) {
     if (msg == null) {
       _deviceClosed?.complete();
     } else if (msg is SendPort) {
       _deviceSend = msg;
     } else if (msg is DeviceState) {
-      if (_deviceState == null ||
-          !_deviceState!.isConnected && msg.isConnected) {
+      if (!(_deviceState?.isConnected ?? false) && msg.isConnected) {
         //clear and setup timed data on device connection
-        _enabledMap?.clear();
-        _sourceVoltageMap?.clear();
-        _positionMap?.clear();
-        _velocityMap?.clear();
-        _controlModeMap?.clear();
-        _dutyOutMap?.clear();
-        _voltageOutMap?.clear();
-        _targetMap?.clear();
-        _errorMap?.clear();
-        _pFactorMap?.clear();
-        _iFactorMap?.clear();
-        _dFactorMap?.clear();
-        _sFactorMap?.clear();
-        _slotMap?.clear();
-        _subErrorMap?.clear();
-        _secsToCompletionMap?.clear();
-        _phaseNameMap?.clear();
-
-        _enabledMap ??= TimeMap();
-        _sourceVoltageMap ??= TimeMap();
-        _positionMap ??= TimeMap();
-        _velocityMap ??= TimeMap();
-        _controlModeMap ??= TimeMap();
-        _dutyOutMap ??= TimeMap();
-        _voltageOutMap ??= TimeMap();
-        _targetMap ??= TimeMap();
-        _errorMap ??= TimeMap();
-        _pFactorMap ??= TimeMap();
-        _iFactorMap ??= TimeMap();
-        _dFactorMap ??= TimeMap();
-        _sFactorMap ??= TimeMap();
-        _slotMap ??= TimeMap();
-        _subErrorMap ??= TimeMap();
-        _secsToCompletionMap ??= TimeMap();
-        _phaseNameMap ??= TimeMap();
+        _resetTimedData();
       }
 
       _deviceState = msg;
       if (msg.lastData != null) {
-        _enabledMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.enabled,
-        );
-        _sourceVoltageMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.sourceVoltage,
-        );
-        _positionMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.position,
-        );
-        _velocityMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.velocity,
-        );
-        _controlModeMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.mode,
-        );
-        _dutyOutMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.dutyOut,
-        );
-        _voltageOutMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.voltageOut,
-        );
-        _targetMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.target,
-        );
-        _errorMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.error,
-        );
-        _pFactorMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.pFactor,
-        );
-        _iFactorMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.iFactor,
-        );
-        _dFactorMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.dFactor,
-        );
-        _sFactorMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.sFactor,
-        );
-        _slotMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.slot,
-        );
-        _subErrorMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.subError,
-        );
-        _secsToCompletionMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.secsToCompletion,
-        );
-        _phaseNameMap?.setValueAtTime(
-          msg.lastData!.timestamp.value,
-          msg.lastData!.controlMode.phase == null
-              ? null
-              : DeviceControlModeData.getPhaseName(
-                  msg.lastData!.controlMode.mode,
-                  msg.lastData!.controlMode.phase!,
-                ),
-        );
+        _updateTimedData(msg.lastData!);
       }
       notifyListeners();
     } else {
       _logger.w("Unknown message '$msg' received from device isolate");
+    }
+  }
+
+  void _resetTimedData() {
+    _enabledMap?.clear();
+    _sourceVoltageMap?.clear();
+    _positionMap?.clear();
+    _velocityMap?.clear();
+    _controlModeMap?.clear();
+    _dutyOutMap?.clear();
+    _voltageOutMap?.clear();
+    _targetMap?.clear();
+    _errorMap?.clear();
+    _pFactorMap?.clear();
+    _iFactorMap?.clear();
+    _dFactorMap?.clear();
+    _sFactorMap?.clear();
+    _slotMap?.clear();
+    _subErrorMap?.clear();
+    _secsToCompletionMap?.clear();
+    _phaseNameMap?.clear();
+
+    _enabledMap ??= TimeMap();
+    _sourceVoltageMap ??= TimeMap();
+    _positionMap ??= TimeMap();
+    _velocityMap ??= TimeMap();
+    _controlModeMap ??= TimeMap();
+    _dutyOutMap ??= TimeMap();
+    _voltageOutMap ??= TimeMap();
+    _targetMap ??= TimeMap();
+    _errorMap ??= TimeMap();
+    _pFactorMap ??= TimeMap();
+    _iFactorMap ??= TimeMap();
+    _dFactorMap ??= TimeMap();
+    _sFactorMap ??= TimeMap();
+    _slotMap ??= TimeMap();
+    _subErrorMap ??= TimeMap();
+    _secsToCompletionMap ??= TimeMap();
+    _phaseNameMap ??= TimeMap();
+  }
+
+  void _updateTimedData(DeviceDataFrame frame) {
+    if (_enabledMap != null) {
+      _updateAndTrimTimeMap(_enabledMap!, frame.timestamp, frame.enabled);
+    }
+    if (_sourceVoltageMap != null) {
+      _updateAndTrimTimeMap(
+        _sourceVoltageMap!,
+        frame.timestamp,
+        frame.sourceVoltage,
+      );
+    }
+    if (_positionMap != null) {
+      _updateAndTrimTimeMap(_positionMap!, frame.timestamp, frame.position);
+    }
+    if (_velocityMap != null) {
+      _updateAndTrimTimeMap(_velocityMap!, frame.timestamp, frame.velocity);
+    }
+    if (_controlModeMap != null) {
+      _updateAndTrimTimeMap(
+        _controlModeMap!,
+        frame.timestamp,
+        frame.controlMode.mode,
+      );
+    }
+    if (_dutyOutMap != null) {
+      _updateAndTrimTimeMap(
+        _dutyOutMap!,
+        frame.timestamp,
+        frame.controlMode.dutyOut,
+      );
+    }
+    if (_voltageOutMap != null) {
+      _updateAndTrimTimeMap(
+        _voltageOutMap!,
+        frame.timestamp,
+        frame.controlMode.voltageOut,
+      );
+    }
+    if (_targetMap != null) {
+      _updateAndTrimTimeMap(
+        _targetMap!,
+        frame.timestamp,
+        frame.controlMode.target,
+      );
+    }
+    if (_errorMap != null) {
+      _updateAndTrimTimeMap(
+        _errorMap!,
+        frame.timestamp,
+        frame.controlMode.error,
+      );
+    }
+    if (_pFactorMap != null) {
+      _updateAndTrimTimeMap(
+        _pFactorMap!,
+        frame.timestamp,
+        frame.controlMode.pFactor,
+      );
+    }
+    if (_iFactorMap != null) {
+      _updateAndTrimTimeMap(
+        _iFactorMap!,
+        frame.timestamp,
+        frame.controlMode.iFactor,
+      );
+    }
+    if (_dFactorMap != null) {
+      _updateAndTrimTimeMap(
+        _dFactorMap!,
+        frame.timestamp,
+        frame.controlMode.dFactor,
+      );
+    }
+    if (_sFactorMap != null) {
+      _updateAndTrimTimeMap(
+        _sFactorMap!,
+        frame.timestamp,
+        frame.controlMode.sFactor,
+      );
+    }
+    if (_slotMap != null) {
+      _updateAndTrimTimeMap(_slotMap!, frame.timestamp, frame.controlMode.slot);
+    }
+    if (_subErrorMap != null) {
+      _updateAndTrimTimeMap(
+        _subErrorMap!,
+        frame.timestamp,
+        frame.controlMode.subError,
+      );
+    }
+    if (_secsToCompletionMap != null) {
+      _updateAndTrimTimeMap(
+        _secsToCompletionMap!,
+        frame.timestamp,
+        frame.controlMode.secsToCompletion,
+      );
+    }
+    if (_phaseNameMap != null) {
+      _updateAndTrimTimeMap(
+        _phaseNameMap!,
+        frame.timestamp,
+        frame.controlMode.phase == null
+            ? null
+            : DeviceControlModeData.getPhaseName(
+                frame.controlMode.mode,
+                frame.controlMode.phase!,
+              ),
+      );
+    }
+  }
+
+  void _updateAndTrimTimeMap<T>(
+    TimeMap<T> map,
+    Milliseconds<int> timestamp,
+    T newVal,
+  ) {
+    map.setValueAtTime(timestamp.value, newVal);
+
+    //remove any unneeded date older than the expiration time
+    while (!(map.isOldestValue(timestamp.value - _dataExpirationTime.value) ??
+        true)) {
+      map.removeOldestEntry();
     }
   }
 }

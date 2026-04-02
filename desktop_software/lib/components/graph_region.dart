@@ -19,7 +19,7 @@ class GraphRegion extends StatelessWidget {
       dividerColor: theme.colorScheme.surfaceContainerHigh,
       dividerHoverColor: theme.colorScheme.surfaceContainerHighest,
       dividerActiveColor: theme.colorScheme.surfaceBright,
-      startPanel: const Placeholder(),
+      startPanel: const _GraphView(),
       endPanel: Row(
         children: [
           Expanded(
@@ -72,6 +72,20 @@ class GraphRegion extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _GraphView extends StatefulWidget {
+  const _GraphView();
+
+  @override
+  State<StatefulWidget> createState() => _GraphViewState();
+}
+
+class _GraphViewState extends State<_GraphView> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }
 

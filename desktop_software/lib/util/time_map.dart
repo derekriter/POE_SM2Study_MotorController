@@ -56,7 +56,13 @@ class TimeMap<T> {
     final entry = _findTimeOfPreviousEntry(time);
     if (entry == null) return null;
 
-    return entry == _internalMap.keys.elementAt(0);
+    return entry == _internalMap.firstKey();
+  }
+
+  void removeOldestEntry() {
+    if (_internalMap.isEmpty) return;
+
+    _internalMap.remove(_internalMap.keys.first);
   }
 
   int? _findTimeOfPreviousEntry(int time) {
