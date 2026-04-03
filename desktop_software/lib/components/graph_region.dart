@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/state/graph_state.dart';
 import 'package:desktop_software/util/data_source.dart';
@@ -84,9 +82,12 @@ class _GraphView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final graphStateRead = context.read<GraphState>();
+
     final currentTime = context.select((AppState s) => s.lastTimestamp);
     var pauseTime = context.select((GraphState s) => s.pauseTime);
-    final graphStateRead = context.read<GraphState>();
+
+    final discreteSources = context.select((GraphState s) => s.discreteSources);
 
     //reset pause time on reconnect
     if (currentTime != null &&
@@ -124,8 +125,8 @@ class _GraphView extends StatelessWidget {
     );
     final haltedText = OverflowText(
       currentTime == null
-          ? "Halted"
-          : "Halted - ${timeDiff.applySuffix(timeDiff.value.floor().toString())}",
+          ? "Paused"
+          : "Paused - ${timeDiff.applySuffix(timeDiff.value.floor().toString())}",
       style: theme.textTheme.labelLarge?.copyWith(color: Colors.orange),
     );
 
@@ -155,8 +156,9 @@ class _GraphView extends StatelessWidget {
           child: ClipRect(
             child: CustomPaint(
               foregroundPainter: _GraphPainter(
-                time: pauseTime ?? currentTime,
                 theme: theme,
+                time: pauseTime ?? currentTime,
+                discreteSources: discreteSources,
               ),
               child: const SizedBox.expand(),
             ),
@@ -170,8 +172,13 @@ class _GraphView extends StatelessWidget {
 class _GraphPainter extends CustomPainter {
   final Milliseconds<int>? time;
   final ThemeData theme;
+  final List<DiscreteDataSource<dynamic>> discreteSources;
 
-  const _GraphPainter({required this.time, required this.theme});
+  const _GraphPainter({
+    required this.time,
+    required this.theme,
+    required this.discreteSources,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -235,6 +242,34 @@ class _GraphPainter extends CustomPainter {
     canvas.clipRect(insideRect);
 
     //draw discrete data
+    for (var i = 0; i < discreteSources.length; i++) {
+      _drawDiscreteSource(canvas, insideRect, discreteSources[i], i);
+    }
+  }
+
+  void _drawDiscreteSource(
+    Canvas canvas,
+    Rect insideRect,
+    DiscreteDataSource<dynamic> src,
+    int index,
+  ) {
+    final changes = src.getAllValueChanges();
+    if (changes == null || changes.isEmpty) return;
+
+    final paintA = Paint()
+      ..color = Colors.red.shade700
+      ..style = PaintingStyle.fill;
+    final paintB = Paint.from(paintA)..color = Colors.red.shade400;
+
+    if (changes.length == 1) {}
+    for (var i = changes.length - 2; i >= 0; i--) {}
+  }
+
+  Offset _toCanvasSpace(Rect insideRect, Milliseconds<int> time, num value) {
+    return Offset(
+      (time.value / 1000) / 10 * insideRect.width + insideRect.left,
+      value / 100 * insideRect.height + insideRect.top,
+    );
   }
 
   @override
