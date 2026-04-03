@@ -7,6 +7,8 @@ class GraphState with ChangeNotifier {
       _rightAxisSources;
   final List<DiscreteDataSource<dynamic>> _discreteSources;
 
+  Milliseconds<int>? _pauseTime;
+
   GraphState()
     : _leftAxisSources = List.empty(growable: true),
       _rightAxisSources = List.empty(growable: true),
@@ -44,6 +46,17 @@ class GraphState with ChangeNotifier {
 
   void removeDiscreteSource(DiscreteDataSource<dynamic> source) {
     discreteSources.remove(source);
+    notifyListeners();
+  }
+
+  Milliseconds<int>? get pauseTime => _pauseTime;
+  void pause(Milliseconds<int> currentTime) {
+    _pauseTime = currentTime.copy();
+    notifyListeners();
+  }
+
+  void resume() {
+    _pauseTime = null;
     notifyListeners();
   }
 }

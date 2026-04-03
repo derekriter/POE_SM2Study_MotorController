@@ -90,9 +90,12 @@ class VoltageDetails extends ControlDetails {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                OverflowText("Voltage Out:", style: theme.textTheme.labelLarge),
+                OverflowText(
+                  "Voltage Out (V):",
+                  style: theme.textTheme.labelLarge,
+                ),
                 _OutputSlider(
-                  precision: 2,
+                  precision: 3,
                   min: -9,
                   max: 9,
                   watchVal: (BuildContext context) => context.select(
@@ -137,7 +140,7 @@ class PIDPosDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 OverflowText(
-                  "Target Rotations:",
+                  "Target Position (rots):",
                   style: theme.textTheme.labelLarge,
                 ),
                 _OutputDoubleField(
@@ -206,7 +209,10 @@ class PIDVelDetails extends ControlDetails {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                OverflowText("Target RPM:", style: theme.textTheme.labelLarge),
+                OverflowText(
+                  "Target Velocity (rpm):",
+                  style: theme.textTheme.labelLarge,
+                ),
                 _OutputDoubleField(
                   precision: 4,
                   watchVal: (BuildContext context) => context.select(
@@ -274,7 +280,7 @@ class TrapPosDetails extends ControlDetails {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 OverflowText(
-                  "Target Rotations:",
+                  "Target Position (rots):",
                   style: theme.textTheme.labelLarge,
                 ),
                 _OutputDoubleField(

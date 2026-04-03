@@ -9,6 +9,7 @@ void main() async {
   await windowManager.ensureInitialized();
 
   windowManager.setTitle("Remote Motor Control (v2.0)");
+  windowManager.setMinimumSize(Size(810, 440));
 
   runApp(const AppRoot());
 }

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/state/graph_state.dart';
 import 'package:desktop_software/util/data_source.dart';
@@ -83,35 +85,161 @@ class _GraphView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentTime = context.select((AppState s) => s.lastTimestamp);
+    var pauseTime = context.select((GraphState s) => s.pauseTime);
+    final graphStateRead = context.read<GraphState>();
 
-    return CustomPaint(
-      foregroundPainter: _GraphPainter(time: currentTime),
-      child: const SizedBox.expand(),
+    //reset pause time on reconnect
+    if (currentTime != null &&
+        pauseTime != null &&
+        currentTime.value < pauseTime.value) {
+      //hacky but it works (mostly)
+      pauseTime = currentTime;
+      Future.microtask(() => graphStateRead.pause(currentTime));
+    }
+
+    final theme = Theme.of(context);
+
+    final pauseButton = TextButton.icon(
+      onPressed: () {
+        if (currentTime == null) return;
+
+        graphStateRead.pause(currentTime);
+      },
+      label: const OverflowText("Pause"),
+      icon: const Icon(Icons.pause),
+    );
+    final resumeButton = FilledButton.icon(
+      onPressed: () => graphStateRead.resume(),
+      label: const OverflowText("Resume"),
+      icon: const Icon(Icons.play_arrow),
+    );
+
+    final liveText = OverflowText(
+      "Live",
+      style: theme.textTheme.labelLarge?.copyWith(color: Colors.green),
+    );
+
+    Seconds timeDiff = Seconds(
+      ((currentTime?.value ?? 0) - (pauseTime?.value ?? 0)) / 1000,
+    );
+    final haltedText = OverflowText(
+      currentTime == null
+          ? "Halted"
+          : "Halted - ${timeDiff.applySuffix(timeDiff.value.floor().toString())}",
+      style: theme.textTheme.labelLarge?.copyWith(color: Colors.orange),
+    );
+
+    return Column(
+      children: [
+        Container(
+          color: theme.colorScheme.surfaceContainerLow,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            child: Row(
+              spacing: 16,
+              children: [
+                pauseTime == null ? pauseButton : resumeButton,
+                pauseTime == null ? liveText : haltedText,
+              ],
+            ),
+          ),
+        ),
+        const Divider(
+          indent: 0,
+          endIndent: 0,
+          radius: null,
+          thickness: 1,
+          height: 1,
+        ),
+        Expanded(
+          child: ClipRect(
+            child: CustomPaint(
+              foregroundPainter: _GraphPainter(
+                time: pauseTime ?? currentTime,
+                theme: theme,
+              ),
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _GraphPainter extends CustomPainter {
   final Milliseconds<int>? time;
+  final ThemeData theme;
 
-  const _GraphPainter({required this.time});
+  const _GraphPainter({required this.time, required this.theme});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (time == null) {
-      canvas.drawCircle(Offset(50, 50), 25, Paint()..color = Colors.white);
+      final text = TextSpan(
+        text: "No data",
+        style: theme.textTheme.displaySmall,
+      );
+      final painter = TextPainter(text: text, textDirection: TextDirection.ltr);
+      painter.layout(maxWidth: size.width);
+
+      painter.paint(
+        canvas,
+        Offset(
+          (size.width - painter.width) / 2,
+          (size.height - painter.height) / 2,
+        ),
+      );
+
       return;
     }
 
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, 30, 30),
-      Paint()..color = HSVColor.fromAHSV(1, time!.value % 360, 1, 1).toColor(),
+    Rect insideRect = _drawGraphBase(canvas, size);
+    _drawGraphContents(canvas, insideRect);
+  }
+
+  Rect _drawGraphBase(Canvas canvas, Size size) {
+    final outlinePaint = Paint()
+      ..color = theme.colorScheme.outline
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    //outline
+    final outlineRect = Rect.fromLTRB(
+      60,
+      10,
+      size.width - 16,
+      size.height - (12 + 8 * 2 + 4),
     );
+    canvas.drawRect(outlineRect, outlinePaint);
+
+    final notchPaint = Paint.from(outlinePaint)..strokeWidth = 2;
+
+    //x-axis
+    const int notchCount = 11;
+    for (var i = 0; i < notchCount; i++) {
+      double x =
+          (outlineRect.left + 0.5) +
+          (outlineRect.width - 1) * i / (notchCount - 1);
+      canvas.drawLine(
+        Offset(x, outlineRect.bottom),
+        Offset(x, outlineRect.bottom + 4),
+        notchPaint,
+      );
+    }
+
+    return outlineRect.inflate(-1);
+  }
+
+  void _drawGraphContents(Canvas canvas, Rect insideRect) {
+    canvas.clipRect(insideRect);
+
+    //draw discrete data
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false; //TODO: shouldRepaint logic?
+  bool shouldRepaint(covariant _GraphPainter oldDelegate) {
+    return time != oldDelegate.time; //TODO: shouldRepaint logic?
   }
 }
 
