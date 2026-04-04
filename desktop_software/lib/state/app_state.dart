@@ -73,7 +73,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _sourceVoltageMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _sourceVoltageMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(2)),
+      asString: (val) {
+        if (val is! Volts<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(2));
+      },
     );
     positionSrc = ContinuousNumSource(
       name: "position",
@@ -82,7 +86,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _positionMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _positionMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
+      asString: (val) {
+        if (val is! Rotations<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(4));
+      },
     );
     velocitySrc = ContinuousNumSource(
       name: "velocity",
@@ -91,7 +99,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _velocityMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _velocityMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
+      asString: (val) {
+        if (val is! RPM<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(4));
+      },
     );
     controlModeSrc = DiscreteControlModeSource(
       name: "controlMode",
@@ -100,7 +112,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _controlModeMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _controlModeMap?.getAllValueChanges(),
-      asString: (val) => val.name,
+      asString: (val) {
+        if (val is! DeviceControlMode) return val.toString();
+
+        return val.name;
+      },
     );
     dutyOutSrc = ContinuousPercentageSource(
       name: "dutyOut",
@@ -111,7 +127,11 @@ class AppState with ChangeNotifier {
       getAllValueChanges: () => _dutyOutMap?.getAllValueChanges(),
       watchCurrentPercentage: (context) =>
           context.select((AppState state) => state.dutyOutLive?.value),
-      asString: (val) => val.value.toStringAsFixed(3),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
+      },
     );
     voltageOutSrc = ContinuousPercentageSource(
       name: "voltageOut",
@@ -131,7 +151,11 @@ class AppState with ChangeNotifier {
         if (out == null || source == null) return null;
         return source == 0 ? 0 : out / source;
       },
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(3)),
+      asString: (val) {
+        if (val is! Volts<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(3));
+      },
     );
     targetSrc = ContinuousNumSource(
       name: "target",
@@ -139,7 +163,11 @@ class AppState with ChangeNotifier {
           context.select((AppState state) => state.targetLive),
       getValueAtTimestamp: (timestamp) => _targetMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _targetMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
+      asString: (val) {
+        if (val is! Unit<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(4));
+      },
     );
     errorSrc = ContinuousNumSource(
       name: "error",
@@ -147,7 +175,11 @@ class AppState with ChangeNotifier {
           context.select((AppState state) => state.errorLive),
       getValueAtTimestamp: (timestamp) => _errorMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _errorMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
+      asString: (val) {
+        if (val is! Unit<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(4));
+      },
     );
     pFactorSrc = ContinuousNumSource(
       name: "pFactor",
@@ -156,7 +188,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _pFactorMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _pFactorMap?.getAllValueChanges(),
-      asString: (val) => val.value.toStringAsFixed(3),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
+      },
     );
     iFactorSrc = ContinuousNumSource(
       name: "iFactor",
@@ -165,7 +201,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _iFactorMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _iFactorMap?.getAllValueChanges(),
-      asString: (val) => val.value.toStringAsFixed(3),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
+      },
     );
     dFactorSrc = ContinuousNumSource(
       name: "dFactor",
@@ -174,7 +214,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _dFactorMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _dFactorMap?.getAllValueChanges(),
-      asString: (val) => val.value.toStringAsFixed(3),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
+      },
     );
     sFactorSrc = ContinuousNumSource(
       name: "sFactor",
@@ -183,7 +227,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _sFactorMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _sFactorMap?.getAllValueChanges(),
-      asString: (val) => val.value.toStringAsFixed(3),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
+      },
     );
     slotSrc = DiscreteIntSource(
       name: "slot",
@@ -191,7 +239,11 @@ class AppState with ChangeNotifier {
           context.select((AppState state) => state.slotLive),
       getValueAtTimestamp: (timestamp) => _slotMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _slotMap?.getAllValueChanges(),
-      asString: (val) => val.value.toString(),
+      asString: (val) {
+        if (val is! Unitless<int>) return val.toString();
+
+        return val.value.toString();
+      },
     );
     subErrorSrc = ContinuousNumSource(
       name: "subError",
@@ -200,7 +252,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _subErrorMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _subErrorMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(4)),
+      asString: (val) {
+        if (val is! Unit<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(4));
+      },
     );
     secsToCompletionSrc = ContinuousValidatableNumSource(
       name: "secsToCompletion",
@@ -209,7 +265,11 @@ class AppState with ChangeNotifier {
       getValueAtTimestamp: (timestamp) =>
           _secsToCompletionMap?.getValueAtTime(timestamp),
       getAllValueChanges: () => _secsToCompletionMap?.getAllValueChanges(),
-      asString: (val) => val.applySuffix(val.value.toStringAsFixed(3)),
+      asString: (val) {
+        if (val is! Seconds<double>) return val.toString();
+
+        return val.applySuffix(val.value.toStringAsFixed(3));
+      },
       isValid: (val) => val.value >= 0,
     );
     phaseNameSrc = DiscreteValidatableStringSource(

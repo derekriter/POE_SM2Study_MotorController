@@ -11,7 +11,8 @@ abstract class DataSource<T> {
   final T? Function(int) getValueAtTimestamp;
   final Iterable<MapEntry<int, T?>>? Function() getAllValueChanges;
 
-  final String Function(T) asString;
+  //has to accept dynamic due to limitations of runtime type casting
+  final String Function(dynamic) asString;
 
   const DataSource({
     required this.name,
@@ -354,7 +355,7 @@ class DiscreteStringSource extends DiscreteDataSource<String> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
-  }) : super(asString: (val) => val);
+  }) : super(asString: (val) => val.toString());
 
   @override
   Widget _generateFormattedDataTabData(
@@ -388,7 +389,7 @@ class DiscreteValidatableStringSource extends DiscreteDataSource<String> {
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
     required this.isValid,
-  }) : super(asString: (val) => val);
+  }) : super(asString: (val) => val.toString());
 
   @override
   Widget _generateFormattedDataTabData(

@@ -36,7 +36,10 @@ bool parseUInt(char const * const str, uint8_t* const out, char** const end) {
 double calcPIDS(double currentVal, double target, struct SlotConfig const * config, unsigned long deltaMicros, double* lastError, double* pFactor, double* iFactor, double* iAccum, double* dFactor, double* sFactor) {
     double err = target - currentVal;
     
-    *iAccum = min(max(*iAccum + err, -1 / config->kI), 1 / config->kI); //prevent integral windup
+    *iAccum += err;
+    if(config->kI != 0) {
+        *iAccum = min(max(*iAccum, -1 / config->kI), 1 / config->kI); //prevent integral windup
+    }
     
     double p = config->kP * err;
     double i = config->kI * *iAccum;
@@ -89,6 +92,11 @@ double calcTrapProfile(unsigned long microsSinceStart, double startPos, double t
     double deltaPos = targetPos - startPos;
     
     double vel = sign(deltaPos) * min(sqrt(2 * abs(deltaPos) / (1 / config->aStart + 1 / config->aEnd)), config->vMax);
+    if(vel == 0) {
+        *secsToCompletion = NAN;
+        *phase = 255u;
+        return startPos;
+    }
     
     double tAccel = abs(vel) / config->aStart;
     double posAccel = tAccel * vel / 2;

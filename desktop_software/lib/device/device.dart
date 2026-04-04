@@ -44,7 +44,8 @@ bool connect() {
   _port = SerialPort("COM6"); //TODO: port scanning
 
   if (!_port!.openReadWrite()) {
-    _logger.e("Failed to open device connection\n${SerialPort.lastError}");
+    _logger.w("Failed to open device connection\n${SerialPort.lastError}");
+    _port!.dispose();
     _port = null;
     return false;
   }

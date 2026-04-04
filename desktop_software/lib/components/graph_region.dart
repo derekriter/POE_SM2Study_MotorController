@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/state/graph_state.dart';
 import 'package:desktop_software/util/data_source.dart';
@@ -77,8 +79,28 @@ class GraphRegion extends StatelessWidget {
   }
 }
 
-class _GraphView extends StatelessWidget {
+class _GraphView extends StatefulWidget {
   const _GraphView();
+
+  @override
+  State<_GraphView> createState() => _GraphViewState();
+}
+
+class _GraphViewState extends State<_GraphView> {
+  late final _GraphPainter _painter;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _painter = _GraphPainter(
+      themeSupplier: () => Theme.of(context),
+      timeSupplier: () =>
+          context.read<GraphState>().pauseTime ??
+          context.read<AppState>().lastTimestamp,
+      discreteSupplier: () => context.read<GraphState>().discreteSources,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +108,7 @@ class _GraphView extends StatelessWidget {
 
     final currentTime = context.select((AppState s) => s.lastTimestamp);
     var pauseTime = context.select((GraphState s) => s.pauseTime);
-
-    final discreteSources = context.select((GraphState s) => s.discreteSources);
+    context.select((GraphState s) => s.discreteSources);
 
     //reset pause time on reconnect
     if (currentTime != null &&
@@ -155,11 +176,8 @@ class _GraphView extends StatelessWidget {
         Expanded(
           child: ClipRect(
             child: CustomPaint(
-              foregroundPainter: _GraphPainter(
-                theme: theme,
-                time: pauseTime ?? currentTime,
-                discreteSources: discreteSources,
-              ),
+              foregroundPainter: _painter,
+              willChange: true,
               child: const SizedBox.expand(),
             ),
           ),
@@ -170,18 +188,28 @@ class _GraphView extends StatelessWidget {
 }
 
 class _GraphPainter extends CustomPainter {
-  final Milliseconds<int>? time;
-  final ThemeData theme;
-  final List<DiscreteDataSource<dynamic>> discreteSources;
+  static final Paint discreteDividerPaint = Paint()
+    ..color = Colors.black
+    ..strokeWidth = 1
+    ..style = PaintingStyle.stroke;
+  static final double discreteHeight = 16;
+  static final double discreteSpacing = 4;
 
-  const _GraphPainter({
-    required this.time,
-    required this.theme,
-    required this.discreteSources,
+  final ThemeData Function() themeSupplier;
+  final Milliseconds<int>? Function() timeSupplier;
+  final List<DiscreteDataSource<dynamic>> Function() discreteSupplier;
+
+  _GraphPainter({
+    required this.themeSupplier,
+    required this.timeSupplier,
+    required this.discreteSupplier,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final time = timeSupplier();
+    final theme = themeSupplier();
+
     if (time == null) {
       final text = TextSpan(
         text: "No data",
@@ -206,6 +234,8 @@ class _GraphPainter extends CustomPainter {
   }
 
   Rect _drawGraphBase(Canvas canvas, Size size) {
+    final theme = themeSupplier();
+
     final outlinePaint = Paint()
       ..color = theme.colorScheme.outline
       ..style = PaintingStyle.stroke
@@ -239,7 +269,9 @@ class _GraphPainter extends CustomPainter {
   }
 
   void _drawGraphContents(Canvas canvas, Rect insideRect) {
-    canvas.clipRect(insideRect);
+    final discreteSources = discreteSupplier();
+
+    // canvas.clipRect(insideRect);
 
     //draw discrete data
     for (var i = 0; i < discreteSources.length; i++) {
@@ -256,25 +288,113 @@ class _GraphPainter extends CustomPainter {
     final changes = src.getAllValueChanges();
     if (changes == null || changes.isEmpty) return;
 
-    final paintA = Paint()
-      ..color = Colors.red.shade700
+    final fillPaint = Paint()
+      ..color = HSVColor.fromColor(
+        Colors.red.shade700,
+      ).withSaturation(0.75).toColor()
       ..style = PaintingStyle.fill;
-    final paintB = Paint.from(paintA)..color = Colors.red.shade400;
 
-    if (changes.length == 1) {}
-    for (var i = changes.length - 2; i >= 0; i--) {}
+    final bottomHeight =
+        insideRect.bottom -
+        discreteSpacing * (index + 1) -
+        discreteHeight * index;
+
+    for (var i = changes.length - 1; i >= 0; i--) {
+      late double rightBound;
+      if (i == changes.length - 1) {
+        rightBound = insideRect.right;
+      } else {
+        rightBound = _toCanvasSpace(
+          insideRect,
+          changes.elementAt(i + 1).key,
+          0,
+        ).dx;
+      }
+      double leftBound = _toCanvasSpace(
+        insideRect,
+        changes.elementAt(i).key,
+        0,
+      ).dx;
+
+      if (leftBound < insideRect.left && rightBound < insideRect.left ||
+          leftBound > insideRect.right && insideRect.right > insideRect.right) {
+        //segment is off-graph
+        continue;
+      }
+
+      rightBound = rightBound.clamp(insideRect.left, insideRect.right);
+      leftBound = leftBound.clamp(insideRect.left, insideRect.right);
+
+      final value = changes.elementAt(i).value;
+      if (value == null) {
+        continue;
+      }
+
+      _drawDiscreteSegment(
+        canvas,
+        Rect.fromLTRB(
+          leftBound,
+          bottomHeight - discreteHeight,
+          rightBound,
+          bottomHeight,
+        ),
+        src.asString(value),
+        fillPaint,
+      );
+
+      if (i != changes.length - 1 && changes.elementAt(i + 1).value != null) {
+        final divisionX =
+            _toCanvasSpace(insideRect, changes.elementAt(i + 1).key, 0).dx - 1;
+        canvas.drawLine(
+          Offset(divisionX, bottomHeight - discreteHeight),
+          Offset(divisionX, bottomHeight),
+          discreteDividerPaint,
+        );
+      }
+    }
   }
 
-  Offset _toCanvasSpace(Rect insideRect, Milliseconds<int> time, num value) {
+  void _drawDiscreteSegment(
+    Canvas canvas,
+    Rect bounds,
+    String label,
+    Paint paint,
+  ) {
+    final theme = themeSupplier();
+
+    canvas.drawRect(bounds, paint);
+
+    final span = TextSpan(
+      text: label,
+      style: TextStyle(color: theme.colorScheme.surface, fontSize: 12),
+    );
+    final textPainter = TextPainter(
+      text: span,
+      textDirection: TextDirection.ltr,
+      ellipsis: "...",
+      maxLines: 1,
+    );
+    textPainter.layout(maxWidth: max(bounds.width - 4, 0));
+    textPainter.paint(canvas, bounds.topLeft + const Offset(2, 0));
+  }
+
+  Offset _toCanvasSpace(Rect insideRect, int millis, num value) {
+    final time = timeSupplier();
+
+    if (time == null) {
+      //should never happen
+      return const Offset(0, 0);
+    }
+
     return Offset(
-      (time.value / 1000) / 10 * insideRect.width + insideRect.left,
+      (millis - time.value) / 1000 / 10 * insideRect.width + insideRect.right,
       value / 100 * insideRect.height + insideRect.top,
     );
   }
 
   @override
   bool shouldRepaint(covariant _GraphPainter oldDelegate) {
-    return time != oldDelegate.time; //TODO: shouldRepaint logic?
+    return true; //TODO: shouldRepaint logic?
   }
 }
 
