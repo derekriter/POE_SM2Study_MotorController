@@ -29,12 +29,12 @@ class GraphRegion extends StatelessWidget {
           Expanded(
             child: _DataDropRegion(
               header: "Left Axis",
-              watchSources: (context) =>
-                  context.watch<GraphState>().leftAxisSources,
+              watchConfigs: (context) =>
+                  context.watch<GraphState>().leftAxisConfigs,
               addSource: (context, src) =>
                   context.read<GraphState>().addLeftAxisSource(src),
-              removeSource: (context, src) =>
-                  context.read<GraphState>().removeLeftAxisSource(src),
+              removeConfig: (context, cfg) =>
+                  context.read<GraphState>().removeLeftAxisConfig(cfg),
             ),
           ),
           const VerticalDivider(
@@ -47,12 +47,12 @@ class GraphRegion extends StatelessWidget {
           Expanded(
             child: _DataDropRegion(
               header: "Discrete",
-              watchSources: (context) =>
-                  context.watch<GraphState>().discreteSources,
+              watchConfigs: (context) =>
+                  context.watch<GraphState>().discreteConfigs,
               addSource: (context, src) =>
                   context.read<GraphState>().addDiscreteSource(src),
-              removeSource: (context, src) =>
-                  context.read<GraphState>().removeDiscreteSource(src),
+              removeConfig: (context, src) =>
+                  context.read<GraphState>().removeDiscreteConfig(src),
             ),
           ),
           const VerticalDivider(
@@ -65,12 +65,12 @@ class GraphRegion extends StatelessWidget {
           Expanded(
             child: _DataDropRegion(
               header: "Right Axis",
-              watchSources: (context) =>
-                  context.watch<GraphState>().rightAxisSources,
+              watchConfigs: (context) =>
+                  context.watch<GraphState>().rightAxisConfigs,
               addSource: (context, src) =>
                   context.read<GraphState>().addRightAxisSource(src),
-              removeSource: (context, src) =>
-                  context.read<GraphState>().removeRightAxisSource(src),
+              removeConfig: (context, src) =>
+                  context.read<GraphState>().removeRightAxisConfig(src),
             ),
           ),
         ],
@@ -98,7 +98,7 @@ class _GraphViewState extends State<_GraphView> {
       timeSupplier: () =>
           context.read<GraphState>().pauseTime ??
           context.read<AppState>().lastTimestamp,
-      discreteSupplier: () => context.read<GraphState>().discreteSources,
+      discreteSupplier: () => context.read<GraphState>().discreteConfigs,
     );
   }
 
@@ -108,7 +108,7 @@ class _GraphViewState extends State<_GraphView> {
 
     final currentTime = context.select((AppState s) => s.lastTimestamp);
     var pauseTime = context.select((GraphState s) => s.pauseTime);
-    context.select((GraphState s) => s.discreteSources);
+    context.select((GraphState s) => s.discreteConfigs);
 
     //reset pause time on reconnect
     if (currentTime != null &&
@@ -197,7 +197,7 @@ class _GraphPainter extends CustomPainter {
 
   final ThemeData Function() themeSupplier;
   final Milliseconds<int>? Function() timeSupplier;
-  final List<DiscreteDataSource<dynamic>> Function() discreteSupplier;
+  final Iterable<DiscreteConfig> Function() discreteSupplier;
 
   _GraphPainter({
     required this.themeSupplier,
@@ -269,29 +269,32 @@ class _GraphPainter extends CustomPainter {
   }
 
   void _drawGraphContents(Canvas canvas, Rect insideRect) {
-    final discreteSources = discreteSupplier();
+    final discreteConfigs = discreteSupplier();
 
     // canvas.clipRect(insideRect);
 
     //draw discrete data
-    for (var i = 0; i < discreteSources.length; i++) {
-      _drawDiscreteSource(canvas, insideRect, discreteSources[i], i);
+    var realI = 0;
+    for (var i = 0; i < discreteConfigs.length; i++) {
+      DiscreteConfig cfg = discreteConfigs.elementAt(i);
+      if (!cfg.visible) continue;
+
+      _drawDiscreteConfig(canvas, insideRect, cfg, realI);
+      realI++;
     }
   }
 
-  void _drawDiscreteSource(
+  void _drawDiscreteConfig(
     Canvas canvas,
     Rect insideRect,
-    DiscreteDataSource<dynamic> src,
+    DiscreteConfig cfg,
     int index,
   ) {
-    final changes = src.getAllValueChanges();
+    final changes = cfg.source.getAllValueChanges();
     if (changes == null || changes.isEmpty) return;
 
     final fillPaint = Paint()
-      ..color = HSVColor.fromColor(
-        Colors.red.shade700,
-      ).withSaturation(0.75).toColor()
+      ..color = cfg.color
       ..style = PaintingStyle.fill;
 
     final bottomHeight =
@@ -338,7 +341,7 @@ class _GraphPainter extends CustomPainter {
           rightBound,
           bottomHeight,
         ),
-        src.asString(value),
+        cfg.source.asString(value),
         fillPaint,
       );
 
@@ -400,20 +403,20 @@ class _GraphPainter extends CustomPainter {
 
 class _DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
   final String header;
-  final List<T> Function(BuildContext) watchSources;
+  final List<SourceConfig<T, S>> Function(BuildContext) watchConfigs;
   final void Function(BuildContext, T) addSource;
-  final void Function(BuildContext, T) removeSource;
+  final void Function(BuildContext, SourceConfig<T, S>) removeConfig;
 
   const _DataDropRegion({
     required this.header,
-    required this.watchSources,
+    required this.watchConfigs,
     required this.addSource,
-    required this.removeSource,
+    required this.removeConfig,
   });
 
   @override
   Widget build(BuildContext context) {
-    final sources = watchSources(context);
+    final configs = watchConfigs(context);
 
     final theme = Theme.of(context);
 
@@ -430,10 +433,10 @@ class _DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
                 builder: (_, controller, physics) => ListView.builder(
                   controller: controller,
                   physics: physics,
-                  itemCount: sources.length,
+                  itemCount: configs.length,
                   itemBuilder: (context, i) => _GraphEntry(
-                    source: sources[i],
-                    removeSource: removeSource,
+                    config: configs[i],
+                    removeConfig: removeConfig,
                   ),
                 ),
               ),
@@ -442,7 +445,7 @@ class _DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
         ),
       ),
       onWillAcceptWithDetails: (details) =>
-          sources.every((src) => src.name != details.data.name),
+          configs.every((cfg) => cfg.source.name != details.data.name),
       onAcceptWithDetails: (details) {
         addSource(context, details.data);
       },
@@ -452,36 +455,78 @@ class _DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
 }
 
 class _GraphEntry<T extends DataSource<S>, S> extends StatelessWidget {
-  final T source;
-  final void Function(BuildContext, T) removeSource;
+  final SourceConfig<T, S> config;
+  final void Function(BuildContext, SourceConfig<T, S>) removeConfig;
 
-  const _GraphEntry({required this.source, required this.removeSource});
+  const _GraphEntry({required this.config, required this.removeConfig});
 
   @override
   Widget build(BuildContext context) {
-    final liveVal = source.watchCurrentValue(context);
+    final liveVal = config.source.watchCurrentValue(context);
 
     final theme = Theme.of(context);
 
     return Draggable<T>(
-      data: source,
-      feedback: OverflowText(source.name, style: theme.textTheme.bodyMedium),
+      data: config.source,
+      feedback: OverflowText(
+        config.source.name,
+        style: theme.textTheme.bodyMedium,
+      ),
       dragAnchorStrategy: (draggable, context, position) =>
           pointerDragAnchorStrategy(draggable, context, position),
       hitTestBehavior: HitTestBehavior.opaque,
-      onDragCompleted: () => removeSource(context, source),
+      onDragCompleted: () => removeConfig(context, config),
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(4),
             child: Row(
               children: [
-                ...source.asGraphEntryContents(context, liveVal),
+                SizedBox.square(
+                  dimension: 24,
+                  child: IconButton(
+                    onPressed: () {
+                      //TODO: color select
+                    },
+                    icon: Icon(
+                      Icons.color_lens,
+                      color: config.visible
+                          ? config.color
+                          : config.color.withAlpha(64),
+                    ),
+                    iconSize: 18,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                ...config.source.asGraphEntryContents(
+                  context,
+                  liveVal,
+                  config.visible,
+                ),
                 const SizedBox(width: 4),
                 SizedBox.square(
                   dimension: 24,
                   child: IconButton(
-                    onPressed: () => removeSource(context, source),
+                    onPressed: () {
+                      context.read<GraphState>().modifyConfig(config, (cfg) {
+                        cfg.visible = !cfg.visible;
+                      });
+                    },
+                    icon: config.visible
+                        ? const Icon(Icons.visibility, color: Colors.white)
+                        : Icon(
+                            Icons.visibility_off,
+                            color: Colors.white.withAlpha(64),
+                          ),
+                    iconSize: 12,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+                SizedBox.square(
+                  dimension: 24,
+                  child: IconButton(
+                    onPressed: () => removeConfig(context, config),
                     icon: const Icon(Icons.close),
                     iconSize: 12,
                     padding: EdgeInsets.zero,

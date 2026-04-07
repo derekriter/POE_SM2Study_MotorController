@@ -40,7 +40,7 @@ abstract class DataSource<T> {
             padding: const EdgeInsetsGeometry.symmetric(horizontal: 4),
             child: Row(
               children: [
-                _generateLabel(context, value),
+                _generateLabel(context, value, true),
                 if (value != null)
                   Expanded(
                     child: _generateFormattedDataTabData(context, value),
@@ -54,10 +54,14 @@ abstract class DataSource<T> {
   }
 
   @nonVirtual
-  List<Widget> asGraphEntryContents(BuildContext context, T? displayValue) {
+  List<Widget> asGraphEntryContents(
+    BuildContext context,
+    T? displayValue,
+    bool visible,
+  ) {
     return [
-      Expanded(child: _generateLabel(context, displayValue)),
-      if (displayValue != null)
+      Expanded(child: _generateLabel(context, displayValue, visible)),
+      if (displayValue != null && visible)
         _generateFormattedGraphData(context, displayValue),
     ];
   }
@@ -66,7 +70,7 @@ abstract class DataSource<T> {
   Widget _generateFormattedGraphData(BuildContext context, T displayValue);
 
   @nonVirtual
-  Widget _generateLabel(BuildContext context, T? displayValue) {
+  Widget _generateLabel(BuildContext context, T? displayValue, bool visible) {
     final theme = Theme.of(context);
 
     final invalidStyle = TextStyle(
@@ -74,10 +78,15 @@ abstract class DataSource<T> {
       fontStyle: FontStyle.italic,
     );
     final validStyle = TextStyle(color: theme.colorScheme.onSurface);
+    final invisibleStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(64),
+    );
 
     return OverflowText(
       name,
-      style: displayValue == null ? invalidStyle : validStyle,
+      style: !visible
+          ? invisibleStyle
+          : (displayValue == null ? invalidStyle : validStyle),
     );
   }
 }
