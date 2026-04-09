@@ -17,6 +17,7 @@ dependencies:
   logger: 2.6.2
   smooth_scroll_multiplatform: 1.0.8
   resizable_splitter: 1.1.0
+  flutter_context_menu: 0.4.2
 
 dev_dependencies:
   flutter_test:

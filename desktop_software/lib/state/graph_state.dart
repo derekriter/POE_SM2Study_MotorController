@@ -14,18 +14,18 @@ class SourceConfig<T extends DataSource<S>, S> {
   Color color;
   bool visible;
 
-  static const usableColors = <Color>[
-    Color.fromRGBO(114, 166, 218, 1),
-    Color.fromRGBO(237, 201, 94, 1),
-    Color.fromRGBO(225, 107, 123, 1),
-    Color.fromRGBO(175, 145, 186, 1),
-    Color.fromRGBO(234, 166, 97, 1),
-    Color.fromRGBO(193, 181, 138, 1),
-    Color.fromRGBO(166, 166, 166, 1),
-    Color.fromRGBO(131, 201, 159, 1),
-    Color.fromRGBO(217, 146, 169, 1),
-    Color.fromRGBO(202, 168, 129, 1),
-  ];
+  static const usableColors = <String, Color>{
+    "Blue": Color.fromRGBO(114, 166, 218, 1),
+    "Gold": Color.fromRGBO(237, 201, 94, 1),
+    "Red": Color.fromRGBO(225, 107, 123, 1),
+    "Purple": Color.fromRGBO(175, 145, 186, 1),
+    "Orange": Color.fromRGBO(234, 166, 97, 1),
+    "Tan": Color.fromRGBO(193, 181, 138, 1),
+    "Grey": Color.fromRGBO(166, 166, 166, 1),
+    "Green": Color.fromRGBO(131, 201, 159, 1),
+    "Pink": Color.fromRGBO(217, 146, 169, 1),
+    "Brown": Color.fromRGBO(202, 168, 129, 1),
+  };
 
   SourceConfig({
     required this.source,
@@ -105,7 +105,7 @@ class GraphState with ChangeNotifier {
   }
 
   Color _selectUsableColor() {
-    List<Color> workingColors = List.from(SourceConfig.usableColors);
+    List<Color> workingColors = List.from(SourceConfig.usableColors.values);
     final usedColors = _leftAxisConfigs
         .map((e) => e.color)
         .followedBy(_rightAxisConfigs.map((e) => e.color))
@@ -119,7 +119,11 @@ class GraphState with ChangeNotifier {
 
     if (workingColors.isEmpty) {
       //all colors have already been used, just pick a random one
-      return SourceConfig.usableColors[Random().nextInt(usedColors.length - 1)];
+      return SourceConfig.usableColors.values.elementAt(
+        Random().nextInt(usedColors.length - 1),
+      );
+    } else if (workingColors.length == 1) {
+      return workingColors[0];
     } else {
       //return random color from the unused ones
       return workingColors[Random().nextInt(workingColors.length - 1)];
