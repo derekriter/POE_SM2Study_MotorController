@@ -1,3 +1,4 @@
+import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/state/graph_state.dart';
 import 'package:desktop_software/util/data_source.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
@@ -68,7 +69,17 @@ class _GraphEntry<T extends DataSource<S>, S> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final liveVal = config.source.watchCurrentValue(context);
+    final pauseTime = context.select((AppState s) => s.pauseTime);
+    final hoverTime = context.select((GraphState s) => s.mouseHoverTime);
+
+    late final S? val;
+    if (hoverTime != null) {
+      val = config.source.getValueAtTimestamp(hoverTime.value);
+    } else if (pauseTime != null) {
+      val = config.source.getValueAtTimestamp(pauseTime.value);
+    } else {
+      val = config.source.watchCurrentValue(context);
+    }
 
     final theme = Theme.of(context);
 
@@ -92,7 +103,7 @@ class _GraphEntry<T extends DataSource<S>, S> extends StatelessWidget {
                 const SizedBox(width: 4),
                 ...config.source.asGraphEntryContents(
                   context,
-                  liveVal,
+                  val,
                   config.visible,
                 ),
                 const SizedBox(width: 4),

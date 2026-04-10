@@ -38,8 +38,6 @@ class GraphState with ChangeNotifier {
   final List<ContinuousConfig> _leftAxisConfigs, _rightAxisConfigs;
   final List<DiscreteConfig> _discreteConfigs;
 
-  Milliseconds<int>? _pauseTime;
-
   GraphState()
     : _leftAxisConfigs = List.empty(growable: true),
       _rightAxisConfigs = List.empty(growable: true),
@@ -48,6 +46,13 @@ class GraphState with ChangeNotifier {
   List<ContinuousConfig> get leftAxisConfigs => _leftAxisConfigs;
   List<ContinuousConfig> get rightAxisConfigs => _rightAxisConfigs;
   List<DiscreteConfig> get discreteConfigs => _discreteConfigs;
+
+  Milliseconds<int>? _mouseHoverTime;
+  Milliseconds<int>? get mouseHoverTime => _mouseHoverTime;
+  set mouseHoverTime(Milliseconds<int>? t) {
+    _mouseHoverTime = t;
+    notifyListeners();
+  }
 
   void addLeftAxisSource(ContinuousSource source) {
     _leftAxisConfigs.add(
@@ -90,17 +95,6 @@ class GraphState with ChangeNotifier {
     void Function(SourceConfig<T, S>) exec,
   ) {
     exec(cfg);
-    notifyListeners();
-  }
-
-  Milliseconds<int>? get pauseTime => _pauseTime;
-  void pause(Milliseconds<int> currentTime) {
-    _pauseTime = currentTime.copy();
-    notifyListeners();
-  }
-
-  void resume() {
-    _pauseTime = null;
     notifyListeners();
   }
 

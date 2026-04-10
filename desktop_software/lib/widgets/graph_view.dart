@@ -26,34 +26,39 @@ class _GraphViewState extends State<GraphView> {
     _painter = _GraphPainter(
       themeSupplier: () => Theme.of(context),
       timeSupplier: () =>
-          context.read<GraphState>().pauseTime ??
+          context.read<AppState>().pauseTime ??
           context.read<AppState>().lastTimestamp,
       discreteSupplier: () => context.read<GraphState>().discreteConfigs,
       continuousLeftSupplier: () => context.read<GraphState>().leftAxisConfigs,
       continuousRightSupplier: () =>
           context.read<GraphState>().rightAxisConfigs,
       mousePosSupplier: () => _mousePos,
+      updateHoverTime: () {
+        Milliseconds<int>? hoverTime;
+        if (_painter.lastLayout != null &&
+            _mousePos != null &&
+            _painter.lastLayout!.insideRect.contains(_mousePos!)) {
+          hoverTime = Milliseconds(
+            (_painter.toSeconds(_painter.lastLayout!, _mousePos!.dx) * 1000)
+                .round(),
+          );
+        }
+
+        final gs = context.read<GraphState>();
+        Future.microtask(() => gs.mouseHoverTime = hoverTime);
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final graphStateRead = context.read<GraphState>();
+    final appStateRead = context.read<AppState>();
 
     final currentTime = context.select((AppState s) => s.lastTimestamp);
-    var pauseTime = context.select((GraphState s) => s.pauseTime);
+    final pauseTime = context.select((AppState s) => s.pauseTime);
     context.select((GraphState s) => s.discreteConfigs);
     context.select((GraphState s) => s.leftAxisConfigs);
     context.select((GraphState s) => s.rightAxisConfigs);
-
-    //reset pause time on reconnect
-    if (currentTime != null &&
-        pauseTime != null &&
-        currentTime.value < pauseTime.value) {
-      //hacky but it works (mostly)
-      pauseTime = currentTime;
-      Future.microtask(() => graphStateRead.pause(currentTime));
-    }
 
     final theme = Theme.of(context);
 
@@ -61,13 +66,13 @@ class _GraphViewState extends State<GraphView> {
       onPressed: () {
         if (currentTime == null) return;
 
-        graphStateRead.pause(currentTime);
+        appStateRead.pause();
       },
       label: const OverflowText("Pause"),
       icon: const Icon(Icons.pause),
     );
     final resumeButton = FilledButton.icon(
-      onPressed: () => graphStateRead.resume(),
+      onPressed: () => appStateRead.resume(),
       label: const OverflowText("Resume"),
       icon: const Icon(Icons.play_arrow),
     );
@@ -111,15 +116,21 @@ class _GraphViewState extends State<GraphView> {
         ),
         Expanded(
           child: MouseRegion(
-            onExit: (_) => setState(() {
+            onExit: (_) {
               _mousePos = null;
-            }),
+              context.read<GraphState>().mouseHoverTime = null;
+
+              setState(() {});
+            },
             onHover: (e) => setState(() {
               _mousePos = e.localPosition;
+
+              setState(() {});
             }),
             child: ClipRect(
               child: CustomPaint(
                 foregroundPainter: _painter,
+                isComplex: true,
                 willChange: true,
                 child: const SizedBox.expand(),
               ),
@@ -167,6 +178,9 @@ class _GraphPainter extends CustomPainter {
   final Iterable<ContinuousConfig> Function() continuousLeftSupplier;
   final Iterable<ContinuousConfig> Function() continuousRightSupplier;
   final Offset? Function() mousePosSupplier;
+  final void Function() updateHoverTime;
+
+  _GraphLayout? lastLayout;
 
   _GraphPainter({
     required this.themeSupplier,
@@ -175,12 +189,15 @@ class _GraphPainter extends CustomPainter {
     required this.continuousLeftSupplier,
     required this.continuousRightSupplier,
     required this.mousePosSupplier,
+    required this.updateHoverTime,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final time = timeSupplier();
     final theme = themeSupplier();
+
+    updateHoverTime();
 
     if (time == null) {
       final text = TextSpan(
@@ -198,6 +215,7 @@ class _GraphPainter extends CustomPainter {
         ),
       );
 
+      lastLayout = null;
       return;
     }
 
@@ -211,7 +229,7 @@ class _GraphPainter extends CustomPainter {
         ..strokeWidth = 1
         ..style = PaintingStyle.stroke;
 
-      _drawDashedLine(
+      drawDashedLine(
         canvas,
         Offset(mouse.dx, layout.insideRect.top),
         Offset(mouse.dx, layout.insideRect.bottom),
@@ -220,6 +238,8 @@ class _GraphPainter extends CustomPainter {
         5,
       );
     }
+
+    lastLayout = layout;
   }
 
   _GraphLayout _drawGraphBase(Canvas canvas, Size size) {
@@ -399,9 +419,9 @@ class _GraphPainter extends CustomPainter {
       if (i == changes.length - 1) {
         rightBound = layout.insideRect.right;
       } else {
-        rightBound = _toCanvasX(layout, changes.elementAt(i + 1).key);
+        rightBound = toCanvasX(layout, changes.elementAt(i + 1).key);
       }
-      double leftBound = _toCanvasX(layout, changes.elementAt(i).key);
+      double leftBound = toCanvasX(layout, changes.elementAt(i).key);
 
       if (leftBound < layout.insideRect.left &&
           rightBound < layout.insideRect.left) {
@@ -440,7 +460,7 @@ class _GraphPainter extends CustomPainter {
       );
 
       if (i != changes.length - 1 && changes.elementAt(i + 1).value != null) {
-        final divisionX = _toCanvasX(layout, changes.elementAt(i + 1).key) - 1;
+        final divisionX = toCanvasX(layout, changes.elementAt(i + 1).key) - 1;
         canvas.drawLine(
           Offset(divisionX, bottomHeight - discreteHeight),
           Offset(divisionX, bottomHeight),
@@ -498,8 +518,8 @@ class _GraphPainter extends CustomPainter {
       double value = entry.value!.value.toDouble();
 
       Offset leftPoint = Offset(
-        _toCanvasX(layout, entry.key),
-        _toCanvasY(layout, value, isLeft),
+        toCanvasX(layout, entry.key),
+        toCanvasY(layout, value, isLeft),
       );
       if (lastPoint != null &&
           (lastPoint.dx - leftPoint.dx) < layout.minPointSpacing) {
@@ -510,7 +530,7 @@ class _GraphPainter extends CustomPainter {
       if (i == changes.length - 1) {
         rightPoint = Offset(
           layout.insideRect.right,
-          _toCanvasY(layout, value, isLeft),
+          toCanvasY(layout, value, isLeft),
         );
       } else {
         if (lastPoint != null) {
@@ -518,8 +538,8 @@ class _GraphPainter extends CustomPainter {
         } else {
           final prev = changes.elementAt(i + 1);
           rightPoint = Offset(
-            _toCanvasX(layout, prev.key),
-            _toCanvasY(layout, value, isLeft),
+            toCanvasX(layout, prev.key),
+            toCanvasY(layout, value, isLeft),
           );
         }
       }
@@ -568,14 +588,14 @@ class _GraphPainter extends CustomPainter {
     }
   }
 
-  double _toCanvasX(_GraphLayout layout, int millis) {
+  double toCanvasX(_GraphLayout layout, int millis) {
     final pixelsPerSec = layout.insideRect.width / (layout.maxX - layout.minX);
 
     return layout.insideRect.left +
         (millis / 1000 - layout.minX) * pixelsPerSec;
   }
 
-  double _toCanvasY(_GraphLayout layout, num value, bool isLeft) {
+  double toCanvasY(_GraphLayout layout, num value, bool isLeft) {
     final pixelsPerUnit =
         layout.insideRect.height /
         (isLeft
@@ -587,7 +607,13 @@ class _GraphPainter extends CustomPainter {
         (value - (isLeft ? layout.minLeftY : layout.minRightY)) * pixelsPerUnit;
   }
 
-  void _drawDashedLine(
+  double toSeconds(_GraphLayout layout, double x) {
+    final secsPerPixel = (layout.maxX - layout.minX) / layout.insideRect.width;
+
+    return layout.minX + (x - layout.insideRect.left) * secsPerPixel;
+  }
+
+  void drawDashedLine(
     Canvas canvas,
     Offset p1,
     Offset p2,
@@ -612,6 +638,6 @@ class _GraphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GraphPainter oldDelegate) {
-    return true; //TODO: shouldRepaint logic?
+    return true;
   }
 }

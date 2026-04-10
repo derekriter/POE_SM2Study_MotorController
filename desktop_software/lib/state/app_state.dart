@@ -356,6 +356,18 @@ class AppState with ChangeNotifier {
     _deviceSend?.send(req);
   }
 
+  Milliseconds<int>? _pauseTime;
+  Milliseconds<int>? get pauseTime => _pauseTime;
+  void pause() {
+    _pauseTime = _deviceState?.lastData?.timestamp;
+    notifyListeners();
+  }
+
+  void resume() {
+    _pauseTime = null;
+    notifyListeners();
+  }
+
   late final ReceivePort _deviceReceive;
   Isolate? _deviceIsolate;
   SendPort? _deviceSend;
@@ -392,11 +404,15 @@ class AppState with ChangeNotifier {
       if (!(_deviceState?.isConnected ?? false) && msg.isConnected) {
         //clear and setup timed data on device connection
         _resetTimedData();
+        _pauseTime = null;
+      }
+      if ((_deviceState?.isConnected ?? false) && !msg.isConnected) {
+        _pauseTime = msg.lastData?.timestamp;
       }
 
       _deviceState = msg;
       if (msg.lastData != null) {
-        _updateTimedData(msg.lastData!);
+        _updateTimedData(msg.lastData!, _pauseTime != null);
       }
       notifyListeners();
     } else {
@@ -442,127 +458,164 @@ class AppState with ChangeNotifier {
     _phaseNameMap ??= TimeMap();
   }
 
-  void _updateTimedData(DeviceDataFrame frame) {
+  void _updateTimedData(DeviceDataFrame frame, bool paused) {
     if (_enabledMap != null) {
-      _updateAndTrimTimeMap(_enabledMap!, frame.timestamp, frame.enabled);
+      _updateTimeMap(
+        _enabledMap!,
+        frame.timestamp,
+        paused ? null : frame.enabled,
+        !paused,
+      );
     }
     if (_sourceVoltageMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _sourceVoltageMap!,
         frame.timestamp,
-        frame.sourceVoltage,
+        paused ? null : frame.sourceVoltage,
+        !paused,
       );
     }
     if (_positionMap != null) {
-      _updateAndTrimTimeMap(_positionMap!, frame.timestamp, frame.position);
+      _updateTimeMap(
+        _positionMap!,
+        frame.timestamp,
+        paused ? null : frame.position,
+        !paused,
+      );
     }
     if (_velocityMap != null) {
-      _updateAndTrimTimeMap(_velocityMap!, frame.timestamp, frame.velocity);
+      _updateTimeMap(
+        _velocityMap!,
+        frame.timestamp,
+        paused ? null : frame.velocity,
+        !paused,
+      );
     }
     if (_controlModeMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _controlModeMap!,
         frame.timestamp,
-        frame.controlMode.mode,
+        paused ? null : frame.controlMode.mode,
+        !paused,
       );
     }
     if (_dutyOutMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _dutyOutMap!,
         frame.timestamp,
-        frame.controlMode.dutyOut,
+        paused ? null : frame.controlMode.dutyOut,
+        !paused,
       );
     }
     if (_voltageOutMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _voltageOutMap!,
         frame.timestamp,
-        frame.controlMode.voltageOut,
+        paused ? null : frame.controlMode.voltageOut,
+        !paused,
       );
     }
     if (_targetMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _targetMap!,
         frame.timestamp,
-        frame.controlMode.target,
+        paused ? null : frame.controlMode.target,
+        !paused,
       );
     }
     if (_errorMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _errorMap!,
         frame.timestamp,
-        frame.controlMode.error,
+        paused ? null : frame.controlMode.error,
+        !paused,
       );
     }
     if (_pFactorMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _pFactorMap!,
         frame.timestamp,
-        frame.controlMode.pFactor,
+        paused ? null : frame.controlMode.pFactor,
+        !paused,
       );
     }
     if (_iFactorMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _iFactorMap!,
         frame.timestamp,
-        frame.controlMode.iFactor,
+        paused ? null : frame.controlMode.iFactor,
+        !paused,
       );
     }
     if (_dFactorMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _dFactorMap!,
         frame.timestamp,
-        frame.controlMode.dFactor,
+        paused ? null : frame.controlMode.dFactor,
+        !paused,
       );
     }
     if (_sFactorMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _sFactorMap!,
         frame.timestamp,
-        frame.controlMode.sFactor,
+        paused ? null : frame.controlMode.sFactor,
+        !paused,
       );
     }
     if (_slotMap != null) {
-      _updateAndTrimTimeMap(_slotMap!, frame.timestamp, frame.controlMode.slot);
+      _updateTimeMap(
+        _slotMap!,
+        frame.timestamp,
+        paused ? null : frame.controlMode.slot,
+        !paused,
+      );
     }
     if (_subErrorMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _subErrorMap!,
         frame.timestamp,
-        frame.controlMode.subError,
+        paused ? null : frame.controlMode.subError,
+        !paused,
       );
     }
     if (_secsToCompletionMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _secsToCompletionMap!,
         frame.timestamp,
-        frame.controlMode.secsToCompletion,
+        paused ? null : frame.controlMode.secsToCompletion,
+        !paused,
       );
     }
     if (_phaseNameMap != null) {
-      _updateAndTrimTimeMap(
+      _updateTimeMap(
         _phaseNameMap!,
         frame.timestamp,
-        frame.controlMode.phase == null
+        paused
             ? null
-            : DeviceControlModeData.getPhaseName(
-                frame.controlMode.mode,
-                frame.controlMode.phase!,
-              ),
+            : (frame.controlMode.phase == null
+                  ? null
+                  : DeviceControlModeData.getPhaseName(
+                      frame.controlMode.mode,
+                      frame.controlMode.phase!,
+                    )),
+        !paused,
       );
     }
   }
 
-  void _updateAndTrimTimeMap<T>(
+  void _updateTimeMap<T>(
     TimeMap<T> map,
     Milliseconds<int> timestamp,
     T newVal,
+    bool trim,
   ) {
     map.setValueAtTime(timestamp.value, newVal);
 
     //remove any unneeded data older than the expiration time
-    while (!(map.isOldestValue(timestamp.value - _dataExpirationTime.value) ??
-        true)) {
+    while (trim &&
+        !(map.isOldestValue(timestamp.value - _dataExpirationTime.value) ??
+            true)) {
       map.removeOldestEntry();
     }
   }
