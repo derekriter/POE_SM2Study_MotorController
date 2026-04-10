@@ -380,10 +380,8 @@ class AppState with ChangeNotifier {
   TimeMap<Seconds<double>?>? _secsToCompletionMap;
   TimeMap<String?>? _phaseNameMap;
 
-  //expire after 3 minutes, allows a theoretical maximum of 7200 entries per map
-  static final Milliseconds<int> _dataExpirationTime = Milliseconds(
-    3 * 60 * 1000,
-  );
+  //expire after 30 seconds, allows a theoretical maximum of 1200 entries per map
+  static final Milliseconds<int> _dataExpirationTime = Milliseconds(30 * 1000);
 
   void _onReceiveFromDevice(dynamic msg) {
     if (msg == null) {
