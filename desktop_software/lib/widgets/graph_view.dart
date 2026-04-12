@@ -7,6 +7,8 @@ import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+typedef MinMaxPair = ({num min, num max});
+
 class GraphView extends StatefulWidget {
   const GraphView({super.key});
 
@@ -131,7 +133,6 @@ class _GraphViewState extends State<GraphView> {
               child: CustomPaint(
                 foregroundPainter: _painter,
                 isComplex: true,
-                willChange: true,
                 child: const SizedBox.expand(),
               ),
             ),
@@ -144,24 +145,22 @@ class _GraphViewState extends State<GraphView> {
 
 class _GraphLayout {
   Rect outsideRect, insideRect;
-  double minX, maxX;
-  double minLeftY, maxLeftY;
-  double minRightY, maxRightY;
+  MinMaxPair minMaxX;
+  MinMaxPair? minMaxLeft;
+  MinMaxPair? minMaxRight;
   double yOffset;
-  int minPointSpacing;
 
   _GraphLayout({
     required this.outsideRect,
     required this.insideRect,
-    required this.minX,
-    required this.maxX,
-    required this.minLeftY,
-    required this.maxLeftY,
-    required this.minRightY,
-    required this.maxRightY,
+    required this.minMaxX,
+    required this.minMaxLeft,
+    required this.minMaxRight,
     required this.yOffset,
-    required this.minPointSpacing,
   });
+
+  bool get hasLeftAxis => minMaxLeft != null;
+  bool get hasRightAxis => minMaxRight != null;
 }
 
 class _GraphPainter extends CustomPainter {
@@ -169,8 +168,10 @@ class _GraphPainter extends CustomPainter {
     ..color = Colors.black
     ..strokeWidth = 1
     ..style = PaintingStyle.stroke;
-  static final double discreteHeight = 16;
-  static final double discreteSpacing = 4;
+  static const double discreteHeight = 16;
+  static const double discreteSpacing = 4;
+  static const double minPointSpacing = 2;
+  static const double yTopPadding = 4;
 
   final ThemeData Function() themeSupplier;
   final Milliseconds<int>? Function() timeSupplier;
@@ -265,6 +266,10 @@ class _GraphPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
+    final currentMS = timeSupplier()?.value ?? 0;
+    final minMaxXMS = (min: currentMS - 10 * 1000, max: currentMS);
+    final minMaxX = (min: minMaxXMS.min / 1000, max: minMaxXMS.max / 1000);
+
     //x-axis
     const int xNotchCount = 11;
     for (var i = 0; i < xNotchCount; i++) {
@@ -307,61 +312,103 @@ class _GraphPainter extends CustomPainter {
       }
     }
 
-    //left y-axis
-    const int leftNotchCount = 13;
-    for (var i = 0; i < leftNotchCount; i++) {
-      double y =
-          (outlineRect.top + 0.5) +
-          (outlineRect.height - 1 - discreteOffset) * i / (leftNotchCount - 1);
-      canvas.drawLine(
-        Offset(outlineRect.left - 4, y),
-        Offset(outlineRect.left, y),
-        notchPaint,
-      );
+    MinMaxPair? minMaxLeft;
+    if (hasLeft) {
+      minMaxLeft = fitAxis(minMaxXMS.min, minMaxXMS.max, left);
 
-      if (hasLeft) {
+      //left y-axis
+      const int leftNotchCount = 13;
+      for (var i = 0; i < leftNotchCount; i++) {
+        double y =
+            (outlineRect.top + yTopPadding + 0.5) +
+            (outlineRect.height - 1 - discreteOffset - yTopPadding) *
+                i /
+                (leftNotchCount - 1);
         canvas.drawLine(
+          Offset(outlineRect.left - 4, y),
           Offset(outlineRect.left, y),
-          Offset(outlineRect.right, y),
-          gridPaint,
+          notchPaint,
         );
+
+        if (hasLeft) {
+          canvas.drawLine(
+            Offset(outlineRect.left, y),
+            Offset(outlineRect.right, y),
+            gridPaint,
+          );
+        }
+      }
+    }
+    MinMaxPair? minMaxRight;
+    if (hasRight) {
+      minMaxRight = fitAxis(minMaxXMS.min, minMaxXMS.max, right);
+
+      //right y-axis
+      const int rightNotchCount = 21;
+      for (var i = 0; i < rightNotchCount; i++) {
+        double y =
+            (outlineRect.top + yTopPadding + 0.5) +
+            (outlineRect.height - 1 - discreteOffset - yTopPadding) *
+                i /
+                (rightNotchCount - 1);
+        canvas.drawLine(
+          Offset(outlineRect.right, y),
+          Offset(outlineRect.right + 4, y),
+          notchPaint,
+        );
+
+        if (!hasLeft && hasRight) {
+          canvas.drawLine(
+            Offset(outlineRect.left, y),
+            Offset(outlineRect.right, y),
+            gridPaint,
+          );
+        }
       }
     }
 
-    //right y-axis
-    const int rightNotchCount = 21;
-    for (var i = 0; i < rightNotchCount; i++) {
-      double y =
-          (outlineRect.top + 0.5) +
-          (outlineRect.height - 1 - discreteOffset) * i / (rightNotchCount - 1);
-      canvas.drawLine(
-        Offset(outlineRect.right, y),
-        Offset(outlineRect.right + 4, y),
-        notchPaint,
-      );
-
-      if (!hasLeft && hasRight) {
-        canvas.drawLine(
-          Offset(outlineRect.left, y),
-          Offset(outlineRect.right, y),
-          gridPaint,
-        );
-      }
-    }
-
-    final time = (timeSupplier()?.value ?? 0) / 1000;
     return _GraphLayout(
       outsideRect: outlineRect,
       insideRect: outlineRect.inflate(-1),
-      minX: time - 10,
-      maxX: time,
-      minLeftY: 0,
-      maxLeftY: 12,
-      minRightY: 0,
-      maxRightY: 200,
+      minMaxX: minMaxX,
+      minMaxLeft: minMaxLeft,
+      minMaxRight: minMaxRight,
       yOffset: discreteOffset,
-      minPointSpacing: 3,
     );
+  }
+
+  MinMaxPair? fitAxis(int minT, int maxT, Iterable<ContinuousConfig> cfgs) {
+    num? axisMin, axisMax;
+
+    for (var i = 0; i < cfgs.length; i++) {
+      final scopeChanges = cfgs
+          .elementAt(i)
+          .source
+          .getAllValuesInRange(minT, maxT);
+
+      if (scopeChanges == null || scopeChanges.isEmpty) continue;
+
+      num? cfgMin = scopeChanges.fold(null, (prev, el) {
+        if (el == null) return prev;
+        if (prev == null) return el.value;
+        return min(prev, el.value);
+      });
+      num? cfgMax = scopeChanges.fold(null, (prev, el) {
+        if (el == null) return prev;
+        if (prev == null) return el.value;
+        return max(prev, el.value);
+      });
+
+      if (cfgMin != null && (axisMin == null || axisMin > cfgMin)) {
+        axisMin = cfgMin;
+      }
+      if (cfgMax != null && (axisMax == null || axisMax < cfgMax)) {
+        axisMax = cfgMax;
+      }
+    }
+
+    if (axisMin == null || axisMax == null) return null;
+    return (min: axisMin, max: axisMax);
   }
 
   void _drawGraphContents(Canvas canvas, _GraphLayout layout) {
@@ -505,9 +552,12 @@ class _GraphPainter extends CustomPainter {
 
     final linePaint = Paint()
       ..color = cfg.color
-      ..strokeWidth = 2;
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..strokeCap = StrokeCap.square;
 
     Offset? lastPoint;
+    Path? workingPath;
     for (var i = changes.length - 1; i >= 0; i--) {
       final entry = changes.elementAt(i);
       if (entry.value == null) {
@@ -517,27 +567,27 @@ class _GraphPainter extends CustomPainter {
 
       double value = entry.value!.value.toDouble();
 
-      Offset leftPoint = Offset(
+      final leftPoint = Offset(
         toCanvasX(layout, entry.key),
         toCanvasY(layout, value, isLeft),
       );
       if (lastPoint != null &&
-          (lastPoint.dx - leftPoint.dx) < layout.minPointSpacing) {
+          (lastPoint.dx - leftPoint.dx) < minPointSpacing) {
         continue;
       }
 
-      late Offset rightPoint;
+      late final Offset nextPoint;
       if (i == changes.length - 1) {
-        rightPoint = Offset(
+        nextPoint = Offset(
           layout.insideRect.right,
           toCanvasY(layout, value, isLeft),
         );
       } else {
         if (lastPoint != null) {
-          rightPoint = lastPoint;
+          nextPoint = lastPoint;
         } else {
           final prev = changes.elementAt(i + 1);
-          rightPoint = Offset(
+          nextPoint = Offset(
             toCanvasX(layout, prev.key),
             toCanvasY(layout, value, isLeft),
           );
@@ -547,70 +597,71 @@ class _GraphPainter extends CustomPainter {
       lastPoint = leftPoint;
 
       if (leftPoint.dx < layout.insideRect.left &&
-          rightPoint.dx < layout.insideRect.left) {
+          nextPoint.dx < layout.insideRect.left) {
         //segment (and all following it) are off-graph
-        return;
+        break;
       }
       if (leftPoint.dx > layout.insideRect.right &&
-          rightPoint.dx > layout.insideRect.right) {
+          nextPoint.dx > layout.insideRect.right) {
+        if (workingPath != null) {
+          canvas.drawPath(workingPath, linePaint);
+          workingPath = null;
+        }
         continue;
       }
 
-      leftPoint = Offset(
-        leftPoint.dx.clamp(layout.insideRect.left, layout.insideRect.right),
-        leftPoint.dy,
-      );
-      final rightEndPoint = Offset(
-        rightPoint.dx.clamp(layout.insideRect.left, layout.insideRect.right),
-        leftPoint.dy.clamp(layout.insideRect.top, layout.insideRect.bottom),
-      );
+      final rightPoint = Offset(nextPoint.dx, leftPoint.dy);
 
-      if (leftPoint.dy > layout.insideRect.top &&
-          leftPoint.dy < layout.insideRect.bottom) {
-        canvas.drawLine(leftPoint, rightEndPoint, linePaint);
-      }
-      if (leftPoint.dy > layout.insideRect.top &&
-              leftPoint.dy < layout.insideRect.bottom ||
-          rightPoint.dy > layout.insideRect.top &&
-              rightPoint.dy < layout.insideRect.bottom) {
-        canvas.drawLine(
-          rightEndPoint,
-          Offset(
-            rightPoint.dx,
-            rightPoint.dy.clamp(
-              layout.insideRect.top,
-              layout.insideRect.bottom,
-            ),
-          ),
-          linePaint,
-        );
-      }
+      workingPath ??= Path();
+
+      workingPath.moveTo(leftPoint.dx, leftPoint.dy);
+      workingPath.lineTo(rightPoint.dx, rightPoint.dy);
+
+      workingPath.moveTo(rightPoint.dx, rightPoint.dy);
+      workingPath.lineTo(nextPoint.dx, nextPoint.dy);
+    }
+
+    if (workingPath != null) {
+      canvas.drawPath(workingPath, linePaint);
+      workingPath = null;
     }
   }
 
   double toCanvasX(_GraphLayout layout, int millis) {
-    final pixelsPerSec = layout.insideRect.width / (layout.maxX - layout.minX);
+    final pixelsPerSec =
+        layout.insideRect.width / (layout.minMaxX.max - layout.minMaxX.min);
 
     return layout.insideRect.left +
-        (millis / 1000 - layout.minX) * pixelsPerSec;
+        (millis / 1000 - layout.minMaxX.min) * pixelsPerSec;
   }
 
   double toCanvasY(_GraphLayout layout, num value, bool isLeft) {
+    if (isLeft &&
+            (!layout.hasLeftAxis ||
+                layout.minMaxLeft!.min == layout.minMaxLeft!.max) ||
+        !isLeft &&
+            (!layout.hasRightAxis ||
+                layout.minMaxRight!.min == layout.minMaxRight!.max)) {
+      return layout.insideRect.center.dy;
+    }
+
     final pixelsPerUnit =
-        layout.insideRect.height /
+        (layout.insideRect.height - layout.yOffset - yTopPadding) /
         (isLeft
-            ? layout.maxLeftY - layout.minLeftY
-            : layout.maxRightY - layout.minRightY);
+            ? layout.minMaxLeft!.max - layout.minMaxLeft!.min
+            : layout.minMaxRight!.max - layout.minMaxRight!.min);
 
     return layout.insideRect.bottom -
         layout.yOffset -
-        (value - (isLeft ? layout.minLeftY : layout.minRightY)) * pixelsPerUnit;
+        (value - (isLeft ? layout.minMaxLeft!.min : layout.minMaxRight!.min)) *
+            pixelsPerUnit;
   }
 
   double toSeconds(_GraphLayout layout, double x) {
-    final secsPerPixel = (layout.maxX - layout.minX) / layout.insideRect.width;
+    final secsPerPixel =
+        (layout.minMaxX.max - layout.minMaxX.min) / layout.insideRect.width;
 
-    return layout.minX + (x - layout.insideRect.left) * secsPerPixel;
+    return layout.minMaxX.min + (x - layout.insideRect.left) * secsPerPixel;
   }
 
   void drawDashedLine(
@@ -638,6 +689,6 @@ class _GraphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GraphPainter oldDelegate) {
-    return true;
+    return false;
   }
 }

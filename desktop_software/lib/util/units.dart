@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 abstract class Unit<T> {
   T value;
 
@@ -7,12 +5,6 @@ abstract class Unit<T> {
 
   String applySuffix(String str);
   Unit<T> copy();
-
-  @override
-  @nonVirtual
-  bool operator ==(Object other) {
-    return other is Unit<T> && other.value == value;
-  }
 }
 
 class Volts<T extends num> extends Unit<T> {
@@ -32,6 +24,11 @@ class Volts<T extends num> extends Unit<T> {
   Volts<T> copy() {
     return Volts(value);
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Volts<T> && other.value == value;
+  }
 }
 
 class Rotations<T extends num> extends Unit<T> {
@@ -49,6 +46,11 @@ class Rotations<T extends num> extends Unit<T> {
   @override
   Rotations<T> copy() {
     return Rotations(value);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Rotations<T> && other.value == value;
   }
 }
 
@@ -68,6 +70,11 @@ class RPM<T extends num> extends Unit<T> {
   RPM<T> copy() {
     return RPM(value);
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RPM<T> && other.value == value;
+  }
 }
 
 class Seconds<T extends num> extends Unit<T> {
@@ -85,6 +92,11 @@ class Seconds<T extends num> extends Unit<T> {
   @override
   Seconds<T> copy() {
     return Seconds(value);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Seconds<T> && other.value == value;
   }
 }
 
@@ -104,6 +116,11 @@ class Milliseconds<T extends num> extends Unit<T> {
   Milliseconds<T> copy() {
     return Milliseconds(value);
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Milliseconds<T> && other.value == value;
+  }
 }
 
 class UnknownUnit<T> extends Unit<T> {
@@ -122,6 +139,11 @@ class UnknownUnit<T> extends Unit<T> {
   UnknownUnit<T> copy() {
     return UnknownUnit(value);
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UnknownUnit<T> && other.value == value;
+  }
 }
 
 class Unitless<T> extends Unit<T> {
@@ -139,5 +161,10 @@ class Unitless<T> extends Unit<T> {
   @override
   Unitless<T> copy() {
     return Unitless(value);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is Unitless<T> && other.value == value;
   }
 }

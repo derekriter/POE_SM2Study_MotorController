@@ -10,6 +10,7 @@ abstract class DataSource<T> {
   final T? Function(BuildContext) watchCurrentValue;
   final T? Function(int) getValueAtTimestamp;
   final Iterable<MapEntry<int, T?>>? Function() getAllValueChanges;
+  final Iterable<T?>? Function(int, int) getAllValuesInRange;
 
   //has to accept dynamic due to limitations of runtime type casting
   final String Function(dynamic) asString;
@@ -18,6 +19,7 @@ abstract class DataSource<T> {
     required this.name,
     required this.watchCurrentValue,
     required this.getAllValueChanges,
+    required this.getAllValuesInRange,
     required this.getValueAtTimestamp,
     required this.asString,
   });
@@ -97,6 +99,7 @@ abstract class ContinuousDataSource<T extends Unit<num>> extends DataSource<T> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
   });
 }
@@ -107,6 +110,7 @@ class ContinuousNumSource<T extends Unit<num>> extends ContinuousDataSource<T> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
   });
 
@@ -136,6 +140,7 @@ class ContinuousValidatableNumSource<T extends Unit<num>>
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
     required this.isValid,
   });
@@ -174,6 +179,7 @@ class ContinuousPercentageSource<T extends Unit<num>>
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required this.watchCurrentPercentage,
     required super.asString,
   });
@@ -252,6 +258,7 @@ abstract class DiscreteDataSource<T> extends DataSource<T> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
   });
 }
@@ -262,6 +269,7 @@ class DiscreteBooleanSource extends DiscreteDataSource<bool> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
   });
 
@@ -298,6 +306,7 @@ class DiscreteControlModeSource extends DiscreteDataSource<DeviceControlMode> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
   });
 
@@ -338,6 +347,7 @@ class DiscreteIntSource<T extends Unit<int>> extends DiscreteDataSource<T> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required super.asString,
   });
 
@@ -364,6 +374,7 @@ class DiscreteStringSource extends DiscreteDataSource<String> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
   }) : super(asString: (val) => val.toString());
 
   @override
@@ -397,6 +408,7 @@ class DiscreteValidatableStringSource extends DiscreteDataSource<String> {
     required super.watchCurrentValue,
     required super.getValueAtTimestamp,
     required super.getAllValueChanges,
+    required super.getAllValuesInRange,
     required this.isValid,
   }) : super(asString: (val) => val.toString());
 

@@ -61,18 +61,20 @@ class AppState with ChangeNotifier {
       name: "enabled",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.enabledLive),
-      getValueAtTimestamp: (timestamp) =>
-          _enabledMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _enabledMap?.getValueAtTime(t),
       getAllValueChanges: () => _enabledMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _enabledMap?.getAllValuesInRange(minT, maxT),
       asString: (val) => val.toString(),
     );
     sourceVoltageSrc = ContinuousNumSource(
       name: "sourceVoltage",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.sourceVoltageLive),
-      getValueAtTimestamp: (timestamp) =>
-          _sourceVoltageMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _sourceVoltageMap?.getValueAtTime(t),
       getAllValueChanges: () => _sourceVoltageMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _sourceVoltageMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Volts<double>) return val.toString();
 
@@ -83,9 +85,10 @@ class AppState with ChangeNotifier {
       name: "position",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.positionLive),
-      getValueAtTimestamp: (timestamp) =>
-          _positionMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _positionMap?.getValueAtTime(t),
       getAllValueChanges: () => _positionMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _positionMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Rotations<double>) return val.toString();
 
@@ -96,9 +99,10 @@ class AppState with ChangeNotifier {
       name: "velocity",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.velocityLive),
-      getValueAtTimestamp: (timestamp) =>
-          _velocityMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _velocityMap?.getValueAtTime(t),
       getAllValueChanges: () => _velocityMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _velocityMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! RPM<double>) return val.toString();
 
@@ -109,9 +113,10 @@ class AppState with ChangeNotifier {
       name: "controlMode",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.controlModeLive),
-      getValueAtTimestamp: (timestamp) =>
-          _controlModeMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _controlModeMap?.getValueAtTime(t),
       getAllValueChanges: () => _controlModeMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _controlModeMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! DeviceControlMode) return val.toString();
 
@@ -122,9 +127,10 @@ class AppState with ChangeNotifier {
       name: "dutyOut",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.dutyOutLive),
-      getValueAtTimestamp: (timestamp) =>
-          _dutyOutMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _dutyOutMap?.getValueAtTime(t),
       getAllValueChanges: () => _dutyOutMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _dutyOutMap?.getAllValuesInRange(minT, maxT),
       watchCurrentPercentage: (context) =>
           context.select((AppState state) => state.dutyOutLive?.value),
       asString: (val) {
@@ -137,9 +143,10 @@ class AppState with ChangeNotifier {
       name: "voltageOut",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.voltageOutLive),
-      getValueAtTimestamp: (timestamp) =>
-          _voltageOutMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _voltageOutMap?.getValueAtTime(t),
       getAllValueChanges: () => _voltageOutMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _voltageOutMap?.getAllValuesInRange(minT, maxT),
       watchCurrentPercentage: (context) {
         final out = context
             .select((AppState state) => state.voltageOutLive)
@@ -161,8 +168,10 @@ class AppState with ChangeNotifier {
       name: "target",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.targetLive),
-      getValueAtTimestamp: (timestamp) => _targetMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _targetMap?.getValueAtTime(t),
       getAllValueChanges: () => _targetMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _targetMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unit<double>) return val.toString();
 
@@ -173,8 +182,10 @@ class AppState with ChangeNotifier {
       name: "error",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.errorLive),
-      getValueAtTimestamp: (timestamp) => _errorMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _errorMap?.getValueAtTime(t),
       getAllValueChanges: () => _errorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _errorMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unit<double>) return val.toString();
 
@@ -185,9 +196,10 @@ class AppState with ChangeNotifier {
       name: "pFactor",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.pFactorLive),
-      getValueAtTimestamp: (timestamp) =>
-          _pFactorMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _pFactorMap?.getValueAtTime(t),
       getAllValueChanges: () => _pFactorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _pFactorMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unitless<double>) return val.toString();
 
@@ -198,9 +210,10 @@ class AppState with ChangeNotifier {
       name: "iFactor",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.iFactorLive),
-      getValueAtTimestamp: (timestamp) =>
-          _iFactorMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _iFactorMap?.getValueAtTime(t),
       getAllValueChanges: () => _iFactorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _iFactorMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unitless<double>) return val.toString();
 
@@ -211,9 +224,10 @@ class AppState with ChangeNotifier {
       name: "dFactor",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.dFactorLive),
-      getValueAtTimestamp: (timestamp) =>
-          _dFactorMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _dFactorMap?.getValueAtTime(t),
       getAllValueChanges: () => _dFactorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _dFactorMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unitless<double>) return val.toString();
 
@@ -224,9 +238,10 @@ class AppState with ChangeNotifier {
       name: "sFactor",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.sFactorLive),
-      getValueAtTimestamp: (timestamp) =>
-          _sFactorMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _sFactorMap?.getValueAtTime(t),
       getAllValueChanges: () => _sFactorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _sFactorMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unitless<double>) return val.toString();
 
@@ -237,8 +252,10 @@ class AppState with ChangeNotifier {
       name: "slot",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.slotLive),
-      getValueAtTimestamp: (timestamp) => _slotMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _slotMap?.getValueAtTime(t),
       getAllValueChanges: () => _slotMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _slotMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unitless<int>) return val.toString();
 
@@ -249,9 +266,10 @@ class AppState with ChangeNotifier {
       name: "subError",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.subErrorLive),
-      getValueAtTimestamp: (timestamp) =>
-          _subErrorMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _subErrorMap?.getValueAtTime(t),
       getAllValueChanges: () => _subErrorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _subErrorMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Unit<double>) return val.toString();
 
@@ -262,9 +280,10 @@ class AppState with ChangeNotifier {
       name: "secsToCompletion",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.secsToCompletionLive),
-      getValueAtTimestamp: (timestamp) =>
-          _secsToCompletionMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _secsToCompletionMap?.getValueAtTime(t),
       getAllValueChanges: () => _secsToCompletionMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _secsToCompletionMap?.getAllValuesInRange(minT, maxT),
       asString: (val) {
         if (val is! Seconds<double>) return val.toString();
 
@@ -276,9 +295,10 @@ class AppState with ChangeNotifier {
       name: "phaseName",
       watchCurrentValue: (context) =>
           context.select((AppState state) => state.phaseNameLive),
-      getValueAtTimestamp: (timestamp) =>
-          _phaseNameMap?.getValueAtTime(timestamp),
+      getValueAtTimestamp: (t) => _phaseNameMap?.getValueAtTime(t),
       getAllValueChanges: () => _phaseNameMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _phaseNameMap?.getAllValuesInRange(minT, maxT),
       isValid: (val) => val != "completed" && val != "unknown",
     );
   }
@@ -407,7 +427,7 @@ class AppState with ChangeNotifier {
         _pauseTime = null;
       }
       if ((_deviceState?.isConnected ?? false) && !msg.isConnected) {
-        _pauseTime = msg.lastData?.timestamp;
+        _pauseTime ??= _deviceState?.lastData?.timestamp;
       }
 
       _deviceState = msg;

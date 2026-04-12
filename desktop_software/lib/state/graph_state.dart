@@ -50,8 +50,11 @@ class GraphState with ChangeNotifier {
   Milliseconds<int>? _mouseHoverTime;
   Milliseconds<int>? get mouseHoverTime => _mouseHoverTime;
   set mouseHoverTime(Milliseconds<int>? t) {
+    bool changed = _mouseHoverTime != t;
     _mouseHoverTime = t;
-    notifyListeners();
+    if (changed) {
+      notifyListeners();
+    }
   }
 
   void addLeftAxisSource(ContinuousSource source) {

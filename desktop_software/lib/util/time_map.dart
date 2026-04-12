@@ -1,6 +1,9 @@
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart';
+
+final _logger = Logger();
 
 ///Tracks changing data over time in a memory-efficient manner
 class TimeMap<T> {
@@ -22,7 +25,7 @@ class TimeMap<T> {
   }
 
   void setValueAtTime(int time, T value) {
-    int? prevTime = _findTimeOfPreviousEntry(time);
+    int? prevTime = findTimeOfPreviousEntry(time);
     if (prevTime == null) {
       _internalMap[time] = value;
     } else {
@@ -36,7 +39,7 @@ class TimeMap<T> {
   }
 
   T? getValueAtTime(int time) {
-    int? prevTime = _findTimeOfPreviousEntry(time);
+    int? prevTime = findTimeOfPreviousEntry(time);
     if (prevTime == null) return null;
 
     return _internalMap[prevTime];
@@ -46,6 +49,33 @@ class TimeMap<T> {
     return _internalMap.entries;
   }
 
+  Iterable<T?> getAllValuesInRange(int minT, int maxT) {
+    if (_internalMap.isEmpty) {
+      return Iterable.empty();
+    }
+    if (maxT < minT) {
+      _logger.w("Attempted to get negative range of values from TimeMap");
+      return Iterable.empty();
+    }
+    if (maxT == minT) {
+      int? t = findTimeOfPreviousEntry(minT);
+      return t == null
+          ? Iterable.empty()
+          : List.of([_internalMap[t]], growable: false);
+    }
+
+    int? endI = _findIndexOfPreviousEntry(maxT);
+    if (endI == null) return Iterable.empty();
+
+    int startI = _findIndexOfPreviousEntry(minT) ?? 0;
+
+    var collected = List<T?>.filled(endI - startI + 1, null, growable: false);
+    for (var i = startI; i <= endI; i++) {
+      collected[i - startI] = _internalMap.entries.elementAt(i).value;
+    }
+    return collected;
+  }
+
   int getNumberOfChanges() {
     return _internalMap.length;
   }
@@ -53,7 +83,7 @@ class TimeMap<T> {
   bool? isOldestValue(int time) {
     if (_internalMap.isEmpty) return null;
 
-    final entry = _findTimeOfPreviousEntry(time);
+    final entry = findTimeOfPreviousEntry(time);
     if (entry == null) return null;
 
     return entry == _internalMap.firstKey();
@@ -65,13 +95,13 @@ class TimeMap<T> {
     _internalMap.remove(_internalMap.keys.first);
   }
 
-  int? _findTimeOfPreviousEntry(int time) {
+  int? _findIndexOfPreviousEntry(int time) {
     if (!hasValueAtTime(time)) return null;
-    if (hasChangeAtTime(time)) return time;
 
     final keys = _internalMap.keys;
+    if (hasChangeAtTime(time)) return keys.toList().indexOf(time);
 
-    if (time >= keys.last) return keys.last;
+    if (time >= keys.last) return keys.length - 1;
 
     //binary search for previous time
     int zoneStart = 0;
@@ -86,7 +116,7 @@ class TimeMap<T> {
 
       //don't need to check if the time is equal, because we have a check at the start of the function
       if (targetTime < time && (nextTime == null || time < nextTime)) {
-        return targetTime;
+        return target;
       }
 
       if (targetTime < time) {
@@ -100,6 +130,11 @@ class TimeMap<T> {
 
     //I don't think this should ever happen, its just for safety
     return null;
+  }
+
+  int? findTimeOfPreviousEntry(int time) {
+    int? i = _findIndexOfPreviousEntry(time);
+    return i == null ? null : _internalMap.keys.elementAt(i);
   }
 
   @override
