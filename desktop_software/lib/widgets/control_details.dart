@@ -1,6 +1,6 @@
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/state/control_tab_state.dart';
-import 'package:desktop_software/util/double_helpers.dart';
+import 'package:desktop_software/util/num_helpers.dart';
 import 'package:desktop_software/widgets/number_field.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:desktop_software/widgets/slot_selector.dart';
@@ -371,7 +371,7 @@ class _OutputSlider extends StatelessWidget {
             onChanged: (double? newVal) {
               newVal ??= 0;
 
-              writeVal(context, newVal.roundToPrecision(precision));
+              writeVal(context, newVal.roundToPrecision(precision).toDouble());
             },
             onChangeEnd: onConfirmed,
           ),

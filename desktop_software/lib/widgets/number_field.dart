@@ -1,4 +1,4 @@
-import 'package:desktop_software/util/double_helpers.dart';
+import 'package:desktop_software/util/num_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -34,8 +34,8 @@ class _DoubleFieldState extends State<DoubleField> {
     super.initState();
 
     _currentVal = widget.defaultVal;
-    _controller.text = _currentVal.toMinimizedString(
-      maxPrecision: widget.precision,
+    _controller.text = _currentVal.toMinimalString(
+      maxPrecision: widget.precision ?? 8,
     );
 
     _focusNode.addListener(() {
@@ -73,12 +73,14 @@ class _DoubleFieldState extends State<DoubleField> {
     if (widget.max != null && val > widget.max!) val = widget.max!;
 
     if (widget.precision != null) {
-      val = val.roundToPrecision(widget.precision!);
+      val = val.roundToPrecision(widget.precision!).toDouble();
     }
 
     setState(() {
       _currentVal = val;
-      _controller.text = val.toMinimizedString(maxPrecision: widget.precision);
+      _controller.text = val.toMinimalString(
+        maxPrecision: widget.precision ?? 8,
+      );
       widget.onConfirmed(val);
     });
   }
@@ -136,7 +138,7 @@ class _ConsumerDoubleFieldState extends State<ConsumerDoubleField> {
   Widget build(BuildContext context) {
     _controller.text = widget
         .watchVal(context)
-        .toMinimizedString(maxPrecision: widget.precision);
+        .toMinimalString(maxPrecision: widget.precision ?? 8);
 
     return TextField(
       decoration:
@@ -158,7 +160,7 @@ class _ConsumerDoubleFieldState extends State<ConsumerDoubleField> {
     if (widget.max != null && val > widget.max!) val = widget.max!;
 
     if (widget.precision != null) {
-      val = val.roundToPrecision(widget.precision!);
+      val = val.roundToPrecision(widget.precision!).toDouble();
     }
 
     widget.writeVal(context, val);

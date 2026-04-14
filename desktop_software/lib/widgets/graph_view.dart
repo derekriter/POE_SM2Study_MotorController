@@ -2,19 +2,14 @@ import 'dart:math';
 
 import 'package:desktop_software/state/app_state.dart';
 import 'package:desktop_software/state/graph_state.dart';
+import 'package:desktop_software/util/num_helpers.dart';
+import 'package:desktop_software/util/range.dart';
 import 'package:desktop_software/util/units.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-typedef MinMaxPair = ({num min, num max});
-typedef AxisDynamics = ({
-  int count,
-  num firstVal,
-  num valInc,
-  double spacing,
-  double firstOffset,
-});
+typedef AxisDynamics = ({num firstVal, num valInc});
 
 class GraphView extends StatefulWidget {
   const GraphView({super.key});
@@ -68,8 +63,6 @@ class _GraphViewState extends State<GraphView> {
 
     final pauseButton = TextButton.icon(
       onPressed: () {
-        if (currentTime == null) return;
-
         appStateRead.pause();
       },
       label: const OverflowText("Pause"),
@@ -147,29 +140,33 @@ class _GraphViewState extends State<GraphView> {
 
 class _GraphLayout {
   Rect outsideRect, insideRect;
-  MinMaxPair minMaxX;
-  MinMaxPair? minMaxLeft;
-  MinMaxPair? minMaxRight;
+  Range xRange;
+  Range? leftRange;
+  Range? rightRange;
   double yOffset;
 
   _GraphLayout({
     required this.outsideRect,
     required this.insideRect,
-    required this.minMaxX,
-    required this.minMaxLeft,
-    required this.minMaxRight,
+    required this.xRange,
+    required this.leftRange,
+    required this.rightRange,
     required this.yOffset,
   });
 
-  bool get hasLeftAxis => minMaxLeft != null;
-  bool get hasRightAxis => minMaxRight != null;
+  bool get hasLeftAxis => leftRange != null;
+  bool get hasRightAxis => rightRange != null;
 }
 
 class _GraphPainter extends CustomPainter {
+  static const double epsilon = 1e-6;
   static const double discreteHeight = 16;
   static const double discreteSpacing = 4;
   static const double minPointSpacing = 2;
   static const double yTopPadding = 4;
+  static const double idealXTickSpacing = 80;
+  static const double idealYTickSpacing = 65;
+  static const double verticalPadding = 64;
 
   final ThemeData theme;
   final Milliseconds<int>? Function() timeSupplier;
@@ -181,9 +178,10 @@ class _GraphPainter extends CustomPainter {
 
   final TextSpan noDataSpan;
   late final TextPainter noDataPainter;
-  final Paint outlinePaint, notchPaint, gridPaint;
+  final Paint outlinePaint, tickPaint, gridPaint;
   final Paint hoverPaint;
   final Paint discreteDividerPaint;
+  late final TextStyle tickLabelStyle;
 
   _GraphPainter({
     required this.theme,
@@ -198,7 +196,7 @@ class _GraphPainter extends CustomPainter {
          ..color = theme.colorScheme.outline
          ..style = PaintingStyle.stroke
          ..strokeWidth = 1,
-       notchPaint = .new()
+       tickPaint = .new()
          ..color = theme.colorScheme.outline
          ..strokeWidth = 2,
        gridPaint = .new()
@@ -211,6 +209,10 @@ class _GraphPainter extends CustomPainter {
          ..color = Colors.black
          ..strokeWidth = 1 {
     noDataPainter = .new(text: noDataSpan, textDirection: TextDirection.ltr);
+    tickLabelStyle = theme.textTheme.labelSmall!.copyWith(
+      fontWeight: FontWeight.normal,
+      color: tickPaint.color,
+    );
   }
 
   _GraphLayout? lastLayout;
@@ -256,15 +258,15 @@ class _GraphPainter extends CustomPainter {
   _GraphLayout _drawGraphBase(Canvas canvas, Size size) {
     //outline
     final outlineRect = Rect.fromLTRB(
-      60,
+      verticalPadding,
       10,
-      size.width - 60,
-      size.height - (12 + 8 * 2 + 4),
+      size.width - verticalPadding,
+      size.height - 32,
     );
     canvas.drawRect(outlineRect, outlinePaint);
 
     final currentMS = timeSupplier()?.value ?? 0;
-    final minMaxXMS = (min: currentMS - 10 * 1000, max: currentMS);
+    final msRange = Range(min: max(currentMS - 10 * 1000, 0), max: currentMS);
 
     final discreteCount = discreteSupplier().fold(0, (current, cfg) {
       return current + (cfg.visible ? 1 : 0);
@@ -272,39 +274,16 @@ class _GraphPainter extends CustomPainter {
     var workingLayout = _GraphLayout(
       outsideRect: outlineRect,
       insideRect: outlineRect.inflate(-1),
-      minMaxX: (min: minMaxXMS.min / 1000, max: minMaxXMS.max / 1000),
-      minMaxLeft: null,
-      minMaxRight: null,
+      xRange: Range(min: msRange.min / 1000, max: msRange.max / 1000),
+      leftRange: null,
+      rightRange: null,
       yOffset:
           discreteCount * discreteHeight +
           (discreteCount + 1) * discreteSpacing,
     );
 
     //x-axis
-    final xDynamics = determineAxisDynamics(
-      workingLayout.insideRect.width,
-      workingLayout.minMaxX,
-    );
-    for (var i = 0; i < xDynamics.count; i++) {
-      double x =
-          workingLayout.insideRect.left +
-          xDynamics.firstOffset +
-          i * xDynamics.spacing;
-
-      canvas.drawLine(
-        Offset(x, outlineRect.bottom),
-        Offset(x, outlineRect.bottom + 4),
-        notchPaint,
-      );
-      canvas.drawLine(
-        Offset(x, outlineRect.bottom),
-        Offset(x, outlineRect.top),
-        gridPaint,
-      );
-
-      //TODO: draw label
-      num val = xDynamics.firstVal + i * xDynamics.valInc;
-    }
+    drawXAxis(canvas, outlineRect, workingLayout);
 
     final left = continuousLeftSupplier();
     final right = continuousRightSupplier();
@@ -325,62 +304,28 @@ class _GraphPainter extends CustomPainter {
     }
 
     if (hasLeft) {
-      workingLayout.minMaxLeft = fitAxis(minMaxXMS.min, minMaxXMS.max, left);
+      workingLayout.leftRange = fitAxis(
+        msRange.min.toInt(),
+        msRange.max.toInt(),
+        left,
+      );
 
-      //left y-axis
-      const int leftNotchCount = 13;
-      for (var i = 0; i < leftNotchCount; i++) {
-        double y =
-            (outlineRect.top + yTopPadding + 0.5) +
-            (outlineRect.height - 1 - workingLayout.yOffset - yTopPadding) *
-                i /
-                (leftNotchCount - 1);
-        canvas.drawLine(
-          Offset(outlineRect.left - 4, y),
-          Offset(outlineRect.left, y),
-          notchPaint,
-        );
-
-        if (hasLeft) {
-          canvas.drawLine(
-            Offset(outlineRect.left, y),
-            Offset(outlineRect.right, y),
-            gridPaint,
-          );
-        }
-      }
+      drawVerticalAxis(canvas, outlineRect, workingLayout, true, true);
     }
     if (hasRight) {
-      workingLayout.minMaxRight = fitAxis(minMaxXMS.min, minMaxXMS.max, right);
+      workingLayout.rightRange = fitAxis(
+        msRange.min.toInt(),
+        msRange.max.toInt(),
+        right,
+      );
 
-      //right y-axis
-      const int rightNotchCount = 21;
-      for (var i = 0; i < rightNotchCount; i++) {
-        double y =
-            (outlineRect.top + yTopPadding + 0.5) +
-            (outlineRect.height - 1 - workingLayout.yOffset - yTopPadding) *
-                i /
-                (rightNotchCount - 1);
-        canvas.drawLine(
-          Offset(outlineRect.right, y),
-          Offset(outlineRect.right + 4, y),
-          notchPaint,
-        );
-
-        if (!hasLeft && hasRight) {
-          canvas.drawLine(
-            Offset(outlineRect.left, y),
-            Offset(outlineRect.right, y),
-            gridPaint,
-          );
-        }
-      }
+      drawVerticalAxis(canvas, outlineRect, workingLayout, false, !hasLeft);
     }
 
     return workingLayout;
   }
 
-  MinMaxPair? fitAxis(int minT, int maxT, Iterable<ContinuousConfig> cfgs) {
+  Range? fitAxis(int minT, int maxT, Iterable<ContinuousConfig> cfgs) {
     num? axisMin, axisMax;
 
     for (var i = 0; i < cfgs.length; i++) {
@@ -411,26 +356,144 @@ class _GraphPainter extends CustomPainter {
     }
 
     if (axisMin == null || axisMax == null) return null;
-    return (min: axisMin, max: axisMax);
+
+    if (axisMin == axisMax) {
+      axisMin -= 1;
+      axisMax += 1;
+    }
+
+    return Range(min: axisMin, max: axisMax);
   }
 
-  AxisDynamics determineAxisDynamics(double pixelSpan, MinMaxPair valSpan) {
-    int exp = 0;
+  AxisDynamics? determineAxisDynamics(
+    double pixelSpan,
+    Range valRange,
+    double idealSpacing,
+  ) {
+    if (valRange.span == 0 || pixelSpan == 0) {
+      return null;
+    }
 
-    int count = ((valSpan.max - valSpan.min) / pow(2, exp)).floor() + 1;
+    num idealCount = pixelSpan / idealSpacing;
 
-    double spacing = count <= 1 ? 0 : pixelSpan / (count - 1);
-    num valInc = count <= 1 ? 0 : (valSpan.max - valSpan.min) / (count - 1);
+    num idealValInc = valRange.span / idealCount;
+    num roundBase = pow(10, (log(idealValInc) / ln10).floor());
+    final multipliers = [0, 1, 2, 2, 5, 5, 5, 5, 5];
+    num valInc =
+        roundBase *
+        (multipliers.elementAtOrNull((idealValInc / roundBase).round()) ?? 10);
 
-    double firstOffset = count <= 0 ? 0 : pixelSpan - (count - 1) * spacing;
-    num firstVal = count <= 0 ? 0 : valSpan.max - (count - 1) * valInc;
-    return (
-      count: count,
-      firstOffset: firstOffset,
-      spacing: spacing,
-      firstVal: firstVal,
-      valInc: valInc,
+    num firstVal = valRange.min.toDouble().ceilToNearest(valInc.toDouble());
+    return (firstVal: firstVal, valInc: valInc);
+  }
+
+  void drawXAxis(Canvas canvas, Rect outlineRect, _GraphLayout layout) {
+    final dynamics = determineAxisDynamics(
+      layout.insideRect.width,
+      layout.xRange,
+      idealXTickSpacing,
     );
+    if (dynamics == null) return;
+
+    final offset =
+        layout.xRange.getPercent(dynamics.firstVal) * layout.insideRect.width;
+    final spacing =
+        dynamics.valInc / layout.xRange.span * layout.insideRect.width;
+    for (var i = 0; true; i++) {
+      double x = layout.insideRect.left + offset + i * spacing;
+
+      if (x > layout.insideRect.right + epsilon) break;
+
+      canvas.drawLine(
+        Offset(x, outlineRect.bottom),
+        Offset(x, outlineRect.bottom + 4),
+        tickPaint,
+      );
+      canvas.drawLine(
+        Offset(x, outlineRect.bottom),
+        Offset(x, outlineRect.top),
+        gridPaint,
+      );
+
+      num val = dynamics.firstVal + i * dynamics.valInc;
+      final span = TextSpan(
+        text: "${val.toDouble().toMinimalString(maxPrecision: 3)}s",
+        style: tickLabelStyle,
+      );
+      final painter = TextPainter(
+        text: span,
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      );
+      painter.layout(maxWidth: spacing);
+      painter.paint(
+        canvas,
+        Offset(x - painter.width / 2, outlineRect.bottom + 4 + 2),
+      );
+    }
+  }
+
+  void drawVerticalAxis(
+    Canvas canvas,
+    Rect outlineRect,
+    _GraphLayout layout,
+    bool isLeft,
+    bool drawGuides,
+  ) {
+    final range = isLeft ? layout.leftRange : layout.rightRange;
+    if (range == null) return;
+
+    final availableHeight =
+        layout.insideRect.height - layout.yOffset - yTopPadding;
+
+    final dynamics = determineAxisDynamics(
+      availableHeight,
+      range,
+      idealYTickSpacing,
+    );
+    if (dynamics == null) return;
+
+    final offset = range.getPercent(dynamics.firstVal) * availableHeight;
+    final spacing = dynamics.valInc / range.span * availableHeight;
+    for (var i = 0; true; i++) {
+      double y =
+          layout.insideRect.bottom - layout.yOffset - offset - i * spacing;
+
+      if (y < layout.insideRect.top - yTopPadding - epsilon) break;
+
+      canvas.drawLine(
+        Offset(isLeft ? outlineRect.left : outlineRect.right, y),
+        Offset(isLeft ? outlineRect.left - 4 : outlineRect.right + 4, y),
+        tickPaint,
+      );
+      if (drawGuides) {
+        canvas.drawLine(
+          Offset(outlineRect.left, y),
+          Offset(outlineRect.right, y),
+          gridPaint,
+        );
+      }
+
+      num val = dynamics.firstVal + i * dynamics.valInc;
+      final span = TextSpan(
+        text: val.toDouble().toMinimalString(),
+        style: tickLabelStyle,
+      );
+      final painter = TextPainter(
+        text: span,
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      );
+      painter.layout(maxWidth: verticalPadding - 4);
+      painter.paint(
+        canvas,
+        Offset(
+          (isLeft ? outlineRect.left - 6 : outlineRect.right + 6) +
+              (isLeft ? -1 : 0) * painter.width,
+          y - painter.height / 2,
+        ),
+      );
+    }
   }
 
   void _drawGraphContents(Canvas canvas, _GraphLayout layout) {
@@ -648,40 +711,32 @@ class _GraphPainter extends CustomPainter {
   }
 
   double toCanvasX(_GraphLayout layout, int millis) {
-    final pixelsPerSec =
-        layout.insideRect.width / (layout.minMaxX.max - layout.minMaxX.min);
+    final pixelsPerSec = layout.insideRect.width / layout.xRange.span;
 
     return layout.insideRect.left +
-        (millis / 1000 - layout.minMaxX.min) * pixelsPerSec;
+        (millis / 1000 - layout.xRange.min) * pixelsPerSec;
   }
 
   double toCanvasY(_GraphLayout layout, num value, bool isLeft) {
-    if (isLeft &&
-            (!layout.hasLeftAxis ||
-                layout.minMaxLeft!.min == layout.minMaxLeft!.max) ||
-        !isLeft &&
-            (!layout.hasRightAxis ||
-                layout.minMaxRight!.min == layout.minMaxRight!.max)) {
+    if (isLeft && (!layout.hasLeftAxis || layout.leftRange!.span == 0) ||
+        !isLeft && (!layout.hasRightAxis || layout.rightRange!.span == 0)) {
       return layout.insideRect.center.dy;
     }
 
     final pixelsPerUnit =
         (layout.insideRect.height - layout.yOffset - yTopPadding) /
-        (isLeft
-            ? layout.minMaxLeft!.max - layout.minMaxLeft!.min
-            : layout.minMaxRight!.max - layout.minMaxRight!.min);
+        (isLeft ? layout.leftRange!.span : layout.rightRange!.span);
 
     return layout.insideRect.bottom -
         layout.yOffset -
-        (value - (isLeft ? layout.minMaxLeft!.min : layout.minMaxRight!.min)) *
+        (value - (isLeft ? layout.leftRange!.min : layout.rightRange!.min)) *
             pixelsPerUnit;
   }
 
   double toSeconds(_GraphLayout layout, double x) {
-    final secsPerPixel =
-        (layout.minMaxX.max - layout.minMaxX.min) / layout.insideRect.width;
+    final secsPerPixel = layout.xRange.span / layout.insideRect.width;
 
-    return layout.minMaxX.min + (x - layout.insideRect.left) * secsPerPixel;
+    return layout.xRange.min + (x - layout.insideRect.left) * secsPerPixel;
   }
 
   void drawDashedLine(

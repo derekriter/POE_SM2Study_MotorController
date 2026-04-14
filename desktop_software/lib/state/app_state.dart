@@ -379,7 +379,7 @@ class AppState with ChangeNotifier {
   Milliseconds<int>? _pauseTime;
   Milliseconds<int>? get pauseTime => _pauseTime;
   void pause() {
-    _pauseTime = _deviceState?.lastData?.timestamp;
+    _pauseTime = _deviceState?.lastData?.timestamp ?? Milliseconds(0);
     notifyListeners();
   }
 
