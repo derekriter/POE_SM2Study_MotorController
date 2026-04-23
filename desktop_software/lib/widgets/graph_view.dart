@@ -128,7 +128,9 @@ class _GraphViewState extends State<GraphView> {
 
               final layout = _painter?.lastLayout;
               final scrollPos = e.localPosition;
-              if (layout == null || !layout.insideRect.contains(scrollPos)) return;
+              if (layout == null || !layout.insideRect.contains(scrollPos)) {
+                return;
+              }
 
               final spanRead = context.read<AppState>().graphSpan;
 
@@ -152,9 +154,26 @@ class _GraphViewState extends State<GraphView> {
             },
             onPointerMove: (e) {
               final layout = _painter?.lastLayout;
-              if (pauseTime == null || layout == null) return;
+              if (_painter == null ||
+                  pauseTime == null ||
+                  layout == null ||
+                  !layout.insideRect.contains(e.localPosition)) {
+                return;
+              }
 
-              debugPrint(e.delta.distance.toString());
+              double deltaSecs = _painter!.toDeltaSeconds(layout, -e.delta.dx);
+              final currEnd =
+                  appStateRead.graphEnd ?? Seconds(pauseTime.value / 1000);
+              final span = appStateRead.graphSpan;
+              final newEnd = Seconds(
+                (currEnd.value + deltaSecs).clamp(
+                  pauseTime.value / 1000 -
+                      AppState.dataExpirationTime.value / 1000 +
+                      span.value,
+                  pauseTime.value / 1000,
+                ),
+              );
+              appStateRead.setGraphEnd(newEnd);
             },
             child: MouseRegion(
               onExit: (_) {
@@ -791,6 +810,12 @@ class _GraphPainter extends CustomPainter {
     final secsPerPixel = layout.xRange.span / layout.insideRect.width;
 
     return layout.xRange.min + (x - layout.insideRect.left) * secsPerPixel;
+  }
+
+  double toDeltaSeconds(_GraphLayout layout, double deltaX) {
+    final secsPerPixel = layout.xRange.span / layout.insideRect.width;
+
+    return deltaX * secsPerPixel;
   }
 
   void drawDashedLine(

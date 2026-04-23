@@ -385,6 +385,7 @@ class AppState with ChangeNotifier {
 
   void resume() {
     _pauseTime = null;
+    _graphEnd = null;
     notifyListeners();
   }
 
@@ -392,7 +393,7 @@ class AppState with ChangeNotifier {
   Seconds<double> get graphSpan => _graphSpan;
   void setGraphSpan(Seconds<double> span) {
     _graphSpan = Seconds(
-      span.value.clamp(0.1, _dataExpirationTime.value / 1000),
+      span.value.clamp(0.1, dataExpirationTime.value / 1000),
     );
     notifyListeners();
   }
@@ -434,7 +435,7 @@ class AppState with ChangeNotifier {
   TimeMap<String?>? _phaseNameMap;
 
   //expire after 30 seconds, allows a theoretical maximum of 1200 entries per map
-  static final Milliseconds<int> _dataExpirationTime = Milliseconds(30 * 1000);
+  static final Milliseconds<int> dataExpirationTime = Milliseconds(30 * 1000);
 
   void _onReceiveFromDevice(dynamic msg) {
     if (msg == null) {
@@ -656,7 +657,7 @@ class AppState with ChangeNotifier {
 
     //remove any unneeded data older than the expiration time
     while (trim &&
-        !(map.isOldestValue(timestamp.value - _dataExpirationTime.value) ??
+        !(map.isOldestValue(timestamp.value - dataExpirationTime.value) ??
             true)) {
       map.removeOldestEntry();
     }
