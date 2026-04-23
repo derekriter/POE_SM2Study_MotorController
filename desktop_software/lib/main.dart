@@ -22,6 +22,7 @@ class AppRoot extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => AppState(),
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: "Remote Motor Control (v2.0)",
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(

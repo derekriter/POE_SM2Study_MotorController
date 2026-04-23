@@ -6,6 +6,7 @@ import 'package:desktop_software/util/num_helpers.dart';
 import 'package:desktop_software/util/range.dart';
 import 'package:desktop_software/util/units.dart';
 import 'package:desktop_software/widgets/overflow_text.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -49,6 +50,8 @@ class _GraphViewState extends State<GraphView> {
         final gs = context.read<GraphState>();
         Future.microtask(() => gs.mouseHoverTime = hoverTime);
       },
+      spanSupplier: () => context.read<AppState>().graphSpan,
+      endSupplier: () => context.read<AppState>().graphEnd,
     );
 
     final appStateRead = context.read<AppState>();
@@ -58,6 +61,8 @@ class _GraphViewState extends State<GraphView> {
     context.select((GraphState s) => s.discreteConfigs);
     context.select((GraphState s) => s.leftAxisConfigs);
     context.select((GraphState s) => s.rightAxisConfigs);
+    context.select((AppState s) => s.graphSpan);
+    context.select((AppState s) => s.graphEnd);
 
     final theme = Theme.of(context);
 
@@ -100,6 +105,11 @@ class _GraphViewState extends State<GraphView> {
               children: [
                 pauseTime == null ? pauseButton : resumeButton,
                 pauseTime == null ? liveText : haltedText,
+                const Expanded(child: SizedBox()),
+                OverflowText(
+                  "Live Time: ${currentTime == null ? "-" : "${(currentTime.value / 1000).toStringAsFixed(3)}s"}",
+                  style: theme.textTheme.labelMedium,
+                ),
               ],
             ),
           ),
@@ -112,23 +122,58 @@ class _GraphViewState extends State<GraphView> {
           height: 1,
         ),
         Expanded(
-          child: MouseRegion(
-            onExit: (_) {
+          child: Listener(
+            onPointerSignal: (e) {
+              if (e is! PointerScrollEvent) return;
+
+              final layout = _painter?.lastLayout;
+              final scrollPos = e.localPosition;
+              if (layout == null || !layout.insideRect.contains(scrollPos)) return;
+
+              final spanRead = context.read<AppState>().graphSpan;
+
+              Seconds<double> deltaSpan = Seconds(
+                e.scrollDelta.dy / 2000 * spanRead.value,
+              );
+              appStateRead.setGraphSpan(
+                Seconds(spanRead.value + deltaSpan.value),
+              );
+            },
+            onPointerDown: (e) {
               _mousePos = null;
               context.read<GraphState>().mouseHoverTime = null;
 
               setState(() {});
             },
-            onHover: (e) => setState(() {
+            onPointerUp: (e) {
               _mousePos = e.localPosition;
 
               setState(() {});
-            }),
-            child: ClipRect(
-              child: CustomPaint(
-                foregroundPainter: _painter,
-                isComplex: true,
-                child: const SizedBox.expand(),
+            },
+            onPointerMove: (e) {
+              final layout = _painter?.lastLayout;
+              if (pauseTime == null || layout == null) return;
+
+              debugPrint(e.delta.distance.toString());
+            },
+            child: MouseRegion(
+              onExit: (_) {
+                _mousePos = null;
+                context.read<GraphState>().mouseHoverTime = null;
+
+                setState(() {});
+              },
+              onHover: (e) => setState(() {
+                _mousePos = e.localPosition;
+
+                setState(() {});
+              }),
+              child: ClipRect(
+                child: CustomPaint(
+                  foregroundPainter: _painter,
+                  isComplex: true,
+                  child: const SizedBox.expand(),
+                ),
               ),
             ),
           ),
@@ -162,7 +207,7 @@ class _GraphPainter extends CustomPainter {
   static const double epsilon = 1e-6;
   static const double discreteHeight = 16;
   static const double discreteSpacing = 4;
-  static const double minPointSpacing = 2;
+  static const double minPointSpacing = 0;
   static const double yTopPadding = 4;
   static const double idealXTickSpacing = 80;
   static const double idealYTickSpacing = 65;
@@ -175,6 +220,8 @@ class _GraphPainter extends CustomPainter {
   final Iterable<ContinuousConfig> Function() continuousRightSupplier;
   final Offset? Function() mousePosSupplier;
   final void Function() updateHoverTime;
+  final Seconds<double> Function() spanSupplier;
+  final Seconds<double>? Function() endSupplier;
 
   final TextSpan noDataSpan;
   late final TextPainter noDataPainter;
@@ -191,6 +238,8 @@ class _GraphPainter extends CustomPainter {
     required this.continuousRightSupplier,
     required this.mousePosSupplier,
     required this.updateHoverTime,
+    required this.spanSupplier,
+    required this.endSupplier,
   }) : noDataSpan = .new(text: "No data", style: theme.textTheme.displaySmall),
        outlinePaint = .new()
          ..color = theme.colorScheme.outline
@@ -266,7 +315,12 @@ class _GraphPainter extends CustomPainter {
     canvas.drawRect(outlineRect, outlinePaint);
 
     final currentMS = timeSupplier()?.value ?? 0;
-    final msRange = Range(min: max(currentMS - 10 * 1000, 0), max: currentMS);
+    var endMS = endSupplier()?.value;
+    if (endMS != null) endMS *= 1000;
+    final msRange = Range(
+      min: max((endMS ?? currentMS) - spanSupplier().value * 1000, 0),
+      max: endMS ?? currentMS,
+    );
 
     final discreteCount = discreteSupplier().fold(0, (current, cfg) {
       return current + (cfg.visible ? 1 : 0);

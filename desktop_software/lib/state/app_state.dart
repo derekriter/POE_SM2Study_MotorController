@@ -388,6 +388,27 @@ class AppState with ChangeNotifier {
     notifyListeners();
   }
 
+  Seconds<double> _graphSpan = Seconds(10);
+  Seconds<double> get graphSpan => _graphSpan;
+  void setGraphSpan(Seconds<double> span) {
+    _graphSpan = Seconds(
+      span.value.clamp(0.1, _dataExpirationTime.value / 1000),
+    );
+    notifyListeners();
+  }
+
+  Seconds<double>? _graphEnd;
+  Seconds<double>? get graphEnd => _graphEnd;
+  void setGraphEnd(Seconds<double> end) {
+    _graphEnd = Seconds(
+      end.value.clamp(
+        _graphSpan.value,
+        (pauseTime?.value ?? lastTimestamp?.value ?? 0) / 1000,
+      ),
+    );
+    notifyListeners();
+  }
+
   late final ReceivePort _deviceReceive;
   Isolate? _deviceIsolate;
   SendPort? _deviceSend;
@@ -425,6 +446,7 @@ class AppState with ChangeNotifier {
         //clear and setup timed data on device connection
         _resetTimedData();
         _pauseTime = null;
+        _graphEnd = null;
       }
       if ((_deviceState?.isConnected ?? false) && !msg.isConnected) {
         _pauseTime ??= _deviceState?.lastData?.timestamp;
