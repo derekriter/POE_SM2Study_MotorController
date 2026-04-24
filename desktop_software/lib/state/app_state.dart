@@ -392,21 +392,14 @@ class AppState with ChangeNotifier {
   Seconds<double> _graphSpan = Seconds(10);
   Seconds<double> get graphSpan => _graphSpan;
   void setGraphSpan(Seconds<double> span) {
-    _graphSpan = Seconds(
-      span.value.clamp(0.1, dataExpirationTime.value / 1000),
-    );
+    _graphSpan = span;
     notifyListeners();
   }
 
   Seconds<double>? _graphEnd;
   Seconds<double>? get graphEnd => _graphEnd;
   void setGraphEnd(Seconds<double> end) {
-    _graphEnd = Seconds(
-      end.value.clamp(
-        _graphSpan.value,
-        (pauseTime?.value ?? lastTimestamp?.value ?? 0) / 1000,
-      ),
-    );
+    _graphEnd = end;
     notifyListeners();
   }
 

@@ -137,9 +137,10 @@ class _GraphViewState extends State<GraphView> {
               Seconds<double> deltaSpan = Seconds(
                 e.scrollDelta.dy / 2000 * spanRead.value,
               );
-              appStateRead.setGraphSpan(
-                Seconds(spanRead.value + deltaSpan.value),
-              );
+              final horzPerc =
+                  (scrollPos.dx - layout.insideRect.left) /
+                  layout.insideRect.width;
+              _recalcGraphViewbox(deltaSpan, horzPerc, Seconds(0));
             },
             onPointerDown: (e) {
               _mousePos = null;
@@ -162,18 +163,7 @@ class _GraphViewState extends State<GraphView> {
               }
 
               double deltaSecs = _painter!.toDeltaSeconds(layout, -e.delta.dx);
-              final currEnd =
-                  appStateRead.graphEnd ?? Seconds(pauseTime.value / 1000);
-              final span = appStateRead.graphSpan;
-              final newEnd = Seconds(
-                (currEnd.value + deltaSecs).clamp(
-                  pauseTime.value / 1000 -
-                      AppState.dataExpirationTime.value / 1000 +
-                      span.value,
-                  pauseTime.value / 1000,
-                ),
-              );
-              appStateRead.setGraphEnd(newEnd);
+              _recalcGraphViewbox(Seconds(0), 0, Seconds(deltaSecs));
             },
             child: MouseRegion(
               onExit: (_) {
@@ -199,6 +189,40 @@ class _GraphViewState extends State<GraphView> {
         ),
       ],
     );
+  }
+
+  void _recalcGraphViewbox(
+    Seconds<double> deltaSpan,
+    double zoomHorzPerc,
+    Seconds<double> deltaSecs,
+  ) {
+    final asr = context.read<AppState>();
+    final pauseTime = asr.pauseTime;
+
+    asr.setGraphSpan(
+      Seconds(
+        (asr.graphSpan.value + deltaSpan.value).clamp(
+          0.1,
+          AppState.dataExpirationTime.value / 1000,
+        ),
+      ),
+    );
+    deltaSecs = Seconds(deltaSecs.value + deltaSpan.value * (1 - zoomHorzPerc));
+
+    if (pauseTime == null) {
+      return;
+    }
+    final currEnd = asr.graphEnd ?? Seconds(pauseTime.value / 1000);
+    final span = asr.graphSpan;
+    final newEnd = Seconds(
+      (currEnd.value + deltaSecs.value).clamp(
+        pauseTime.value / 1000 -
+            AppState.dataExpirationTime.value / 1000 +
+            span.value,
+        pauseTime.value / 1000,
+      ),
+    );
+    asr.setGraphEnd(newEnd);
   }
 }
 
