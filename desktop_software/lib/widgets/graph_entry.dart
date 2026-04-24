@@ -69,16 +69,24 @@ class _GraphEntry<T extends DataSource<S>, S> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pauseTime = context.select((AppState s) => s.pauseTime);
-    final hoverTime = context.select((GraphState s) => s.mouseHoverTime);
+    final pauseTime = context.select(
+      (AppState s) => !config.visible ? null : s.pauseTime,
+    );
+    final hoverTime = context.select(
+      (GraphState s) => !config.visible ? null : s.mouseHoverTime,
+    );
 
     late final S? val;
-    if (hoverTime != null) {
-      val = config.source.getValueAtTimestamp(hoverTime.value);
-    } else if (pauseTime != null) {
-      val = config.source.getValueAtTimestamp(pauseTime.value);
+    if (config.visible) {
+      if (hoverTime != null) {
+        val = config.source.getValueAtTimestamp(hoverTime.value);
+      } else if (pauseTime != null) {
+        val = config.source.getValueAtTimestamp(pauseTime.value);
+      } else {
+        val = config.source.watchCurrentValue(context);
+      }
     } else {
-      val = config.source.watchCurrentValue(context);
+      val = null;
     }
 
     final theme = Theme.of(context);

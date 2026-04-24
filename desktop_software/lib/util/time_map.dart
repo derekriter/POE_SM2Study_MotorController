@@ -21,7 +21,7 @@ class TimeMap<T> {
   }
 
   bool hasChangeAtTime(int time) {
-    return _internalMap.isNotEmpty && _internalMap.containsKey(time);
+    return _internalMap.isNotEmpty && _internalMap[time] != null;
   }
 
   void setValueAtTime(int time, T value) {
@@ -64,16 +64,12 @@ class TimeMap<T> {
           : List.of([_internalMap[t]], growable: false);
     }
 
-    int? endI = _findIndexOfPreviousEntry(maxT);
-    if (endI == null) return Iterable.empty();
-
-    int startI = _findIndexOfPreviousEntry(minT) ?? 0;
-
-    var collected = List<T?>.filled(endI - startI + 1, null, growable: false);
-    for (var i = startI; i <= endI; i++) {
-      collected[i - startI] = _internalMap.entries.elementAt(i).value;
-    }
-    return collected;
+    int? firstTime = findTimeOfPreviousEntry(minT);
+    return _internalMap.entries
+        .where(
+          (e) => e.key <= maxT && (firstTime == null || e.key >= firstTime),
+        )
+        .map((e) => e.value);
   }
 
   int getNumberOfChanges() {
@@ -95,46 +91,51 @@ class TimeMap<T> {
     _internalMap.remove(_internalMap.keys.first);
   }
 
-  int? _findIndexOfPreviousEntry(int time) {
-    if (!hasValueAtTime(time)) return null;
+  // int? _findIndexOfPreviousEntry(int time) {
+  //   if (!hasValueAtTime(time)) return null;
 
-    final keys = _internalMap.keys;
-    if (hasChangeAtTime(time)) return keys.toList().indexOf(time);
+  //   final keys = _internalMap.keys.toList(growable: false);
+  //   if (hasChangeAtTime(time)) return keys.indexOf(time);
 
-    if (time >= keys.last) return keys.length - 1;
+  //   if (time >= keys[keys.length - 1]) return keys.length - 1;
 
-    //binary search for previous time
-    int zoneStart = 0;
-    int zoneEnd = _internalMap.length - 1;
-    while (zoneStart <= zoneEnd) {
-      int target = ((zoneStart + zoneEnd) / 2).truncate();
+  //   //binary search for previous time
+  //   int zoneStart = 0;
+  //   int zoneEnd = _internalMap.length - 1;
+  //   while (zoneStart <= zoneEnd) {
+  //     int target = ((zoneStart + zoneEnd) / 2).truncate();
 
-      int targetTime = keys.elementAt(target);
-      int? nextTime = target >= _internalMap.length - 1
-          ? null
-          : keys.elementAt(target + 1);
+  //     int targetTime = keys[target];
+  //     int? nextTime = target >= _internalMap.length - 1
+  //         ? null
+  //         : keys[target + 1];
 
-      //don't need to check if the time is equal, because we have a check at the start of the function
-      if (targetTime < time && (nextTime == null || time < nextTime)) {
-        return target;
-      }
+  //     //don't need to check if the time is equal, because we have a check at the start of the function
+  //     if (targetTime < time && (nextTime == null || time < nextTime)) {
+  //       return target;
+  //     }
 
-      if (targetTime < time) {
-        //before given time, but the next event is not after the time
-        zoneStart = target + 1;
-      } else {
-        //after given time
-        zoneEnd = target - 1;
-      }
-    }
+  //     if (targetTime < time) {
+  //       //before given time, but the next event is not after the time
+  //       zoneStart = target + 1;
+  //     } else {
+  //       //after given time
+  //       zoneEnd = target - 1;
+  //     }
+  //   }
 
-    //I don't think this should ever happen, its just for safety
-    return null;
-  }
+  //   //I don't think this should ever happen, its just for safety
+  //   return null;
+  // }
 
   int? findTimeOfPreviousEntry(int time) {
-    int? i = _findIndexOfPreviousEntry(time);
-    return i == null ? null : _internalMap.keys.elementAt(i);
+    if (!hasValueAtTime(time)) return null;
+    if (hasChangeAtTime(time)) return time;
+
+    return _internalMap.lastKeyBefore(time);
+
+    // int? i = _findIndexOfPreviousEntry(time);
+    // return i == null ? null : _internalMap.keys.elementAtOrNull(i);
   }
 
   @override

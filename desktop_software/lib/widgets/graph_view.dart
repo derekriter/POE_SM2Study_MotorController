@@ -429,14 +429,20 @@ class _GraphPainter extends CustomPainter {
       final scopeChanges = cfgs
           .elementAt(i)
           .source
-          .getAllValuesInRange(minT, maxT);
+          .getAllValuesInRange(minT, maxT)
+          ?.toList(
+            growable: false,
+          ); //discards lazy loading in favor of faster folding
 
       if (scopeChanges == null || scopeChanges.isEmpty) continue;
 
       num? cfgMin = scopeChanges.fold(null, (prev, el) {
         if (el == null) return prev;
         if (prev == null) return el.value;
-        return min(prev, el.value);
+
+        //for some reason the profiler says that min is really slow, but not max, so I just made my own
+        //return min(prev, el.value);
+        return prev <= el.value ? prev : el.value;
       });
       num? cfgMax = scopeChanges.fold(null, (prev, el) {
         if (el == null) return prev;
@@ -738,8 +744,9 @@ class _GraphPainter extends CustomPainter {
 
     Offset? lastPoint;
     Path? workingPath;
-    for (var i = changes.length - 1; i >= 0; i--) {
-      final entry = changes.elementAt(i);
+    final changesList = changes.toList(growable: false);
+    for (var i = changesList.length - 1; i >= 0; i--) {
+      final entry = changesList[i];
       if (entry.value == null) {
         lastPoint = null;
         continue;
@@ -757,7 +764,7 @@ class _GraphPainter extends CustomPainter {
       }
 
       late final Offset nextPoint;
-      if (i == changes.length - 1) {
+      if (i == changesList.length - 1) {
         nextPoint = Offset(
           layout.insideRect.right,
           toCanvasY(layout, value, isLeft),
@@ -766,7 +773,7 @@ class _GraphPainter extends CustomPainter {
         if (lastPoint != null) {
           nextPoint = lastPoint;
         } else {
-          final prev = changes.elementAt(i + 1);
+          final prev = changesList[i + 1];
           nextPoint = Offset(
             toCanvasX(layout, prev.key),
             toCanvasY(layout, value, isLeft),
