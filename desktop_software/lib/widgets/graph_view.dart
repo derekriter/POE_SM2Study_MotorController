@@ -199,6 +199,7 @@ class _GraphViewState extends State<GraphView> {
     final asr = context.read<AppState>();
     final pauseTime = asr.pauseTime;
 
+    final prevSpan = asr.graphSpan;
     asr.setGraphSpan(
       Seconds(
         (asr.graphSpan.value + deltaSpan.value).clamp(
@@ -207,7 +208,10 @@ class _GraphViewState extends State<GraphView> {
         ),
       ),
     );
-    deltaSecs = Seconds(deltaSecs.value + deltaSpan.value * (1 - zoomHorzPerc));
+    final realDeltaSpan = Seconds(asr.graphSpan.value - prevSpan.value);
+    deltaSecs = Seconds(
+      deltaSecs.value + realDeltaSpan.value * (1 - zoomHorzPerc),
+    );
 
     if (pauseTime == null) {
       return;
