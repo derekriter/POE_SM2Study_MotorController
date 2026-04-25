@@ -53,7 +53,6 @@ class VoltageControlMode : public ControlMode {
     private:
         double _voltage;
         double _lastDuty;
-        double _lastVS;
 };
 
 class PIDPositionControlMode : public ControlMode {
@@ -70,12 +69,11 @@ class PIDPositionControlMode : public ControlMode {
         double _target;
         uint8_t _slot;
         double _lastDuty;
-        double _lastVS;
         double _lastError;
         double _iAccum;
         
         unsigned int _updatesSinceLastFrame;
-        double _totalP, _totalI, _totalD, _totalS;
+        double _totalP, _totalI, _totalD, _totalF, _totalS;
 };
 
 class PIDVelocityControlMode : public ControlMode {
@@ -92,12 +90,11 @@ class PIDVelocityControlMode : public ControlMode {
         double _target;
         uint8_t _slot;
         double _lastDuty;
-        double _lastVS;
         double _lastError;
         double _iAccum;
         
         unsigned int _updatesSinceLastFrame;
-        double _totalP, _totalI, _totalD, _totalS;
+        double _totalP, _totalI, _totalD, _totalF, _totalS, _totalV;
 };
 
 class TrapezoidalPIDPositionControlMode : public ControlMode {
@@ -115,7 +112,6 @@ class TrapezoidalPIDPositionControlMode : public ControlMode {
         double _target;
         uint8_t _slot;
         double _lastDuty;
-        double _lastVS;
         double _lastMajorError;
         double _lastMinorError;
         double _iAccum;
@@ -125,5 +121,5 @@ class TrapezoidalPIDPositionControlMode : public ControlMode {
         double _lastSecsToCompletion;
         
         unsigned int _updatesSinceLastFrame;
-        double _totalP, _totalI, _totalD, _totalS;
+        double _totalP, _totalI, _totalD, _totalF, _totalS;
 };

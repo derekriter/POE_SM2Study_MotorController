@@ -7,7 +7,8 @@
 #define KS_MODE_VELOCITY_BASED 0x01u
 
 struct SlotConfig {
-    double kP, kI, kD, kS;
+    double kP, kI, kD;
+    double kF, kS, kV;
     uint8_t kSMode;
     double vMax, aStart, aEnd;
 };

@@ -33,7 +33,7 @@ bool parseUInt(char const * const str, uint8_t* const out, char** const end) {
     *end = parsedEnd;
     return true;
 }
-double calcPIDS(double currentVal, double target, struct SlotConfig const * config, unsigned long deltaMicros, double* lastError, double* pFactor, double* iFactor, double* iAccum, double* dFactor, double* sFactor) {
+double calcPID(double currentVal, double target, struct SlotConfig const * config, unsigned long deltaMicros, double* lastError, double* pFactor, double* iFactor, double* iAccum, double* dFactor) {
     double err = target - currentVal;
     
     *iAccum += err;
@@ -51,33 +51,11 @@ double calcPIDS(double currentVal, double target, struct SlotConfig const * conf
         d = config->kD * (err - *lastError) / deltaMicros * 1e6;
     }
     
-    /*
-    From Phoenix 6 Slot0Configs.StaticFeedforwardSign:
-    
-    "The default behavior uses the velocity reference sign. This works well with velocity closed loop, Motion Magic® controls, and position closed loop when velocity reference is specified (motion profiling).
-
-However, when using position closed loop with zero velocity reference (no motion profiling), the application may want to apply static feedforward based on the sign of closed loop error instead. When doing so, we recommend using the minimal amount of kS, otherwise the motor output may dither when closed loop error is near zero."
-    */
-    int sPolarity;
-    switch(config->kSMode) {
-        default:
-        case KS_MODE_ERROR_BASED: {
-            sPolarity = sign(err);
-            break;
-        }
-        case KS_MODE_VELOCITY_BASED: {
-            sPolarity = sign(getEncoderTicksPerSecond());
-            break;
-        }
-    }
-    double s = config->kS * sPolarity;
-    
     *lastError = err;
     *pFactor = p;
     *iFactor = i;
     *dFactor = d;
-    *sFactor = s;
-    return p + i + d + s;
+    return p + i + d;
 }
 double calcTrapProfile(unsigned long microsSinceStart, double startPos, double targetPos, struct SlotConfig const * config, double* secsToCompletion, uint8_t* phase) {
     //https://www.desmos.com/calculator/1rzl2ysfkp
@@ -130,4 +108,34 @@ double calcTrapProfile(unsigned long microsSinceStart, double startPos, double t
     }
     
     return startPos + sign(vel) * (accelSeg + constSeg + deccelSeg);
+}
+double calcFF(struct SlotConfig const * config, double error, double targetVel,double* fFactor, double* sFactor, double* vFactor) {
+    const double sv = getSourceVoltage();
+    
+    *fFactor = sv == 0 ? 0 : config->kF / sv;
+    
+    /*
+    From Phoenix 6 Slot0Configs.StaticFeedforwardSign:
+    
+    "The default behavior uses the velocity reference sign. This works well with velocity closed loop, Motion Magic® controls, and position closed loop when velocity reference is specified (motion profiling).
+
+However, when using position closed loop with zero velocity reference (no motion profiling), the application may want to apply static feedforward based on the sign of closed loop error instead. When doing so, we recommend using the minimal amount of kS, otherwise the motor output may dither when closed loop error is near zero."
+    */
+    int sPolarity;
+    switch(config->kSMode) {
+        default:
+        case KS_MODE_ERROR_BASED: {
+            sPolarity = sign(error);
+            break;
+        }
+        case KS_MODE_VELOCITY_BASED: {
+            sPolarity = sign(getEncoderTicksPerSecond());
+            break;
+        }
+    }
+    *sFactor = (sv == 0 ? 0 : config->kS / sv) * sPolarity;
+    
+    *vFactor = sv == 0 ? 0 : (config->kV * targetVel / sv);
+    
+    return *fFactor + *sFactor + *vFactor;
 }

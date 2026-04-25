@@ -29,8 +29,12 @@ struct ControlModeData {
     double iFactor;
     bool hasDFactor;
     double dFactor;
+    bool hasFFactor;
+    double fFactor;
     bool hasSFactor;
     double sFactor;
+    bool hasVFactor;
+    double vFactor;
     bool hasSlot;
     uint8_t slot;
     bool hasSubError;
@@ -58,7 +62,8 @@ struct MessageFrameP {
 };
 struct SlotFrame {
     uint8_t slotNum;
-    double kP, kI, kD, kS;
+    double kP, kI, kD;
+    double kF, kS, kV;
     uint8_t kSMode;
     double vMax, aStart, aEnd;
 };

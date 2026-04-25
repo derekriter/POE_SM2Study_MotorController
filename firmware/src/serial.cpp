@@ -43,9 +43,17 @@ void sendDataFrame(DataFrame const * const data) {
         Serial.print(F(",\"cd\":"));
         Serial.print(data->controlModeData->dFactor, 3);
     }
+    if(data->controlModeData->hasFFactor) {
+        Serial.print(F(",\"cf\":"));
+        Serial.print(data->controlModeData->fFactor, 3);
+    }
     if(data->controlModeData->hasSFactor) {
         Serial.print(F(",\"cs\":"));
         Serial.print(data->controlModeData->sFactor, 3);
+    }
+    if(data->controlModeData->hasVFactor) {
+        Serial.print(F(",\"cv\":"));
+        Serial.print(data->controlModeData->vFactor, 3);
     }
     if(data->controlModeData->hasSlot) {
         Serial.print(F(",\"sl\":"));
@@ -109,8 +117,14 @@ void sendSlotFrame(SlotFrame const * const slot) {
     Serial.print(F(",\"d\":"));
     Serial.print(slot->kD, 8);
     
+    Serial.print(F(",\"f\":"));
+    Serial.print(slot->kF, 8);
+    
     Serial.print(F(",\"s\":"));
     Serial.print(slot->kS, 8);
+    
+    Serial.print(F(",\"v\":"));
+    Serial.print(slot->kV, 8);
     
     Serial.print(F(",\"sm\":"));
     Serial.print(slot->kSMode);

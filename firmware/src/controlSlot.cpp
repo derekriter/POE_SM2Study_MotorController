@@ -137,14 +137,44 @@ bool parseSlotConfigFromCommandArgs(char const * const commandArgs, SlotConfig**
         return false;
     }
     
-    if(*arg10Start != '\0') {
+    if(*arg10Start == '\0') {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed SlotConfig, too few arguments")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    double kV;
+    char* arg11Start;
+    if(!parseDouble(arg10Start, &kV, &arg11Start)) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed SlotConfig, failed to parse arg10 as a double")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    if(*arg11Start == '\0') {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed SlotConfig, too few arguments")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    double kF;
+    char* arg12Start;
+    if(!parseDouble(arg11Start, &kF, &arg12Start)) {
+        const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed SlotConfig, failed to parse arg10 as a double")};
+        sendMessageFrameP(&msg);
+        
+        return false;
+    }
+    
+    if(*arg12Start != '\0') {
         const MessageFrameP msg = {SEVERITY_ERROR, F("Malformed SlotConfig, too many arguments")};
         sendMessageFrameP(&msg);
         
         return false;
     }
     
-    *slotOut = new SlotConfig {kP, kI, kD, kS, kSMode, vMax, aStart, aEnd};
+    *slotOut = new SlotConfig {kP, kI, kD, kF, kS, kV, kSMode, vMax, aStart, aEnd};
     *slotNumOut = slotNum;
     return true;
 }
