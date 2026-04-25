@@ -11,8 +11,8 @@
 #define SET_ENABLE 1u
 #define SET_DISABLE 2u
 
-#define DEVICE_NAME F("Custom Motor Controller v1.0")
-#define FIRMWARE_VERSION F("v2.0")
+#define DEVICE_NAME F("Custom Motor Controller v1.1")
+#define FIRMWARE_VERSION F("v2.1")
 
 struct ControlModeData {
     uint8_t controlID;
