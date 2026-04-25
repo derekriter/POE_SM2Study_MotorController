@@ -28,7 +28,7 @@ void loop() {
     
     unsigned long currentMicros = micros();
     
-    //update velocity reference. Velocity measurement will break if this is removed
+    updateSourceVoltage();
     updateVelocity();
     sumRPMSinceLastData += getEncoderRPM();
     framesSinceLastData++;
