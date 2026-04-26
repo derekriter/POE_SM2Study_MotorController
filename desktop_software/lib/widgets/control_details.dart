@@ -44,7 +44,10 @@ class DutyCycleDetails extends ControlDetails {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                OverflowText("Duty Out:", style: theme.textTheme.labelLarge),
+                OverflowText(
+                  "Duty Out (%):",
+                  style: theme.textTheme.labelLarge,
+                ),
                 _OutputSlider(
                   precision: 3,
                   min: -1,

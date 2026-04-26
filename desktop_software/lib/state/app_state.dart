@@ -234,6 +234,20 @@ class AppState with ChangeNotifier {
         return val.value.toStringAsFixed(3);
       },
     );
+    fFactorSrc = ContinuousNumSource(
+      name: "fFactor",
+      watchCurrentValue: (context) =>
+          context.select((AppState s) => s.fFactorLive),
+      getValueAtTimestamp: (t) => _fFactorMap?.getValueAtTime(t),
+      getAllValueChanges: () => _fFactorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _fFactorMap?.getAllValuesInRange(minT, maxT),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
+      },
+    );
     sFactorSrc = ContinuousNumSource(
       name: "sFactor",
       watchCurrentValue: (context) =>
@@ -260,6 +274,20 @@ class AppState with ChangeNotifier {
         if (val is! Unitless<int>) return val.toString();
 
         return val.value.toString();
+      },
+    );
+    vFactorSrc = ContinuousNumSource(
+      name: "vFactor",
+      watchCurrentValue: (context) =>
+          context.select((AppState s) => s.vFactorLive),
+      getValueAtTimestamp: (t) => _vFactorMap?.getValueAtTime(t),
+      getAllValueChanges: () => _vFactorMap?.getAllValueChanges(),
+      getAllValuesInRange: (minT, maxT) =>
+          _vFactorMap?.getAllValuesInRange(minT, maxT),
+      asString: (val) {
+        if (val is! Unitless<double>) return val.toString();
+
+        return val.value.toStringAsFixed(3);
       },
     );
     subErrorSrc = ContinuousNumSource(
@@ -333,8 +361,12 @@ class AppState with ChangeNotifier {
       _deviceState?.lastData?.controlMode.iFactor;
   Unitless<double>? get dFactorLive =>
       _deviceState?.lastData?.controlMode.dFactor;
+  Unitless<double>? get fFactorLive =>
+      _deviceState?.lastData?.controlMode.fFactor;
   Unitless<double>? get sFactorLive =>
       _deviceState?.lastData?.controlMode.sFactor;
+  Unitless<double>? get vFactorLive =>
+      _deviceState?.lastData?.controlMode.vFactor;
   Unitless<int>? get slotLive => _deviceState?.lastData?.controlMode.slot;
   Unit<double>? get subErrorLive =>
       _deviceState?.lastData?.controlMode.subError;
@@ -365,7 +397,9 @@ class AppState with ChangeNotifier {
   late final ContinuousNumSource<Unitless<double>> pFactorSrc;
   late final ContinuousNumSource<Unitless<double>> iFactorSrc;
   late final ContinuousNumSource<Unitless<double>> dFactorSrc;
+  late final ContinuousNumSource<Unitless<double>> fFactorSrc;
   late final ContinuousNumSource<Unitless<double>> sFactorSrc;
+  late final ContinuousNumSource<Unitless<double>> vFactorSrc;
   late final DiscreteIntSource<Unitless<int>> slotSrc;
   late final ContinuousNumSource<Unit<double>> subErrorSrc;
   late final ContinuousValidatableNumSource<Seconds<double>>
@@ -421,7 +455,9 @@ class AppState with ChangeNotifier {
   TimeMap<Unitless<double>?>? _pFactorMap;
   TimeMap<Unitless<double>?>? _iFactorMap;
   TimeMap<Unitless<double>?>? _dFactorMap;
+  TimeMap<Unitless<double>?>? _fFactorMap;
   TimeMap<Unitless<double>?>? _sFactorMap;
+  TimeMap<Unitless<double>?>? _vFactorMap;
   TimeMap<Unitless<int>?>? _slotMap;
   TimeMap<Unit<double>?>? _subErrorMap;
   TimeMap<Seconds<double>?>? _secsToCompletionMap;
@@ -469,7 +505,9 @@ class AppState with ChangeNotifier {
     _pFactorMap?.clear();
     _iFactorMap?.clear();
     _dFactorMap?.clear();
+    _fFactorMap?.clear();
     _sFactorMap?.clear();
+    _vFactorMap?.clear();
     _slotMap?.clear();
     _subErrorMap?.clear();
     _secsToCompletionMap?.clear();
@@ -487,7 +525,9 @@ class AppState with ChangeNotifier {
     _pFactorMap ??= TimeMap();
     _iFactorMap ??= TimeMap();
     _dFactorMap ??= TimeMap();
+    _fFactorMap ??= TimeMap();
     _sFactorMap ??= TimeMap();
+    _vFactorMap ??= TimeMap();
     _slotMap ??= TimeMap();
     _subErrorMap ??= TimeMap();
     _secsToCompletionMap ??= TimeMap();
@@ -591,11 +631,27 @@ class AppState with ChangeNotifier {
         !paused,
       );
     }
+    if (_fFactorMap != null) {
+      _updateTimeMap(
+        _fFactorMap!,
+        frame.timestamp,
+        paused ? null : frame.controlMode.fFactor,
+        !paused,
+      );
+    }
     if (_sFactorMap != null) {
       _updateTimeMap(
         _sFactorMap!,
         frame.timestamp,
         paused ? null : frame.controlMode.sFactor,
+        !paused,
+      );
+    }
+    if (_vFactorMap != null) {
+      _updateTimeMap(
+        _vFactorMap!,
+        frame.timestamp,
+        paused ? null : frame.controlMode.vFactor,
         !paused,
       );
     }

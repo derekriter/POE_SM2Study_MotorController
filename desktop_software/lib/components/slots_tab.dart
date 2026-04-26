@@ -212,11 +212,34 @@ class _SlotSettings extends StatelessWidget {
                     context.read<SlotsTabState>().setWorkingKD(slotID, newKD);
                   },
                 ),
+              ],
+            ),
+          ),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsetsGeometry.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                OverflowText("kF (V):", style: theme.textTheme.labelLarge),
+                ConsumerDoubleField(
+                  defaultVal: DeviceSlotConfig.empty.kF,
+                  precision: 3,
+                  watchVal: (BuildContext context) => context.select(
+                    (SlotsTabState tabState) =>
+                        tabState.getWorkingKF(slotID) ??
+                        DeviceSlotConfig.empty.kF,
+                  ),
+                  writeVal: (BuildContext context, double newKF) {
+                    context.read<SlotsTabState>().setWorkingKF(slotID, newKF);
+                  },
+                ),
                 const SizedBox(height: 8),
-                OverflowText("kS:", style: theme.textTheme.labelLarge),
+                OverflowText("kS (V):", style: theme.textTheme.labelLarge),
                 ConsumerDoubleField(
                   defaultVal: DeviceSlotConfig.empty.kS,
-                  precision: 8,
+                  precision: 3,
                   watchVal: (BuildContext context) => context.select(
                     (SlotsTabState tabState) =>
                         tabState.getWorkingKS(slotID) ??
@@ -258,6 +281,20 @@ class _SlotSettings extends StatelessWidget {
                     ),
                     _KSModeHelp(slotID),
                   ],
+                ),
+                const SizedBox(height: 8),
+                OverflowText("kV (V):", style: theme.textTheme.labelLarge),
+                ConsumerDoubleField(
+                  defaultVal: DeviceSlotConfig.empty.kV,
+                  precision: 8,
+                  watchVal: (BuildContext context) => context.select(
+                    (SlotsTabState tabState) =>
+                        tabState.getWorkingKV(slotID) ??
+                        DeviceSlotConfig.empty.kV,
+                  ),
+                  writeVal: (BuildContext context, double newKV) {
+                    context.read<SlotsTabState>().setWorkingKV(slotID, newKV);
+                  },
                 ),
               ],
             ),
@@ -368,7 +405,7 @@ class _KSModeHelpState extends State<_KSModeHelp> {
       case KSMode.velocityBased:
         {
           message =
-              "kS will be applied in the direction of the current velocity. This works best for velocity control.";
+              "kS will be applied in the direction of the current velocity. This works best for velocity control and motion profiling.";
         }
       default:
         {

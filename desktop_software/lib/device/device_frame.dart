@@ -300,7 +300,8 @@ class DeviceOKFrame extends DeviceFrame {
 
 class DeviceSlotFrame extends DeviceFrame {
   final int slotNum;
-  final double kP, kI, kD, kS;
+  final double kP, kI, kD;
+  final double kF, kS, kV;
   final KSMode kSMode;
   final double vMax, aStart, aEnd;
 
@@ -309,8 +310,10 @@ class DeviceSlotFrame extends DeviceFrame {
     required this.kP,
     required this.kI,
     required this.kD,
+    required this.kF,
     required this.kS,
     required this.kSMode,
+    required this.kV,
     required this.vMax,
     required this.aStart,
     required this.aEnd,
@@ -329,32 +332,39 @@ class DeviceSlotFrame extends DeviceFrame {
     }
 
     late final double kP;
-    if (json["p"] is! double) {
-      _logger.w("Invalid slot frame, missing or invalid 'p' parameter");
+    if (json["kp"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'kp' parameter");
       return null;
     }
-    kP = json["p"] as double;
+    kP = json["kp"] as double;
 
     late final double kI;
-    if (json["i"] is! double) {
-      _logger.w("Invalid slot frame, missing or invalid 'i' parameter");
+    if (json["ki"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'ki' parameter");
       return null;
     }
-    kI = json["i"] as double;
+    kI = json["ki"] as double;
 
     late final double kD;
-    if (json["d"] is! double) {
-      _logger.w("Invalid slot frame, missing or invalid 'd' parameter");
+    if (json["kd"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'kd' parameter");
       return null;
     }
-    kD = json["d"] as double;
+    kD = json["kd"] as double;
+
+    late final double kF;
+    if (json["kf"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'kf' parameter");
+      return null;
+    }
+    kF = json["kf"] as double;
 
     late final double kS;
-    if (json["s"] is! double) {
-      _logger.w("Invalid slot frame, missing or invalid 's' parameter");
+    if (json["ks"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'ks' parameter");
       return null;
     }
-    kS = json["s"] as double;
+    kS = json["ks"] as double;
 
     late final KSMode kSMode;
     if (json["sm"] is! int) {
@@ -368,12 +378,19 @@ class DeviceSlotFrame extends DeviceFrame {
     }
     kSMode = temp;
 
-    late final double vMax;
-    if (json["v"] is! double) {
-      _logger.w("Invalid slot frame, missing or invalid 'v' parameter");
+    late final double kV;
+    if (json["kv"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'kv' parameter");
       return null;
     }
-    vMax = json["v"] as double;
+    kV = json["kv"] as double;
+
+    late final double vMax;
+    if (json["vm"] is! double) {
+      _logger.w("Invalid slot frame, missing or invalid 'vm' parameter");
+      return null;
+    }
+    vMax = json["vm"] as double;
 
     late final double aStart;
     if (json["as"] is! double) {
@@ -394,8 +411,10 @@ class DeviceSlotFrame extends DeviceFrame {
       kP: kP,
       kI: kI,
       kD: kD,
+      kF: kF,
       kS: kS,
       kSMode: kSMode,
+      kV: kV,
       vMax: vMax,
       aStart: aStart,
       aEnd: aEnd,
@@ -406,8 +425,10 @@ class DeviceSlotFrame extends DeviceFrame {
     kP: kP,
     kI: kI,
     kD: kD,
+    kF: kF,
     kS: kS,
     kSMode: kSMode,
+    kV: kV,
     vMax: vMax,
     aStart: aStart,
     aEnd: aEnd,
@@ -420,8 +441,10 @@ class DeviceSlotFrame extends DeviceFrame {
       kP: kP,
       kI: kI,
       kD: kD,
+      kF: kF,
       kS: kS,
       kSMode: kSMode,
+      kV: kV,
       vMax: vMax,
       aStart: aStart,
       aEnd: aEnd,

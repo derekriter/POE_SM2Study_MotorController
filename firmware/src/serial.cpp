@@ -108,28 +108,28 @@ void sendSlotFrame(SlotFrame const * const slot) {
     Serial.print(F("\"sn\":"));
     Serial.print(slot->slotNum);
     
-    Serial.print(F(",\"p\":"));
+    Serial.print(F(",\"kp\":"));
     Serial.print(slot->kP, 8);
     
-    Serial.print(F(",\"i\":"));
+    Serial.print(F(",\"ki\":"));
     Serial.print(slot->kI, 8);
     
-    Serial.print(F(",\"d\":"));
+    Serial.print(F(",\"kd\":"));
     Serial.print(slot->kD, 8);
     
-    Serial.print(F(",\"f\":"));
-    Serial.print(slot->kF, 8);
+    Serial.print(F(",\"kf\":"));
+    Serial.print(slot->kF, 3);
     
-    Serial.print(F(",\"s\":"));
-    Serial.print(slot->kS, 8);
+    Serial.print(F(",\"ks\":"));
+    Serial.print(slot->kS, 3);
     
-    Serial.print(F(",\"v\":"));
+    Serial.print(F(",\"kv\":"));
     Serial.print(slot->kV, 8);
     
     Serial.print(F(",\"sm\":"));
     Serial.print(slot->kSMode);
     
-    Serial.print(F(",\"v\":"));
+    Serial.print(F(",\"vm\":"));
     Serial.print(slot->vMax, 2);
     
     Serial.print(F(",\"as\":"));

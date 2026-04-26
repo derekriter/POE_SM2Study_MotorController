@@ -38,6 +38,12 @@ class SlotsTabState with ChangeNotifier {
     return _workingConfigs?.elementAt(slot)?.kD;
   }
 
+  double? getWorkingKF(int slot) {
+    assert(slot >= 0 && slot < 6);
+
+    return _workingConfigs?.elementAt(slot)?.kF;
+  }
+
   double? getWorkingKS(int slot) {
     assert(slot >= 0 && slot < 6);
 
@@ -48,6 +54,12 @@ class SlotsTabState with ChangeNotifier {
     assert(slot >= 0 && slot < 6);
 
     return _workingConfigs?.elementAt(slot)?.kSMode;
+  }
+
+  double? getWorkingKV(int slot) {
+    assert(slot >= 0 && slot < 6);
+
+    return _workingConfigs?.elementAt(slot)?.kV;
   }
 
   double? getWorkingVMax(int slot) {
@@ -114,6 +126,17 @@ class SlotsTabState with ChangeNotifier {
     notifyListeners();
   }
 
+  void setWorkingKF(int slot, double kF) {
+    assert(slot >= 0 && slot < 6);
+
+    if (_workingConfigs == null || _workingConfigs![slot] == null) {
+      _setWorkingConfigAdv(slot, DeviceSlotConfig.empty.copy(), false);
+    }
+    _workingConfigs![slot]!.kF = kF;
+
+    notifyListeners();
+  }
+
   void setWorkingKS(int slot, double kS) {
     assert(slot >= 0 && slot < 6);
 
@@ -132,6 +155,17 @@ class SlotsTabState with ChangeNotifier {
       _setWorkingConfigAdv(slot, DeviceSlotConfig.empty.copy(), false);
     }
     _workingConfigs![slot]!.kSMode = kSMode;
+
+    notifyListeners();
+  }
+
+  void setWorkingKV(int slot, double kV) {
+    assert(slot >= 0 && slot < 6);
+
+    if (_workingConfigs == null || _workingConfigs![slot] == null) {
+      _setWorkingConfigAdv(slot, DeviceSlotConfig.empty.copy(), false);
+    }
+    _workingConfigs![slot]!.kV = kV;
 
     notifyListeners();
   }

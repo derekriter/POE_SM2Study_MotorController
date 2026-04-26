@@ -59,7 +59,9 @@ class DeviceControlModeData {
   final Unitless<double>? pFactor;
   final Unitless<double>? iFactor;
   final Unitless<double>? dFactor;
+  final Unitless<double>? fFactor;
   final Unitless<double>? sFactor;
+  final Unitless<double>? vFactor;
   final Unitless<int>? slot;
   final Unit<double>? subError;
   final Seconds<double>? secsToCompletion;
@@ -74,7 +76,9 @@ class DeviceControlModeData {
     required this.pFactor,
     required this.iFactor,
     required this.dFactor,
+    required this.fFactor,
     required this.sFactor,
+    required this.vFactor,
     required this.slot,
     required this.subError,
     required this.secsToCompletion,
@@ -183,12 +187,26 @@ class DeviceControlModeData {
     }
     dFactor = Unitless.nullable(json["cd"] as double?);
 
+    late final Unitless<double>? fFactor;
+    if (json["cf"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'cf' parameter");
+      return null;
+    }
+    fFactor = Unitless.nullable(json["cf"] as double?);
+
     late final Unitless<double>? sFactor;
     if (json["cs"] is! double?) {
       _logger.w("Invalid control mode, invalid 'cs' parameter");
       return null;
     }
     sFactor = Unitless.nullable(json["cs"] as double?);
+
+    late final Unitless<double>? vFactor;
+    if (json["cv"] is! double?) {
+      _logger.w("Invalid control mode, invalid 'cv' parameter");
+      return null;
+    }
+    vFactor = Unitless.nullable(json["cv"] as double?);
 
     late final Unitless<int>? slot;
     if (json["sl"] is! int?) {
@@ -247,7 +265,9 @@ class DeviceControlModeData {
       pFactor: pFactor,
       iFactor: iFactor,
       dFactor: dFactor,
+      fFactor: fFactor,
       sFactor: sFactor,
+      vFactor: vFactor,
       slot: slot,
       subError: subError,
       secsToCompletion: secsToCompletion,
@@ -299,7 +319,9 @@ class DeviceControlModeData {
       pFactor: pFactor?.copy(),
       iFactor: iFactor?.copy(),
       dFactor: dFactor?.copy(),
+      fFactor: fFactor?.copy(),
       sFactor: sFactor?.copy(),
+      vFactor: vFactor?.copy(),
       slot: slot?.copy(),
       subError: subError?.copy(),
       secsToCompletion: secsToCompletion?.copy(),
