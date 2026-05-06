@@ -10,8 +10,8 @@
 
 #define USE_EXTERNAL_AREF true //WARNING: making this false while AREF isn't floating WILL SHORT OUT the arduino
 #define PIN_SOURCE_VOLTAGE A0
-#define SV_R1 5040 //r1 value in the voltage divider ; 5k1 resistor with 1% tolerance, measured with multimeter
-#define SV_R2 987 + 324 //r2 value in the voltage divider ; 1k resistor and 330 resistor with 1% tolerance, measured with multimeter
+#define SV_R1 5030 //r1 value in the voltage divider ; 5k1 resistor with 1% tolerance, measured with multimeter
+#define SV_R2 (985 + 324) //r2 value in the voltage divider ; 1k resistor and 330 resistor with 1% tolerance, measured with multimeter
 #define SV_SAMPLE_COUNT 16
 #if USE_EXTERNAL_AREF
 #define VREF 2.5

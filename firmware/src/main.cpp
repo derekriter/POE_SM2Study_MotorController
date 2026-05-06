@@ -45,7 +45,7 @@ void loop() {
         _disabledControlMode->update(currentMicros - lastMicros, _slotConfigs);
     }
     
-    if(currentMicros - lastDataTime >= 1e6 / 40.0) {
+    if(currentMicros - lastDataTime >= 1e6 / 30.0) {
         ControlModeData cm;
         if(getMotorEnabled()) {
             _controlMode->getControlModeData(&cm);
