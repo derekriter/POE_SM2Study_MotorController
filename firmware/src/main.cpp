@@ -82,7 +82,9 @@ void loop() {
                 _slotConfigs[todo.changeSlotNum].kP = todo.changeSlotConfig->kP;
                 _slotConfigs[todo.changeSlotNum].kI = todo.changeSlotConfig->kI;
                 _slotConfigs[todo.changeSlotNum].kD = todo.changeSlotConfig->kD;
+                _slotConfigs[todo.changeSlotNum].kF = todo.changeSlotConfig->kF;
                 _slotConfigs[todo.changeSlotNum].kS = todo.changeSlotConfig->kS;
+                _slotConfigs[todo.changeSlotNum].kV = todo.changeSlotConfig->kV;
                 _slotConfigs[todo.changeSlotNum].kSMode = todo.changeSlotConfig->kSMode;
                 _slotConfigs[todo.changeSlotNum].vMax = todo.changeSlotConfig->vMax;
                 _slotConfigs[todo.changeSlotNum].aStart = todo.changeSlotConfig->aStart;

@@ -121,5 +121,5 @@ class TrapezoidalPIDPositionControlMode : public ControlMode {
         double _lastSecsToCompletion;
         
         unsigned int _updatesSinceLastFrame;
-        double _totalP, _totalI, _totalD, _totalF, _totalS;
+        double _totalP, _totalI, _totalD, _totalF, _totalS, _totalV;
 };

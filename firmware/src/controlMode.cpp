@@ -394,6 +394,7 @@ TrapezoidalPIDPositionControlMode::TrapezoidalPIDPositionControlMode(double targ
     _totalD = 0;
     _totalF = 0;
     _totalS = 0;
+    _totalV = 0;
     _startRots = NAN;
     _lastPhase = 0;
     _lastSecsToCompletion = 0;
@@ -406,14 +407,15 @@ void TrapezoidalPIDPositionControlMode::update(unsigned long deltaMicros, struct
     }
     
     SlotConfig const * config = slots + _slot;
-    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config, &_lastSecsToCompletion, &_lastPhase);
+    double targetVel = 0;
+    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config, &_lastSecsToCompletion, &_lastPhase, &targetVel);
     
     double currentPosition = getEncoderRotations();
     _lastMajorError = _target - currentPosition;
     
-    double p, i, d, f, s, _;
+    double p, i, d, f, s, v;
     double pid = calcPID(currentPosition, currentTarget, config, deltaMicros, &_lastMinorError, &p, &i, &_iAccum, &d);
-    double ff = calcFF(config, _lastMinorError, 0, &f, &s, &_);
+    double ff = calcFF(config, _lastMinorError, targetVel, &f, &s, &v);
     _lastDuty = pid + ff;
     
     _totalP += p;
@@ -421,6 +423,7 @@ void TrapezoidalPIDPositionControlMode::update(unsigned long deltaMicros, struct
     _totalD += d;
     _totalF += f;
     _totalS += s;
+    _totalV += v;
     _updatesSinceLastFrame++;
     
     _lastDuty = min(max(_lastDuty, -1), 1);
@@ -447,6 +450,8 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     data->fFactor = _totalF / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasVFactor = true;
+    data->vFactor = _totalV / _updatesSinceLastFrame;
     data->hasSlot = true;
     data->slot = _slot;
     data->hasSubError = true;
@@ -462,6 +467,7 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     _totalD = 0;
     _totalF = 0;
     _totalS = 0;
+    _totalV = 0;
 }
 bool TrapezoidalPIDPositionControlMode::parseFromCommandArgs(char const * const commandArgs, TrapezoidalPIDPositionControlMode** const controlOut) {
     double target;

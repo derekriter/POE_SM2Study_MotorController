@@ -57,10 +57,10 @@ double calcPID(double currentVal, double target, struct SlotConfig const * confi
     *dFactor = d;
     return p + i + d;
 }
-double calcTrapProfile(unsigned long microsSinceStart, double startPos, double targetPos, struct SlotConfig const * config, double* secsToCompletion, uint8_t* phase) {
+double calcTrapProfile(unsigned long microsSinceStart, double startPos, double targetPos, struct SlotConfig const * config, double* secsToCompletion, uint8_t* phase, double* targetVel) {
     //https://www.desmos.com/calculator/1rzl2ysfkp
     
-    if(config->aStart == 0.0 || config->aEnd == 0.0 || config->vMax == 0.0) {
+    if(config->aStart <= 0.0 || config->aEnd <= 0.0 || config->vMax <= 0.0) {
         *secsToCompletion = NAN;
         *phase = 255u;
         return startPos;
@@ -69,45 +69,50 @@ double calcTrapProfile(unsigned long microsSinceStart, double startPos, double t
     double minsSinceStart = microsSinceStart / (double) 1e6 / 60.0;
     double deltaPos = targetPos - startPos;
     
-    double vel = sign(deltaPos) * min(sqrt(2 * abs(deltaPos) / (1 / config->aStart + 1 / config->aEnd)), config->vMax);
-    if(vel == 0) {
+    double maxVel = sign(deltaPos) * min(sqrt(2 * abs(deltaPos) / (1 / config->aStart + 1 / config->aEnd)), config->vMax);
+    if(maxVel == 0) {
         *secsToCompletion = NAN;
         *phase = 255u;
+        *targetVel = 0;
         return startPos;
     }
     
-    double tAccel = abs(vel) / config->aStart;
-    double posAccel = tAccel * vel / 2;
+    double tAccel = abs(maxVel) / config->aStart;
+    double posAccel = tAccel * maxVel / 2;
     
-    double tDeccel = abs(vel) / config->aEnd;
-    double posDeccel = tDeccel * vel / 2;
+    double tDeccel = abs(maxVel) / config->aEnd;
+    double posDeccel = tDeccel * maxVel / 2;
     
     double posConst = deltaPos - posAccel - posDeccel;
-    double tConst = abs(posConst / vel);
+    double tConst = abs(posConst / maxVel);
     
     double iAccel = min(minsSinceStart, tAccel);
     double iConst = min(max(minsSinceStart - tAccel, 0), tConst);
     double iDeccel = min(max(minsSinceStart - tAccel - tConst, 0), tDeccel);
     
     double accelSeg = config->aStart / 2 * iAccel * iAccel;
-    double constSeg = abs(vel) * iConst;
-    double deccelSeg = -config->aEnd / 2 * iDeccel * iDeccel + abs(vel) * iDeccel;
+    double constSeg = abs(maxVel) * iConst;
+    double deccelSeg = -config->aEnd / 2 * iDeccel * iDeccel + abs(maxVel) * iDeccel;
     
     *secsToCompletion = (tAccel + tConst + tDeccel - minsSinceStart) * 60;
     if(minsSinceStart > tAccel + tConst + tDeccel) {
         *phase = 3;
+        *targetVel = 0;
     }
     else if(iDeccel > 0) {
         *phase = 2;
+        *targetVel = maxVel - sign(maxVel) * abs(config->aEnd * iDeccel);
     }
     else if(iConst > 0) {
         *phase = 1;
+        *targetVel = maxVel;
     }
     else {
         *phase = 0;
+        *targetVel = sign(maxVel) * abs(config->aStart * iAccel);
     }
     
-    return startPos + sign(vel) * (accelSeg + constSeg + deccelSeg);
+    return startPos + sign(maxVel) * (accelSeg + constSeg + deccelSeg);
 }
 double calcFF(struct SlotConfig const * config, double error, double targetVel,double* fFactor, double* sFactor, double* vFactor) {
     const double sv = getSourceVoltage();
@@ -129,7 +134,7 @@ However, when using position closed loop with zero velocity reference (no motion
             break;
         }
         case KS_MODE_VELOCITY_BASED: {
-            sPolarity = sign(getEncoderTicksPerSecond());
+            sPolarity = sign(targetVel);
             break;
         }
     }
