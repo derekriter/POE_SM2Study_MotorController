@@ -283,7 +283,7 @@ class _SlotSettings extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                OverflowText("kV (V):", style: theme.textTheme.labelLarge),
+                OverflowText("kV (V/rpm):", style: theme.textTheme.labelLarge),
                 ConsumerDoubleField(
                   defaultVal: DeviceSlotConfig.empty.kV,
                   precision: 8,
