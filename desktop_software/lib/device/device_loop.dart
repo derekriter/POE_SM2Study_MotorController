@@ -106,7 +106,7 @@ Future<void> _deviceLoop(SendPort send) async {
     }
   } else if (!state.isConnected && _lastReconnectTime == null ||
       now.difference(_lastReconnectTime!).inSeconds >= 3) {
-    state.isConnected = connect();
+    state.isConnected = connect("COM6");
 
     if (!state.isConnected) {
       _lastDataTime = null;

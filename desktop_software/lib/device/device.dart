@@ -14,7 +14,7 @@ DateTime? _connectTime;
 
 //NOTE: calling any functions in this file from any isolates other than the device loop will break things
 
-bool connect() {
+bool connect(String portName) {
   if (isConnected()) {
     _logger.w("Device already connected");
     return false;
@@ -41,7 +41,7 @@ bool connect() {
     ..cts = SerialPortCts.ignore
     ..xonXoff = SerialPortXonXoff.disabled;
 
-  _port = SerialPort("COM6"); //TODO: port scanning
+  _port = SerialPort(portName);
 
   if (!_port!.openReadWrite()) {
     _logger.w("Failed to open device connection\n${SerialPort.lastError}");
@@ -73,7 +73,7 @@ void disconnect() {
   _port?.dispose();
   _port = null;
 
-  // _portConfig?.dispose(); // causes assertion failure even though the docs say to dispose. I think SerialPort.dispose() might auto dispose the config
+  //SerialPort.dispose() auto disposes the config
   _portConfig = null;
 
   _connectTime = null;

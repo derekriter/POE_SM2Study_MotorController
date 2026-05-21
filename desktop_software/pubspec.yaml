@@ -14,10 +14,12 @@ dependencies:
   provider: 6.1.5+1
   window_manager: 0.5.1
   flutter_libserialport: 0.6.0
+  libserialport: 0.3.0+1
   logger: 2.6.2
   smooth_scroll_multiplatform: 1.0.8
   resizable_splitter: 1.1.0
   flutter_context_menu: 0.4.2
+  ffi: ^2.2.0
 
 dev_dependencies:
   flutter_test:

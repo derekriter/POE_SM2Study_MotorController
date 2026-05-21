@@ -8,6 +8,7 @@ import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:desktop_software/device/device_frame.dart';
 import 'package:desktop_software/device/device_loop.dart';
 import 'package:desktop_software/device/device_state.dart';
+import 'package:desktop_software/device/ports.dart';
 import 'package:desktop_software/util/data_source.dart';
 import 'package:desktop_software/util/time_map.dart';
 import 'package:desktop_software/util/units.dart';
@@ -38,6 +39,8 @@ class AppState with ChangeNotifier {
           _logger.f("Failed to create device isolate\n$err");
           ServicesBinding.instance.exitApplication(AppExitType.cancelable, 1);
         });
+
+    _portListLoop(); //start port listening
 
     //NOTE: will only trigger on cancelable closes, a force termination will not trigger this function
     AppLifecycleListener(
@@ -442,6 +445,9 @@ class AppState with ChangeNotifier {
   SendPort? _deviceSend;
   Completer<void>? _deviceClosed;
 
+  Set<PortInfo> _ports = {};
+  Set<PortInfo> get ports => Set.unmodifiable(_ports);
+
   DeviceState? _deviceState;
   TimeMap<bool?>? _enabledMap;
   TimeMap<Volts<double>?>? _sourceVoltageMap;
@@ -710,5 +716,11 @@ class AppState with ChangeNotifier {
             true)) {
       map.removeOldestEntry();
     }
+  }
+
+  void _portListLoop() {
+    _ports = getAvailablePortInfo();
+
+    Future.delayed(Duration(milliseconds: 500), _portListLoop);
   }
 }
