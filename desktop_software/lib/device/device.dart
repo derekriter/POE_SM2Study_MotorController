@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:desktop_software/device/device_control_request.dart';
+import 'package:desktop_software/device/ports.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:logger/logger.dart';
 
@@ -58,7 +59,7 @@ bool connect(String portName) {
 
   _connectTime = DateTime.now();
 
-  _logger.i("Connected to device on port ${getConnectedPort()}");
+  _logger.i("Connected to device on port ${_port!.name}");
   return true;
 }
 
@@ -92,8 +93,14 @@ bool isReady() {
           200; //allow time for connection to configure and stabilize
 }
 
-String? getConnectedPort() {
-  return isConnected() ? _port?.name : null;
+PortInfo? getPortInfo() {
+  if (!isConnected()) return null;
+
+  return (name: _port!.name ?? "UNKNOWN", description: _port!.description);
+}
+
+ConnectionInfo getConnectionInfo() {
+  return (connected: isConnected(), ready: isReady(), portInfo: getPortInfo());
 }
 
 Future<String?> readLine() async {

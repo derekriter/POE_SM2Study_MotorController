@@ -8,6 +8,7 @@ import 'package:libserialport/src/bindings.dart';
 import 'package:libserialport/src/util.dart';
 
 typedef PortInfo = ({String name, String? description});
+typedef ConnectionInfo = ({bool connected, bool ready, PortInfo? portInfo});
 
 Set<PortInfo> getAvailablePortInfo() {
   //modified code from libserialport _SerialPortImpl::availablePorts

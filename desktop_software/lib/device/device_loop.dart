@@ -39,9 +39,7 @@ void deviceLoopInit(SendPort send) async {
 
 Future<void> _deviceLoop(SendPort send) async {
   DeviceState state = _prevState?.copy() ?? DeviceState();
-  state.isConnected = isConnected();
-  state.isReady = isReady();
-  state.port = getConnectedPort();
+  state.connInfo = getConnectionInfo();
 
   final now = DateTime.now();
   if (_lastDataTime != null &&
@@ -52,16 +50,14 @@ Future<void> _deviceLoop(SendPort send) async {
     _lastUPSTime = null;
 
     disconnect();
-    state.isConnected = false;
-    state.isReady = false;
-    state.port = null;
+    state.connInfo = (connected: false, ready: false, portInfo: null);
     state.lastData = null;
     state.updatesPerSec = null;
     state.deviceName = null;
     state.firmwareVersion = null;
   }
 
-  if (state.isReady) {
+  if (state.connInfo.ready) {
     final String? raw = await readLine();
     if (raw != null) {
       final DeviceFrame? frame = _parseFrameIfValid(raw);
@@ -104,11 +100,13 @@ Future<void> _deviceLoop(SendPort send) async {
       _lastUPSTime = _lastUPSTime!.add(Duration(seconds: 1));
       _workingUPS = 0;
     }
-  } else if (!state.isConnected && _lastReconnectTime == null ||
+  } else if (!state.connInfo.connected && _lastReconnectTime == null ||
       now.difference(_lastReconnectTime!).inSeconds >= 3) {
-    state.isConnected = connect("COM6");
+    connect("COM6");
+    state.connInfo =
+        getConnectionInfo(); //refresh info after attempting connect
 
-    if (!state.isConnected) {
+    if (!state.connInfo.connected) {
       _lastDataTime = null;
       _lastReconnectTime = now;
       _lastUPSTime = null;

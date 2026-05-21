@@ -335,9 +335,9 @@ class AppState with ChangeNotifier {
   }
 
   //connection data
-  bool get isConnected => _deviceState?.isConnected ?? false;
-  bool get isReady => _deviceState?.isReady ?? false;
-  String? get port => _deviceState?.port;
+  ConnectionInfo get connInfo =>
+      _deviceState?.connInfo ??
+      (connected: false, ready: false, portInfo: null);
 
   //basic device info
   String? get deviceName => _deviceState?.deviceName;
@@ -478,13 +478,13 @@ class AppState with ChangeNotifier {
     } else if (msg is SendPort) {
       _deviceSend = msg;
     } else if (msg is DeviceState) {
-      if (!(_deviceState?.isConnected ?? false) && msg.isConnected) {
+      if (!connInfo.connected && msg.connInfo.connected) {
         //clear and setup timed data on device connection
         _resetTimedData();
         _pauseTime = null;
         _graphEnd = null;
       }
-      if ((_deviceState?.isConnected ?? false) && !msg.isConnected) {
+      if (connInfo.connected && !msg.connInfo.connected) {
         _pauseTime ??= _deviceState?.lastData?.timestamp;
       }
 
@@ -721,6 +721,6 @@ class AppState with ChangeNotifier {
   void _portListLoop() {
     _ports = getAvailablePortInfo();
 
-    Future.delayed(Duration(milliseconds: 500), _portListLoop);
+    Future.delayed(Duration(seconds: 1), _portListLoop);
   }
 }

@@ -1,10 +1,9 @@
 import 'package:desktop_software/device/device_control_slot.dart';
 import 'package:desktop_software/device/device_frame.dart';
+import 'package:desktop_software/device/ports.dart';
 
 class DeviceState {
-  bool isConnected = false;
-  bool isReady = false;
-  String? port;
+  ConnectionInfo connInfo = (connected: false, ready: false, portInfo: null);
   DeviceDataFrame? lastData;
   List<DeviceSlotConfig?> slots;
   int? updatesPerSec;
@@ -15,9 +14,16 @@ class DeviceState {
 
   DeviceState copy() {
     return DeviceState()
-      ..isConnected = isConnected
-      ..isReady = isReady
-      ..port = port
+      ..connInfo = (
+        connected: connInfo.connected,
+        ready: connInfo.ready,
+        portInfo: connInfo.portInfo == null
+            ? null
+            : (
+                name: connInfo.portInfo!.name,
+                description: connInfo.portInfo!.description,
+              ),
+      )
       ..lastData = lastData?.copy()
       ..slots = List.from(slots)
       ..updatesPerSec = updatesPerSec
@@ -28,9 +34,7 @@ class DeviceState {
   @override
   bool operator ==(Object other) {
     return other is DeviceState &&
-        other.isConnected == isConnected &&
-        other.isReady == isReady &&
-        other.port == port &&
+        other.connInfo == connInfo &&
         other.lastData == lastData &&
         other.slots == slots &&
         other.updatesPerSec == updatesPerSec &&
