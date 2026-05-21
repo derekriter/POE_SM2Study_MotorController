@@ -20,6 +20,7 @@ void DisabledControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
     data->hasVFactor = false;
     data->hasSlot = false;
@@ -43,6 +44,7 @@ void StopControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
     data->hasVFactor = false;
     data->hasSlot = false;
@@ -69,6 +71,7 @@ void DutyCycleControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
     data->hasVFactor = false;
     data->hasSlot = false;
@@ -123,6 +126,7 @@ void VoltageControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
     data->hasVFactor = false;
     data->hasSlot = false;
