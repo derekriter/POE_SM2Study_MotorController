@@ -39,10 +39,13 @@ class _SlotsTabState extends State<SlotsTab>
 
     assert(_selectedSlot >= 0 && _selectedSlot < 6);
 
-    final isReady = context.select((AppState appState) => appState.isReady);
+    final isReady = context.select(
+      (AppState appState) => appState.connInfo.ready,
+    );
 
     if (!isReady) {
-      return const Column(
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _SlotChangeListener(0),
           _SlotChangeListener(1),
