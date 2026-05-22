@@ -44,7 +44,8 @@ class _SlotsTabState extends State<SlotsTab>
     );
 
     if (!isReady) {
-      return const Column(
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _SlotChangeListener(0),
           _SlotChangeListener(1),

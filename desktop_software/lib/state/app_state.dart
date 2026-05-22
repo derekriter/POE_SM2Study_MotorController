@@ -447,6 +447,15 @@ class AppState with ChangeNotifier {
 
   Set<PortInfo> _ports = {};
   Set<PortInfo> get ports => Set.unmodifiable(_ports);
+  void connect(PortInfo target) {
+    if (connInfo.connected || _deviceSend == null) return;
+    _deviceSend!.send(target);
+  }
+
+  void disconnect() {
+    if (!connInfo.connected || _deviceSend == null) return;
+    _deviceSend!.send("disconn");
+  }
 
   DeviceState? _deviceState;
   TimeMap<bool?>? _enabledMap;

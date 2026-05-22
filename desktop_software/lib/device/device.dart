@@ -103,16 +103,20 @@ ConnectionInfo getConnectionInfo() {
   return (connected: isConnected(), ready: isReady(), portInfo: getPortInfo());
 }
 
-Future<String?> readLine() async {
+Future<String?> readLine([Duration? expiration]) async {
   if (!isReady()) return null;
 
   StringBuffer line = StringBuffer();
+  bool encounteredErr = false;
   await Future.doWhile(() {
     late String data;
     try {
-      data = String.fromCharCode(_port!.read(1, timeout: 0)[0]);
+      data = String.fromCharCode(
+        _port!.read(1, timeout: expiration?.inMilliseconds ?? 0)[0],
+      );
     } catch (err) {
       _logger.e("Exception while reading line: $err");
+      encounteredErr = true;
       return false;
     }
 
@@ -124,7 +128,7 @@ Future<String?> readLine() async {
     return true;
   });
 
-  return line.toString();
+  return encounteredErr ? null : line.toString();
 }
 
 Future<bool> _sendMessage(Uint8List msg) async {

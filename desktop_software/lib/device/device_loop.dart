@@ -6,6 +6,7 @@ import 'package:desktop_software/device/device.dart';
 import 'package:desktop_software/device/device_control_request.dart';
 import 'package:desktop_software/device/device_frame.dart';
 import 'package:desktop_software/device/device_state.dart';
+import 'package:desktop_software/device/ports.dart';
 import 'package:logger/logger.dart';
 
 final _logger = Logger();
@@ -13,9 +14,11 @@ late final ReceivePort _receive;
 bool _shouldClose = false;
 DeviceState? _prevState;
 DateTime? _lastDataTime;
-DateTime? _lastReconnectTime;
 DateTime? _lastUPSTime;
 int? _workingUPS;
+PortInfo? _connReq;
+bool _shouldDisconn = false;
+bool _wasReadyLast = false;
 
 void deviceLoopInit(SendPort send) async {
   _receive = ReceivePort();
@@ -29,7 +32,9 @@ void deviceLoopInit(SendPort send) async {
   });
 
   if (isConnected()) {
-    await sendControlRequest(DeviceEnableDisableRequest(false));
+    if (isReady()) {
+      await sendControlRequest(DeviceEnableDisableRequest(false));
+    }
     disconnect();
   }
 
@@ -42,102 +47,57 @@ Future<void> _deviceLoop(SendPort send) async {
   state.connInfo = getConnectionInfo();
 
   final now = DateTime.now();
-  if (_lastDataTime != null &&
+  if (state.connInfo.connected &&
+      _lastDataTime != null &&
       now.difference(_lastDataTime!).inMilliseconds >= 500) {
     _logger.i("Connection has timed out, auto-disconnecting...");
 
-    _workingUPS = null;
-    _lastUPSTime = null;
+    _shouldDisconn = true;
+  }
 
-    disconnect();
-    state.connInfo = (connected: false, ready: false, portInfo: null);
-    state.lastData = null;
-    state.updatesPerSec = null;
-    state.deviceName = null;
-    state.firmwareVersion = null;
+  if (_shouldDisconn) {
+    _disconnect(state);
+  }
+  if (_connReq != null) {
+    connect(_connReq!.name);
+    state.connInfo = getConnectionInfo();
+    _wasReadyLast = false;
+
+    _connReq = null;
   }
 
   if (state.connInfo.ready) {
-    final String? raw = await readLine();
+    if (!_wasReadyLast) {
+      _lastDataTime = now;
+      _lastUPSTime = now;
+      _workingUPS = 0;
+      flushBuffers(); //prevent unprocessed bad data from causing problems
+
+      await sendControlRequest(DeviceGetInfoRequest());
+      for (int i = 0; i < state.slots.length; i++) {
+        await sendControlRequest(DeviceGetSlotRequest(i));
+      }
+    }
+
+    final String? raw = await readLine(Duration(milliseconds: 200));
     if (raw != null) {
       final DeviceFrame? frame = _parseFrameIfValid(raw);
-
-      if (frame is DeviceDataFrame) {
-        state.lastData = frame;
-
-        _lastDataTime = now;
-        _workingUPS = (_workingUPS ?? 0) + 1;
-      } else if (frame is DeviceMessageFrame) {
-        final resp = frame.toResponse().toString();
-
-        switch (frame.severity) {
-          case DeviceResponseSeverity.ok:
-          case DeviceResponseSeverity.info:
-            {
-              _logger.i(resp);
-            }
-          case DeviceResponseSeverity.warning:
-            {
-              _logger.w(resp);
-            }
-          case DeviceResponseSeverity.error:
-            {
-              _logger.e(resp);
-            }
-        }
-      } else if (frame is DeviceOKFrame) {
-        _logger.i(frame.toResponse().toString());
-      } else if (frame is DeviceSlotFrame) {
-        state.slots[frame.slotNum] = frame.slotConfig;
-      } else if (frame is DeviceInfoFrame) {
-        state.deviceName = frame.deviceName;
-        state.firmwareVersion = frame.firmwareVersion;
-      }
+      _handleFrame(frame, state);
     }
 
     if (_lastUPSTime != null && now.difference(_lastUPSTime!).inSeconds >= 1) {
       state.updatesPerSec = _workingUPS;
+
       _lastUPSTime = _lastUPSTime!.add(Duration(seconds: 1));
       _workingUPS = 0;
-    }
-  } else if (!state.connInfo.connected && _lastReconnectTime == null ||
-      now.difference(_lastReconnectTime!).inSeconds >= 3) {
-    connect("COM6");
-    state.connInfo =
-        getConnectionInfo(); //refresh info after attempting connect
-
-    if (!state.connInfo.connected) {
-      _lastDataTime = null;
-      _lastReconnectTime = now;
-      _lastUPSTime = null;
-      _workingUPS = null;
-    } else {
-      _lastDataTime = null;
-      _lastReconnectTime = null;
-
-      //update local copy of all slots
-      Future.doWhile(() async {
-        if (!isReady()) return true;
-
-        _lastDataTime = DateTime.now();
-        _workingUPS = 0;
-        _lastUPSTime = DateTime.now();
-        flushBuffers(); //prevent unprocessed bad data from causing problems
-
-        await sendControlRequest(DeviceGetInfoRequest());
-        for (int i = 0; i < state.slots.length; i++) {
-          await sendControlRequest(DeviceGetSlotRequest(i));
-        }
-        return false;
-      });
     }
   }
 
   if (_prevState != state) {
     send.send(state);
   }
-
   _prevState = state;
+  _wasReadyLast = state.connInfo.ready;
 }
 
 void _onReceiveFromMain(dynamic msg) async {
@@ -145,6 +105,10 @@ void _onReceiveFromMain(dynamic msg) async {
     _shouldClose = true;
   } else if (msg is DeviceControlRequest) {
     sendControlRequest(msg); //do not await
+  } else if (msg == "disconn") {
+    _shouldDisconn = true;
+  } else if (msg is PortInfo) {
+    _connReq = msg;
   } else {
     _logger.w("Unknown message '$msg' received from main isolate");
   }
@@ -163,4 +127,54 @@ DeviceFrame? _parseFrameIfValid(String raw) {
     return null;
   }
   return DeviceFrame.parseFromJson(parsed);
+}
+
+void _handleFrame(DeviceFrame? frame, DeviceState state) {
+  if (frame is DeviceDataFrame) {
+    state.lastData = frame;
+
+    _lastDataTime = DateTime.now();
+    _workingUPS = (_workingUPS ?? 0) + 1;
+  } else if (frame is DeviceMessageFrame) {
+    final resp = frame.toResponse().toString();
+
+    switch (frame.severity) {
+      case DeviceResponseSeverity.ok:
+      case DeviceResponseSeverity.info:
+        {
+          _logger.i(resp);
+        }
+      case DeviceResponseSeverity.warning:
+        {
+          _logger.w(resp);
+        }
+      case DeviceResponseSeverity.error:
+        {
+          _logger.e(resp);
+        }
+    }
+  } else if (frame is DeviceOKFrame) {
+    _logger.i(frame.toResponse().toString());
+  } else if (frame is DeviceSlotFrame) {
+    state.slots[frame.slotNum] = frame.slotConfig;
+  } else if (frame is DeviceInfoFrame) {
+    state.deviceName = frame.deviceName;
+    state.firmwareVersion = frame.firmwareVersion;
+  }
+}
+
+void _disconnect(DeviceState state) {
+  disconnect();
+  state.connInfo = getConnectionInfo();
+  state.lastData = null;
+  state.updatesPerSec = null;
+  state.deviceName = null;
+  state.firmwareVersion = null;
+
+  _workingUPS = null;
+  _lastUPSTime = null;
+  _lastDataTime = null;
+  _wasReadyLast = false;
+
+  _shouldDisconn = false;
 }
