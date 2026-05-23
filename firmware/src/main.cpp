@@ -64,7 +64,7 @@ void loop() {
         
         sendDataFrame(&data);
         
-        lastDataTime = currentMicros;
+        lastDataTime += 1e6 / 30.0;
         sumRPMSinceLastData = 0;
         framesSinceLastData = 0;
     }
