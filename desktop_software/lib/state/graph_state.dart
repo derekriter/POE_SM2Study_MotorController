@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:desktop_software/util/data_source.dart';
+import 'package:desktop_software/util/range.dart';
 import 'package:desktop_software/util/units.dart';
 import 'package:flutter/material.dart';
 
@@ -37,6 +38,8 @@ class SourceConfig<T extends DataSource<S>, S> {
 class GraphState with ChangeNotifier {
   final List<ContinuousConfig> _leftAxisConfigs, _rightAxisConfigs;
   final List<DiscreteConfig> _discreteConfigs;
+  Range? _lockedLeft, _lockedRight;
+  Range? _lastLeftScale, _lastRightScale;
 
   GraphState()
     : _leftAxisConfigs = List.empty(growable: true),
@@ -100,6 +103,23 @@ class GraphState with ChangeNotifier {
     exec(cfg);
     notifyListeners();
   }
+
+  Range? get leftLockRange => _lockedLeft;
+  Range? get rightLockRange => _lockedRight;
+  bool get isLeftLocked => _lockedLeft != null;
+  bool get isRightLocked => _lockedRight != null;
+  void setLeftAxisLocked(bool locked) {
+    _lockedLeft = locked ? _lastLeftScale : null;
+    notifyListeners();
+  }
+
+  void setRightAxisLocked(bool locked) {
+    _lockedRight = locked ? _lastRightScale : null;
+    notifyListeners();
+  }
+
+  set lastLeftRange(Range? r) => _lastLeftScale = r;
+  set lastRightRange(Range? r) => _lastRightScale = r;
 
   Color _selectUsableColor() {
     List<Color> workingColors = List.from(SourceConfig.usableColors.values);

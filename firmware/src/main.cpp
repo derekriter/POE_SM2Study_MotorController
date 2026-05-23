@@ -28,7 +28,7 @@ void loop() {
     
     unsigned long currentMicros = micros();
     
-    //update velocity reference. Velocity measurement will break if this is removed
+    updateSourceVoltage();
     updateVelocity();
     sumRPMSinceLastData += getEncoderRPM();
     framesSinceLastData++;
@@ -45,7 +45,7 @@ void loop() {
         _disabledControlMode->update(currentMicros - lastMicros, _slotConfigs);
     }
     
-    if(currentMicros - lastDataTime >= 1e6 / 40.0) {
+    if(currentMicros - lastDataTime >= 1e6 / 30.0) {
         ControlModeData cm;
         if(getMotorEnabled()) {
             _controlMode->getControlModeData(&cm);
@@ -64,7 +64,7 @@ void loop() {
         
         sendDataFrame(&data);
         
-        lastDataTime = currentMicros;
+        lastDataTime += 1e6 / 30.0;
         sumRPMSinceLastData = 0;
         framesSinceLastData = 0;
     }
@@ -82,7 +82,9 @@ void loop() {
                 _slotConfigs[todo.changeSlotNum].kP = todo.changeSlotConfig->kP;
                 _slotConfigs[todo.changeSlotNum].kI = todo.changeSlotConfig->kI;
                 _slotConfigs[todo.changeSlotNum].kD = todo.changeSlotConfig->kD;
+                _slotConfigs[todo.changeSlotNum].kF = todo.changeSlotConfig->kF;
                 _slotConfigs[todo.changeSlotNum].kS = todo.changeSlotConfig->kS;
+                _slotConfigs[todo.changeSlotNum].kV = todo.changeSlotConfig->kV;
                 _slotConfigs[todo.changeSlotNum].kSMode = todo.changeSlotConfig->kSMode;
                 _slotConfigs[todo.changeSlotNum].vMax = todo.changeSlotConfig->vMax;
                 _slotConfigs[todo.changeSlotNum].aStart = todo.changeSlotConfig->aStart;
@@ -102,7 +104,9 @@ void loop() {
                     _slotConfigs[todo.getSlotNum].kP,
                     _slotConfigs[todo.getSlotNum].kI,
                     _slotConfigs[todo.getSlotNum].kD,
+                    _slotConfigs[todo.getSlotNum].kF,
                     _slotConfigs[todo.getSlotNum].kS,
+                    _slotConfigs[todo.getSlotNum].kV,
                     _slotConfigs[todo.getSlotNum].kSMode,
                     _slotConfigs[todo.getSlotNum].vMax,
                     _slotConfigs[todo.getSlotNum].aStart,

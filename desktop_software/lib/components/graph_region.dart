@@ -30,6 +30,10 @@ class GraphRegion extends StatelessWidget {
                   context.read<GraphState>().addLeftAxisSource(src),
               removeConfig: (context, cfg) =>
                   context.read<GraphState>().removeLeftAxisConfig(cfg),
+              watchIsLocked: (context) =>
+                  context.select((GraphState s) => s.isLeftLocked),
+              setIsLocked: (context, locked) =>
+                  context.read<GraphState>().setLeftAxisLocked(locked),
             ),
           ),
           const VerticalDivider(
@@ -66,6 +70,10 @@ class GraphRegion extends StatelessWidget {
                   context.read<GraphState>().addRightAxisSource(src),
               removeConfig: (context, src) =>
                   context.read<GraphState>().removeRightAxisConfig(src),
+              watchIsLocked: (context) =>
+                  context.select((GraphState s) => s.isRightLocked),
+              setIsLocked: (context, locked) =>
+                  context.read<GraphState>().setRightAxisLocked(locked),
             ),
           ),
         ],

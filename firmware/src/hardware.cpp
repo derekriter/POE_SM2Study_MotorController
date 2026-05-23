@@ -3,14 +3,19 @@
 bool _motorEnabled = false;
 volatile long _encoderPosition = 0;
 double _velocityTPS = 0;
+double _sourceVolts = 0;
 
 void initHardware() {
     pinMode(PIN_MOTOR_FORWARD, OUTPUT);
     pinMode(PIN_MOTOR_REVERSE, OUTPUT);
     pinMode(PIN_MOTOR_ENABLE, OUTPUT);
-    pinMode(PIN_SOURCE_VOLTAGE, INPUT);
     pinMode(PIN_ENCODER_A, INPUT_PULLUP);
     pinMode(PIN_ENCODER_B, INPUT_PULLUP);
+    
+    #if USE_EXTERNAL_AREF
+    analogReference(EXTERNAL);
+    #endif
+    pinMode(PIN_SOURCE_VOLTAGE, INPUT);
     
     attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_A), _encoderISR, CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_B), _encoderISR, CHANGE);
@@ -42,17 +47,18 @@ void dutyCycle(double dutyCycle) {
         analogWrite(PIN_MOTOR_REVERSE, (int) (-dutyCycle * 255));
     }
 }
-double getSourceVoltage() {
-    const int R1 = 971; //r1 value in the voltage divider ; 1000 ohm resistor with 5% tolerance, measured with multimeter
-    const int R2 = 543; //r2 value in the voltage divider ; 560 ohm resistor with 5% tolerance, measured with multimeter
-    const float REF_VOLTAGE = 4.24; //should be 5 V but the voltage regulator is pretty shit
+void updateSourceVoltage() {
+    double Vin = 0;
+    for(int i = 0; i < SV_SAMPLE_COUNT; i++) {
+        //For extra accuraccy, add 0.5 and divide by 1024: https://skillbank.co.uk/arduino/adc.htm
+        Vin += (analogRead(PIN_SOURCE_VOLTAGE) + 0.5) * VREF / 1024.0;
+    }
+    Vin /= SV_SAMPLE_COUNT;
     
-    float percent = analogRead(PIN_SOURCE_VOLTAGE) / 1023.0;
-    //V_in = (V_s * R2) / (R1 + R2)
-    //perc = V_in / V_r
-    //therefore:
-    //V_s = perc * V_r * (R1 + R2) / R2
-    return percent * REF_VOLTAGE * (R1 + R2) / R2;
+    _sourceVolts =  Vin * (SV_R1 + SV_R2) / SV_R2;
+}
+double getSourceVoltage() {
+    return _sourceVolts;
 }
 
 //https://forum.arduino.cc/t/this-is-how-i-use-an-optical-encoder/1034970

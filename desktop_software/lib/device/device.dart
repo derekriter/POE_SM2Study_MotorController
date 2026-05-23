@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:desktop_software/device/device_control_request.dart';
+import 'package:desktop_software/device/ports.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:logger/logger.dart';
 
@@ -14,7 +15,7 @@ DateTime? _connectTime;
 
 //NOTE: calling any functions in this file from any isolates other than the device loop will break things
 
-bool connect() {
+bool connect(String portName) {
   if (isConnected()) {
     _logger.w("Device already connected");
     return false;
@@ -41,7 +42,7 @@ bool connect() {
     ..cts = SerialPortCts.ignore
     ..xonXoff = SerialPortXonXoff.disabled;
 
-  _port = SerialPort("COM6"); //TODO: port scanning
+  _port = SerialPort(portName);
 
   if (!_port!.openReadWrite()) {
     _logger.w("Failed to open device connection\n${SerialPort.lastError}");
@@ -58,7 +59,7 @@ bool connect() {
 
   _connectTime = DateTime.now();
 
-  _logger.i("Connected to device on port ${getConnectedPort()}");
+  _logger.i("Connected to device on port ${_port!.name}");
   return true;
 }
 
@@ -73,7 +74,7 @@ void disconnect() {
   _port?.dispose();
   _port = null;
 
-  // _portConfig?.dispose(); // causes assertion failure even though the docs say to dispose. I think SerialPort.dispose() might auto dispose the config
+  //SerialPort.dispose() auto disposes the config
   _portConfig = null;
 
   _connectTime = null;
@@ -92,20 +93,30 @@ bool isReady() {
           200; //allow time for connection to configure and stabilize
 }
 
-String? getConnectedPort() {
-  return isConnected() ? _port?.name : null;
+PortInfo? getPortInfo() {
+  if (!isConnected()) return null;
+
+  return (name: _port!.name ?? "UNKNOWN", description: _port!.description);
 }
 
-Future<String?> readLine() async {
+ConnectionInfo getConnectionInfo() {
+  return (connected: isConnected(), ready: isReady(), portInfo: getPortInfo());
+}
+
+Future<String?> readLine([Duration? expiration]) async {
   if (!isReady()) return null;
 
   StringBuffer line = StringBuffer();
+  bool encounteredErr = false;
   await Future.doWhile(() {
     late String data;
     try {
-      data = String.fromCharCode(_port!.read(1, timeout: 0)[0]);
+      data = String.fromCharCode(
+        _port!.read(1, timeout: expiration?.inMilliseconds ?? 0)[0],
+      );
     } catch (err) {
       _logger.e("Exception while reading line: $err");
+      encounteredErr = true;
       return false;
     }
 
@@ -117,7 +128,7 @@ Future<String?> readLine() async {
     return true;
   });
 
-  return line.toString();
+  return encounteredErr ? null : line.toString();
 }
 
 Future<bool> _sendMessage(Uint8List msg) async {

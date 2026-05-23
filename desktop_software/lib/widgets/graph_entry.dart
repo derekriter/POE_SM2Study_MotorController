@@ -12,6 +12,8 @@ class DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
   final List<SourceConfig<T, S>> Function(BuildContext) watchConfigs;
   final void Function(BuildContext, T) addSource;
   final void Function(BuildContext, SourceConfig<T, S>) removeConfig;
+  final bool Function(BuildContext)? watchIsLocked;
+  final void Function(BuildContext, bool)? setIsLocked;
 
   const DataDropRegion({
     super.key,
@@ -19,13 +21,59 @@ class DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
     required this.watchConfigs,
     required this.addSource,
     required this.removeConfig,
-  });
+    this.watchIsLocked,
+    this.setIsLocked,
+  }) : assert(
+         (watchIsLocked == null) == (setIsLocked == null),
+         "watchIsLocked and setIsLocked must both be either null or not",
+       );
 
   @override
   Widget build(BuildContext context) {
     final configs = watchConfigs(context);
+    final isLocked = watchIsLocked?.call(context);
 
     final theme = Theme.of(context);
+
+    late final Widget headerWidget;
+    if (isLocked == null) {
+      headerWidget = Align(
+        alignment: Alignment.center,
+        child: OverflowText(header, style: theme.textTheme.labelLarge),
+      );
+    } else {
+      headerWidget = Stack(
+        alignment: Alignment.center,
+        children: [
+          Align(
+            alignment: Alignment.center,
+            child: OverflowText(header, style: theme.textTheme.labelLarge),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: SizedBox.square(
+                dimension: 18,
+                child: IconButton(
+                  onPressed: () {
+                    setIsLocked!(context, !isLocked);
+                  },
+                  icon: isLocked
+                      ? const Icon(Icons.lock, color: Colors.white)
+                      : Icon(
+                          Icons.lock_open,
+                          color: Colors.white.withAlpha(128),
+                        ),
+                  iconSize: 14,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return DragTarget<T>(
       builder: (context, candidates, rejected) => Container(
@@ -33,8 +81,9 @@ class DataDropRegion<T extends DataSource<S>, S> extends StatelessWidget {
             ? Colors.green.withAlpha(64)
             : Colors.transparent,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            OverflowText(header, style: theme.textTheme.labelLarge),
+            headerWidget,
             Expanded(
               child: SmoothScroll(
                 builder: (_, controller, physics) => ListView.builder(

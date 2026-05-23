@@ -26,7 +26,9 @@ class _ControlTabState extends State<ControlTab>
     super.build(context); //required by AutomaticKeepAliveClientMixin
 
     final appStateRead = context.read<AppState>();
-    final isReady = context.select((AppState appState) => appState.isReady);
+    final isReady = context.select(
+      (AppState appState) => appState.connInfo.ready,
+    );
     final controlMode = context.select(
       (AppState state) => state.controlModeLive,
     );

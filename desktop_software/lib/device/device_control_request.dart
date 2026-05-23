@@ -93,7 +93,7 @@ class DeviceSlotConfigRequest extends DeviceControlRequest {
   @override
   List<String> toSerialCommands() {
     return <String>[
-      "setSlot $slotNum ${config.kP.toStringAsFixed(8)} ${config.kI.toStringAsFixed(8)} ${config.kD.toStringAsFixed(8)} ${config.kS.toStringAsFixed(8)} ${config.kSMode.id} ${config.vMax.toStringAsFixed(2)} ${config.aStart.toStringAsFixed(2)} ${config.aEnd.toStringAsFixed(2)}",
+      "setSlot $slotNum ${config.kP.toStringAsFixed(8)} ${config.kI.toStringAsFixed(8)} ${config.kD.toStringAsFixed(8)} ${config.kS.toStringAsFixed(3)} ${config.kSMode.id} ${config.vMax.toStringAsFixed(2)} ${config.aStart.toStringAsFixed(2)} ${config.aEnd.toStringAsFixed(2)} ${config.kV.toStringAsFixed(8)} ${config.kF.toStringAsFixed(3)}",
     ];
   }
 }

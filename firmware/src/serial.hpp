@@ -11,8 +11,8 @@
 #define SET_ENABLE 1u
 #define SET_DISABLE 2u
 
-#define DEVICE_NAME F("Custom Motor Controller v1.0")
-#define FIRMWARE_VERSION F("v2.0")
+#define DEVICE_NAME F("Custom Motor Controller v1.1")
+#define FIRMWARE_VERSION F("v2.1")
 
 struct ControlModeData {
     uint8_t controlID;
@@ -29,8 +29,12 @@ struct ControlModeData {
     double iFactor;
     bool hasDFactor;
     double dFactor;
+    bool hasFFactor;
+    double fFactor;
     bool hasSFactor;
     double sFactor;
+    bool hasVFactor;
+    double vFactor;
     bool hasSlot;
     uint8_t slot;
     bool hasSubError;
@@ -58,7 +62,8 @@ struct MessageFrameP {
 };
 struct SlotFrame {
     uint8_t slotNum;
-    double kP, kI, kD, kS;
+    double kP, kI, kD;
+    double kF, kS, kV;
     uint8_t kSMode;
     double vMax, aStart, aEnd;
 };

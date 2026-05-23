@@ -20,7 +20,9 @@ void DisabledControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
+    data->hasVFactor = false;
     data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
@@ -42,7 +44,9 @@ void StopControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
+    data->hasVFactor = false;
     data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
@@ -67,7 +71,9 @@ void DutyCycleControlMode::getControlModeData(ControlModeData* data) {
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
+    data->hasVFactor = false;
     data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
@@ -101,11 +107,10 @@ bool DutyCycleControlMode::parseFromCommandArgs(char const * const commandArgs, 
 VoltageControlMode::VoltageControlMode(double voltage) {
     _voltage = voltage;
     _lastDuty = 0;
-    _lastVS = 0;
 }
 void VoltageControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
-    _lastVS = getSourceVoltage();
-    _lastDuty = min(max(_lastVS == 0 ? 0 : _voltage / _lastVS, -1), 1);
+    const double vs = getSourceVoltage();
+    _lastDuty = min(max(vs == 0 ? 0 : _voltage / vs, -1), 1);
     
     dutyCycle(_lastDuty);
 }
@@ -114,14 +119,16 @@ void VoltageControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _lastDuty;
-    data->voltageOut = _lastDuty * _lastVS;
+    data->voltageOut = _lastDuty * getSourceVoltage();
     
     data->hasTarget = false;
     data->hasError = false;
     data->hasPFactor = false;
     data->hasIFactor = false;
     data->hasDFactor = false;
+    data->hasFFactor = false;
     data->hasSFactor = false;
+    data->hasVFactor = false;
     data->hasSlot = false;
     data->hasSubError = false;
     data->hasSecsToCompletion = false;
@@ -155,26 +162,27 @@ PIDPositionControlMode::PIDPositionControlMode(double targetRots, uint8_t slot) 
     _slot = slot;
     
     _lastDuty = 0;
-    _lastVS = 0;
     _lastError = 0;
     _iAccum = 0;
     _totalP = 0;
     _totalI = 0;
     _totalD = 0;
+    _totalF = 0;
     _totalS = 0;
     _updatesSinceLastFrame = 0;
 }
 void PIDPositionControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
-    _lastVS = getSourceVoltage();
-    
     SlotConfig const * config = slots + _slot;
-    double p, i, d, s;
+    double p, i, d, f, s, _;
     
-    _lastDuty = calcPIDS(getEncoderRotations(), _target, config, deltaMicros, &_lastError, &p, &i, &_iAccum, &d, &s);
+    double pid = calcPID(getEncoderRotations(), _target, config, deltaMicros, &_lastError, &p, &i, &_iAccum, &d);
+    double ff = calcFF(config, _lastError, 0, &f, &s, &_);
+    _lastDuty = pid + ff;
     
     _totalP += p;
     _totalI += i;
     _totalD += d;
+    _totalF += f;
     _totalS += s;
     _updatesSinceLastFrame++;
     
@@ -186,7 +194,7 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _lastDuty;
-    data->voltageOut = _lastDuty * _lastVS;
+    data->voltageOut = _lastDuty * getSourceVoltage();
     
     data->hasTarget = true;
     data->target = _target;
@@ -198,8 +206,11 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     data->iFactor = _totalI / _updatesSinceLastFrame;
     data->hasDFactor = true;
     data->dFactor = _totalD / _updatesSinceLastFrame;
+    data->hasFFactor = true;
+    data->fFactor = _totalF / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasVFactor = false;
     data->hasSlot = true;
     data->slot = _slot;
     data->hasSubError = false;
@@ -210,6 +221,7 @@ void PIDPositionControlMode::getControlModeData(ControlModeData* data) {
     _totalP = 0;
     _totalI = 0;
     _totalD = 0;
+    _totalF = 0;
     _totalS = 0;
 }
 bool PIDPositionControlMode::parseFromCommandArgs(char const * const commandArgs, PIDPositionControlMode** const controlOut) {
@@ -261,27 +273,30 @@ PIDVelocityControlMode::PIDVelocityControlMode(double targetRPM, uint8_t slot) {
     _slot = slot;
     
     _lastDuty = 0;
-    _lastVS = 0;
     _lastError = 0;
     _iAccum = 0;
     _totalP = 0;
     _totalI = 0;
     _totalD = 0;
+    _totalF = 0;
     _totalS = 0;
+    _totalV = 0;
     _updatesSinceLastFrame = 0;
 }
 void PIDVelocityControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
-    _lastVS = getSourceVoltage();
-    
     SlotConfig const * config = slots + _slot;
-    double p, i, d, s;
+    double p, i, d, f, s, v;
     
-    _lastDuty = calcPIDS(getEncoderRPM(), _target, config, deltaMicros, &_lastError, &p, &i, &_iAccum, &d, &s);
+    double pid = calcPID(getEncoderRPM(), _target, config, deltaMicros, &_lastError, &p, &i, &_iAccum, &d);
+    double ff = calcFF(config, _lastError, _target, &f, &s, &v);
+    _lastDuty = pid + ff;
     
     _totalP += p;
     _totalI += i;
     _totalD += d;
+    _totalF += f;
     _totalS += s;
+    _totalV += v;
     _updatesSinceLastFrame++;
     _lastDuty = min(max(_lastDuty, -1), 1);
     
@@ -292,7 +307,7 @@ void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _lastDuty;
-    data->voltageOut = _lastDuty * _lastVS;
+    data->voltageOut = _lastDuty * getSourceVoltage();
     
     data->hasTarget = true;
     data->target = _target;
@@ -304,8 +319,12 @@ void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
     data->iFactor = _totalI / _updatesSinceLastFrame;
     data->hasDFactor = true;
     data->dFactor = _totalD / _updatesSinceLastFrame;
+    data->hasFFactor = true;
+    data->fFactor = _totalF / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasVFactor = true;
+    data->vFactor = _totalV / _updatesSinceLastFrame;
     data->hasSlot = true;
     data->slot = _slot;
     data->hasSubError = false;
@@ -316,7 +335,9 @@ void PIDVelocityControlMode::getControlModeData(ControlModeData* data) {
     _totalP = 0;
     _totalI = 0;
     _totalD = 0;
+    _totalF = 0;
     _totalS = 0;
+    _totalV = 0;
 }
 bool PIDVelocityControlMode::parseFromCommandArgs(char const * const commandArgs, PIDVelocityControlMode** const controlOut) {
     double target;
@@ -367,7 +388,6 @@ TrapezoidalPIDPositionControlMode::TrapezoidalPIDPositionControlMode(double targ
     _slot = slot;
     
     _lastDuty = 0;
-    _lastVS = 0;
     _lastMajorError = 0;
     _lastMinorError = 0;
     _iAccum = 0;
@@ -376,32 +396,38 @@ TrapezoidalPIDPositionControlMode::TrapezoidalPIDPositionControlMode(double targ
     _totalP = 0;
     _totalI = 0;
     _totalD = 0;
+    _totalF = 0;
     _totalS = 0;
+    _totalV = 0;
     _startRots = NAN;
     _lastPhase = 0;
     _lastSecsToCompletion = 0;
 }
 void TrapezoidalPIDPositionControlMode::update(unsigned long deltaMicros, struct SlotConfig const * const slots) {
     _microsSinceStart += deltaMicros;
-    _lastVS = getSourceVoltage();
     
     if(isnan(_startRots)) {
         _startRots = getEncoderRotations();
     }
     
     SlotConfig const * config = slots + _slot;
-    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config, &_lastSecsToCompletion, &_lastPhase);
+    double targetVel = 0;
+    double currentTarget = calcTrapProfile(_microsSinceStart, _startRots, _target, config, &_lastSecsToCompletion, &_lastPhase, &targetVel);
     
     double currentPosition = getEncoderRotations();
     _lastMajorError = _target - currentPosition;
     
-    double p, i, d, s;
-    _lastDuty = calcPIDS(currentPosition, currentTarget, config, deltaMicros, &_lastMinorError, &p, &i, &_iAccum, &d, &s);
+    double p, i, d, f, s, v;
+    double pid = calcPID(currentPosition, currentTarget, config, deltaMicros, &_lastMinorError, &p, &i, &_iAccum, &d);
+    double ff = calcFF(config, _lastMinorError, targetVel, &f, &s, &v);
+    _lastDuty = pid + ff;
     
     _totalP += p;
     _totalI += i;
     _totalD += d;
+    _totalF += f;
     _totalS += s;
+    _totalV += v;
     _updatesSinceLastFrame++;
     
     _lastDuty = min(max(_lastDuty, -1), 1);
@@ -412,7 +438,7 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     *data = ControlModeData {};
     data->controlID = getID();
     data->dutyOut = _lastDuty;
-    data->voltageOut = _lastDuty * _lastVS;
+    data->voltageOut = _lastDuty * getSourceVoltage();
     
     data->hasTarget = true;
     data->target = _target;
@@ -424,8 +450,12 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     data->iFactor = _totalI / _updatesSinceLastFrame;
     data->hasDFactor = true;
     data->dFactor = _totalD / _updatesSinceLastFrame;
+    data->hasFFactor = true;
+    data->fFactor = _totalF / _updatesSinceLastFrame;
     data->hasSFactor = true;
     data->sFactor = _totalS / _updatesSinceLastFrame;
+    data->hasVFactor = true;
+    data->vFactor = _totalV / _updatesSinceLastFrame;
     data->hasSlot = true;
     data->slot = _slot;
     data->hasSubError = true;
@@ -439,7 +469,9 @@ void TrapezoidalPIDPositionControlMode::getControlModeData(struct ControlModeDat
     _totalP = 0;
     _totalI = 0;
     _totalD = 0;
+    _totalF = 0;
     _totalS = 0;
+    _totalV = 0;
 }
 bool TrapezoidalPIDPositionControlMode::parseFromCommandArgs(char const * const commandArgs, TrapezoidalPIDPositionControlMode** const controlOut) {
     double target;

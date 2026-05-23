@@ -52,6 +52,10 @@ class _GraphViewState extends State<GraphView> {
       },
       spanSupplier: () => context.read<AppState>().graphSpan,
       endSupplier: () => context.read<AppState>().graphEnd,
+      leftLockRangeSupplier: () => context.read<GraphState>().leftLockRange,
+      rightLockRangeSupplier: () => context.read<GraphState>().rightLockRange,
+      leftRangeSetter: (r) => context.read<GraphState>().lastLeftRange = r,
+      rightRangeSetter: (r) => context.read<GraphState>().lastRightRange = r,
     );
 
     final appStateRead = context.read<AppState>();
@@ -269,6 +273,8 @@ class _GraphPainter extends CustomPainter {
   final void Function() updateHoverTime;
   final Seconds<double> Function() spanSupplier;
   final Seconds<double>? Function() endSupplier;
+  final Range? Function() leftLockRangeSupplier, rightLockRangeSupplier;
+  final void Function(Range?) leftRangeSetter, rightRangeSetter;
 
   final TextSpan noDataSpan;
   late final TextPainter noDataPainter;
@@ -287,6 +293,10 @@ class _GraphPainter extends CustomPainter {
     required this.updateHoverTime,
     required this.spanSupplier,
     required this.endSupplier,
+    required this.leftLockRangeSupplier,
+    required this.rightLockRangeSupplier,
+    required this.leftRangeSetter,
+    required this.rightRangeSetter,
   }) : noDataSpan = .new(text: "No data", style: theme.textTheme.displaySmall),
        outlinePaint = .new()
          ..color = theme.colorScheme.outline
@@ -388,39 +398,46 @@ class _GraphPainter extends CustomPainter {
 
     final left = continuousLeftSupplier();
     final right = continuousRightSupplier();
+    final leftLocked = leftLockRangeSupplier();
+    final rightLocked = rightLockRangeSupplier();
 
-    bool hasLeft = false;
-    for (var e in left) {
-      if (e.visible) {
-        hasLeft = true;
-        break;
+    bool hasLeft = leftLocked != null;
+    if (!hasLeft) {
+      for (var e in left) {
+        if (e.visible) {
+          hasLeft = true;
+          break;
+        }
       }
     }
-    bool hasRight = false;
-    for (var e in right) {
-      if (e.visible) {
-        hasRight = true;
-        break;
+    bool hasRight = rightLocked != null;
+    if (!hasRight) {
+      for (var e in right) {
+        if (e.visible) {
+          hasRight = true;
+          break;
+        }
       }
     }
 
     if (hasLeft) {
-      workingLayout.leftRange = fitAxis(
-        msRange.min.toInt(),
-        msRange.max.toInt(),
-        left,
-      );
+      workingLayout.leftRange =
+          leftLocked ?? fitAxis(msRange.min.toInt(), msRange.max.toInt(), left);
+      leftRangeSetter(workingLayout.leftRange);
 
       drawVerticalAxis(canvas, outlineRect, workingLayout, true, true);
+    } else {
+      leftRangeSetter(null);
     }
     if (hasRight) {
-      workingLayout.rightRange = fitAxis(
-        msRange.min.toInt(),
-        msRange.max.toInt(),
-        right,
-      );
+      workingLayout.rightRange =
+          rightLocked ??
+          fitAxis(msRange.min.toInt(), msRange.max.toInt(), right);
+      rightRangeSetter(workingLayout.rightRange);
 
       drawVerticalAxis(canvas, outlineRect, workingLayout, false, !hasLeft);
+    } else {
+      rightRangeSetter(null);
     }
 
     return workingLayout;
@@ -430,9 +447,11 @@ class _GraphPainter extends CustomPainter {
     num? axisMin, axisMax;
 
     for (var i = 0; i < cfgs.length; i++) {
-      final scopeChanges = cfgs
-          .elementAt(i)
-          .source
+      ContinuousConfig c = cfgs.elementAt(i);
+
+      if (!c.visible) continue;
+
+      final scopeChanges = c.source
           .getAllValuesInRange(minT, maxT)
           ?.toList(
             growable: false,
