@@ -141,7 +141,7 @@ class _ConnectionControlsState extends State<_ConnectionControls> {
                   ? const OverflowText("Connected - Ready")
                   : OverflowText(
                       "Connected - Not ready",
-                      style: TextStyle(color: Colors.orange.shade800),
+                      style: TextStyle(color: Colors.yellow),
                     ))
             : OverflowText(
                 "Disconnected",

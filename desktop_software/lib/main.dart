@@ -26,7 +26,7 @@ class AppRoot extends StatelessWidget {
         title: "Remote Motor Control (v2.1)",
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
+            seedColor: Color.fromARGB(255, 34, 118, 115),
             brightness: Brightness.dark,
           ),
         ),
